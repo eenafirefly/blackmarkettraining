@@ -17,7 +17,7 @@ git push origin main
 
 1. Go to [render.com](https://render.com)
 2. Sign up or log in
-3. Connect your Git repository
+3. Connect your Git repository.
 
 ### Step 3: Create PostgreSQL Database
 
