@@ -1,0 +1,1447 @@
+div.enroller-widget input,
+div.enroller-widget-popup input,
+div.enroller-widget {
+    font-size: 16px;
+}
+div.enroller-widget *,
+div.enroller-widget-popup * {
+    font-family: "Arimo", sans-serif;
+    color: #3e3e3e;
+    box-sizing: border-box;
+    font-weight: 500 !important;
+    font-size: 1em;
+}
+
+div.enroller-widget div.enroller-field-holder {
+    clear: left;
+}
+
+.enroller-content.ui-page {
+    min-height: auto !important;
+    background: transparent;
+    box-sizing: initial;
+    width: 100%;
+}
+
+div.ui-overlay-a,
+div.ui-page-theme-a,
+div.ui-page-theme-a div.ui-panel-wrapper {
+    background: inherit;
+    border: inherit;
+    color: inherit;
+    text-shadow: inherit;
+}
+
+.ui-popup-container ul {
+    list-style: none !important;
+    margin: 0;
+    margin-left: 0;
+    -webkit-margin-before: 0;
+    -webkit-padding-start: 0;
+}
+.ui-collapsible-heading {
+    font-size: 1em;
+}
+div.enroller-widget *:not(strong):not(.course-outline) {
+    font-weight: 500;
+}
+div.enroller-widget div.course-outline * {
+    font-weight: initial;
+}
+div.enroller-widget table,
+div.enroller-widget table td {
+    border: 0;
+}
+div.enroller-widget div.enroller-contact-list-hold ul li,
+div.enroller-widget ul.chosen-results li {
+    margin: 0 !important;
+}
+
+/*ALERT*/
+.ui-popup-container #temporaryAlert {
+    width: 90vw;
+    max-width: 50em;
+}
+
+div.enroller-widget input[type="date"],
+div.enroller-widget input[type="email"],
+div.enroller-widget input[type="number"],
+div.enroller-widget input[type="password"],
+div.enroller-widget input[type="search"],
+div.enroller-widget input[type="tel"],
+div.enroller-widget input[type="text"],
+div.enroller-widget textarea {
+    font-size: inherit;
+}
+div.enroller-widget a.enroller-tooltip {
+    border: none !important;
+    background: none !important;
+}
+
+/* div.enroller-widget #contactSearch_step .ui-input-search{
+	padding-top: .1em;
+    padding-bottom: 0;
+} */
+
+/* /*input fields*/
+
+.ui-popup-container div.enroller-widget-popup {
+    width: 90vw;
+    max-width: 50em;
+}
+
+div.enroller-widget-popup {
+    padding: 1em;
+}
+div.enroller-widget-popup button.enroller-save-button.ui-btn {
+    margin-bottom: 1em !important;
+}
+/* END POPUP*/
+
+.required-field.enroller-field-label.ui-btn-icon-left {
+    padding-left: 1em;
+}
+.required-field.enroller-field-label.ui-btn-icon-right {
+    padding-right: 1em;
+}
+
+textarea.ui-btn {
+    user-select: text;
+    -moz-user-select: text;
+    -webkit-user-select: text;
+    -ms-user-select: text;
+}
+
+div.enroller-widget div.enroller-info-field-detailed {
+    width: 100%;
+    min-width: 100%;
+    font-size: 1.1em;
+    font-weight: 600 !important;
+    max-width: 100%;
+    display: block;
+    clear: both;
+    padding: 0.7em 1em;
+    line-height: 1.4;
+    border-bottom: 1px solid #ddd;
+    min-height: 22px;
+    margin-bottom: 1.5em;
+}
+
+div.enroller-widget div.enroller-divider-field {
+    width: 100%;
+    min-width: 100%;
+    font-size: 16px;
+    font-weight: 600 !important;
+    max-width: 100%;
+    display: block;
+    clear: both;
+    padding: 0.7em 1em;
+    line-height: 1.4;
+    border-top: 1px solid #888;
+    min-height: 22px;
+}
+
+.enquiry-widget .ui-body-a {
+    border-width: 0px;
+}
+
+div#enroller.enquiry-widget div.enroller-step {
+    border-bottom: 0px;
+    border-radius: 0;
+}
+
+div#enroller.enquiry-widget
+    div.enroller-step:not(.courses)
+    div.enroller-field-holder:last-of-type.enroller-field-hasdropdown {
+    margin-bottom: 1em;
+}
+
+div#enroller.enquiry-widget #courses_step {
+    min-height: auto;
+}
+
+#tooltipPop-screen {
+    /*	display:none;*/
+}
+
+div.enroller-widget a.enroller-menu-link {
+    z-index: 1101;
+}
+#tooltipPop-popup,
+.ui-popup-container {
+    z-index: 1102;
+}
+div.enroller-widget .enroller-step-status .enroller-info-text {
+    z-index: 1101;
+}
+
+/* Spacing on last enroller field on form*/
+.enroller-step > div.enroller-field-holder:last-of-type {
+    margin-bottom: 3em !important;
+}
+
+/*Set selects that chosens fall under to be visible but have no width or height*/
+div.enroller-widget select.chosen-markup {
+    height: 0px;
+    position: relative !important;
+    opacity: 0;
+    max-width: 24em;
+    display: block !important;
+    margin: 0;
+    float: none;
+    margin-top: -10px;
+    width: 24em;
+    pointer-events: none;
+    background: transparent;
+}
+
+div.enroller-widget select:not(.chosen-markup) {
+    width: 24em;
+    max-width: 100%;
+    display: inline-block;
+}
+
+/*WP-199*/
+div.enroller-widget div.enroller-contact-mode-holder .ui-block-a,
+div.enroller-widget div.enroller-contact-mode-holder .ui-block-b {
+    min-width: 24em;
+    max-width: 24em;
+    display: inline-block;
+}
+div.enroller-widget.outer-600 div.enroller-contact-mode-holder .ui-block-a,
+div.enroller-widget.outer-600 div.enroller-contact-mode-holder .ui-block-b {
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+}
+
+/*WP-155: Course Table Column Configuration*/
+div.enroller-widget #courseDataTable th.priority-0,
+div.enroller-widget #courseDataTable td.priority-0 {
+    display: none;
+}
+div.enroller-widget.outer-800 #courseDataTable th.priority-4,
+div.enroller-widget.outer-800 #courseDataTable td.priority-4 {
+    display: none;
+}
+
+div.enroller-widget.outer-600 #courseDataTable th.priority-3,
+div.enroller-widget.outer-600 #courseDataTable td.priority-3 {
+    display: none;
+}
+div.enroller-widget.outer-450 #courseDataTable th.priority-2,
+div.enroller-widget.outer-450 #courseDataTable td.priority-2 {
+    display: none;
+}
+#courseDataTable td,
+#courseDataTable th {
+    text-align: center;
+}
+
+/*flipswitch move to core files*/
+
+div.enroller-widget .enroller-terms-flip.ui-flipswitch .ui-btn.ui-flipswitch-on {
+    text-indent: -20.7em;
+}
+div.enroller-widget .enroller-terms-flip.ui-flipswitch .ui-flipswitch-off {
+    text-indent: 0.5em;
+}
+div.enroller-widget .enroller-terms-flip {
+    padding: 0.5em 0.5em;
+    min-height: 2.2em;
+    max-height: 3em;
+    height: auto;
+    box-sizing: border-box;
+}
+div.enroller-widget .enroller-terms-flip.ui-flipswitch {
+    width: 24em;
+    margin-top: 0;
+}
+div.enroller-widget .enroller-terms-flip.ui-flipswitch.ui-flipswitch-active {
+    padding-left: 21.5em;
+    width: 24em;
+}
+div.enroller-widget .enroller-terms-flip.ui-flipswitch.ui-flipswitch-active span.ui-flipswitch-off {
+    height: 0;
+    display: none;
+}
+
+div.enroller-widget div.modifier-checkbox select.chosen-markup {
+    width: 0px;
+    display: none !important;
+}
+div.enroller-widget div.modifier-checkbox div.chosen-container {
+    max-width: 10em;
+    width: 10em;
+    clear: right;
+}
+
+div.enroller-widget div.enroller-modifier-holder {
+    display: table;
+    margin-left: 16em;
+}
+div.enroller-widget div.enroller-field-holder:not(.has-tooltip) div.enroller-modifier-holder {
+    margin-top: -2.7em;
+}
+div.enroller-widget:not(.outer-920) div.enroller-field-holder.has-tooltip .enroller-tooltip {
+    position: absolute;
+    margin-top: -2.7em;
+}
+
+div.enroller-widget div.enroller-modifier-holder label:after {
+    width: 15px;
+    height: 15px;
+    margin: -8px 2px 0 2px;
+}
+div.enroller-widget.outer-920 div.enroller-modifier-holder {
+    display: table;
+    margin-left: inherit;
+    margin-top: inherit;
+}
+div.enroller-widget div.enroller-modifier-holder label,
+div.enroller-widget div.enroller-modifier-holder .chosen-single {
+    font-size: 70%;
+}
+div.enroller-widget div.enroller-modifier-holder .chosen-single {
+    font-size: 10.5px;
+}
+
+/*Checkbox*/
+
+/*Required Field marking*/
+
+div#enroller .enroller-incomplete-field .ui-input-text {
+    border: 1px rgba(220, 35, 35, 0.7) solid;
+}
+div#enroller div.enroller-incomplete-field .chosen-single {
+    border: 1px rgba(220, 35, 35, 0.7) solid;
+}
+div#enroller div.enroller-incomplete-field div.enroller-modifier-holder .chosen-single {
+    border: 1px solid #ddd;
+}
+div#enroller div.enroller-incomplete-field div.enroller-modifier-holder {
+    border: 1px rgba(220, 35, 35, 0.7) solid;
+}
+
+div.enroller-widget div.enroller-incomplete-field div.enroller-checkbox-holder {
+    border: 1px rgba(220, 35, 35, 0.7) solid;
+}
+
+/*Tables */
+div.enroller-widget table td,
+div.enroller-widget table th {
+    vertical-align: middle;
+    padding: 0.7em;
+}
+div.enroller-widget table th.sorting {
+    padding-right: 1em;
+}
+div.enroller-widget table td.left-align,
+div.enroller-widget table th.left-align {
+    text-align: left !important;
+}
+div.enroller-widget table td.right-align,
+div.enroller-widget table th.right-align {
+    text-align: right !important;
+}
+
+/*Search Input*/
+div.enroller-widget .ui-input-search input {
+    margin-top: 0;
+    margin-bottom: 0;
+    min-height: inherit;
+}
+div.enroller-widget div.enroller-contact-searchadd a {
+    line-height: 1.3em;
+}
+
+/*Popup*/
+div.enroller-widget.enroller-widget-popup {
+    min-width: inherit;
+}
+
+/* RESPONSIVE CLASS ADJUSTMENT - NOTE USES CLASSES RATHER THAN MEDIA QUERIES TO SUPPORT EMBEDDING */
+
+div.enroller-widget.outer-920 #courseDataTable td,
+div.enroller-widget.outer-920 #courseDataTable th {
+    padding: 0.2em;
+}
+
+div.enroller-widget.outer-720 div.enroller-step-menu.enroller-layout-left {
+    max-width: 5em;
+    padding: 0;
+}
+div.enroller-widget.outer-720 div.enroller-step-menu.enroller-layout-left a {
+    font-size: 0.9em;
+    padding-left: 0.5em;
+    white-space: normal;
+    margin-right: -0.3em;
+    padding-right: 0.8em;
+}
+div.enroller-widget.outer-720 div.enroller-step-menu.enroller-layout-left a:after {
+    zoom: 0.6;
+}
+div.enroller-widget.outer-720 {
+    padding: 0;
+}
+
+div.enroller-widget.outer-600 div.enroller-step-menu.enroller-layout-left {
+    max-width: 5em;
+    padding: 0;
+}
+div.enroller-widget.outer-600 div.enroller-step-menu.enroller-layout-left a {
+    font-size: 0.8em;
+    padding-left: 0.5em;
+    white-space: normal;
+    margin-right: -0.3em;
+    padding-right: 0.8em;
+}
+
+div.enroller-widget.outer-600 {
+    padding: 0;
+}
+div.enroller-widget.outer-600 div.enroller-portfolio-holder form a.enroller-file-attach {
+    display: none;
+}
+div.enroller-widget.outer-600 .enroller-file-input input {
+    margin-left: 0;
+}
+div.enroller-widget.outer-600 div.enroller-file-input {
+    max-width: 100%;
+    width: 100%;
+    margin-right: -1em;
+}
+
+div.enroller-widget.outer-600 div.chosen-container {
+    max-width: 100%;
+    width: 100%;
+    min-width: 100%;
+}
+div.enroller-widget.outer-600 div.enroller-field-holder input {
+    max-width: 100%;
+    width: 100%;
+    min-width: 100%;
+}
+
+div.enroller-widget.outer-600 {
+    width: 100%;
+    max-width: 100%;
+    min-width: 100%;
+}
+div.enroller-widget.outer-600 div.enroller-step {
+    width: 100%;
+    max-width: 100%;
+}
+div.enroller-widget.outer-600 div.enroller-step:not(.contact-search) {
+    padding: 0.5em;
+}
+div.enroller-widget.outer-600 #courses_step div.chosen-container {
+    max-width: 100%;
+}
+div.enroller-widget.outer-600 div.enroller-search-course-controls div.ui-btn,
+div.enroller-widget.outer-600 div.enroller-search-course-controls a.ui-btn,
+div.enroller-widget.outer-600
+    div.enroller-step
+    div.enroller-field-holder.enroller-search-course-controls
+    .ui-btn.ui-btn-active {
+    width: 100%;
+    max-width: 100%;
+}
+div.enroller-widget.outer-600 div.portfolio div.dataTables_wrapper {
+    zoom: 0.7;
+}
+div.enroller-widget.outer-600 div.portfolio div.dataTables_wrapper * {
+    width: auto;
+}
+div.enroller-widget.outer-600 div.enroller-search-course-controls {
+    width: 100%;
+}
+
+div.enroller-widget.outer-600 #courseDataTableHolder {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: scroll;
+}
+
+div.enroller-widget.outer-600 #courseDataTable {
+    zoom: 0.7;
+}
+div.enroller-widget.outer-600 #courseDataTable th {
+    width: auto !important;
+}
+div.enroller-widget.outer-600 #courseDataTable th,
+div.enroller-widget.outer-600 #courseDataTable td {
+    padding: 0.2em;
+}
+
+div.enroller-widget.outer-600 #agentCourseTable_wrapper {
+    max-width: 100%;
+    zoom: 0.7;
+}
+div.enroller-widget.outer-600 div.enroller-field-label {
+    max-width: 100%;
+    width: 100%;
+    min-width: 100%;
+}
+div.enroller-widget.outer-600 div.enroller-checkboxes div.ui-checkbox {
+    width: 100%;
+    max-width: 100%;
+    min-width: 100%;
+}
+
+div.enroller-widget.outer-600 div.modifier-checkbox div.ui-checkbox {
+    width: 100%;
+    max-width: 100%;
+    min-width: 100%;
+}
+div.enroller-widget.outer-600 div.enroller-course-heading {
+    max-width: 100%;
+    width: 100%;
+}
+div.enroller-widget.outer-600 #courseOutline {
+    max-width: 100%;
+    width: 100%;
+}
+div.enroller-widget.outer-600 #courseOutline a.ui-collapsible-heading {
+    max-width: 100%;
+    width: 100%;
+}
+
+div.enroller-widget.outer-600 div.enroller-info-field-Points div.enroller-text-field,
+div.enroller-widget.outer-600 div.enroller-info-field-Points div.ui-controlgroup-controls {
+    width: 100%;
+    max-width: 100%;
+    min-width: 100%;
+}
+
+div.enroller-widget.outer-600 div.enroller-portfolio-holder div.ui-controlgroup-controls {
+    width: 100%;
+    max-width: 100%;
+    min-width: 100%;
+}
+div.enroller-widget.outer-600 div.enroller-info-field-Points {
+    max-width: 100%;
+    min-width: 100%;
+    width: 100%;
+}
+div.enroller-widget.outer-600 div.ui-input-text input.enroller-date-field {
+    max-width: 100%;
+    width: 100%;
+}
+div.enroller-widget.outer-600 div.enroller-portfolio-holder a.enroller-portfolio-upload {
+    width: 100%;
+    max-width: 100%;
+    min-width: 100%;
+}
+div.enroller-portfolio-holder {
+    padding-right: 1em;
+}
+
+div.enroller-widget.outer-450 #courseDataTable td,
+div.enroller-widget.outer-450 #courseDataTable th {
+    max-width: 10%;
+    overflow: hidden;
+    width: 5%;
+}
+
+div.enroller-widget.outer-600
+    div.enroller-step-menu:not(.enroller-layout-left)
+    a.enroller-menu-link:not(.ui-btn-active) {
+    width: 33%;
+    max-width: 33%;
+}
+div.enroller-widget.outer-450
+    div.enroller-step-menu:not(.enroller-layout-left)
+    a.enroller-menu-link:not(.ui-btn-active) {
+    width: 50%;
+    max-width: 50%;
+}
+
+div.enroller-widget.outer-600 .enroller-terms-flip.ui-flipswitch .ui-btn.ui-flipswitch-on {
+    text-indent: -1000%;
+}
+div.enroller-widget.outer-600 .enroller-terms-flip.ui-flipswitch .ui-flipswitch-off {
+    text-indent: 0.5em;
+}
+
+div.enroller-widget.outer-600 .enroller-terms-flip.ui-flipswitch {
+    width: 100%;
+}
+div.enroller-widget.outer-600 .enroller-terms-flip.ui-flipswitch.ui-flipswitch-active {
+    padding-left: 90%;
+    width: 100%;
+}
+
+div.enroller-widget div.enroller-step.enrol > div#enrolmentHolder {
+    min-height: 5em;
+}
+
+/*** Portfolio File table***/
+div.enroller-widget div.enroller-file-table-holder .file-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 16em;
+}
+
+/*Cart Review Step*/
+
+div.enroller-widget div.enroller-course-tab {
+    padding: 0;
+    padding-top: 1em;
+    padding-bottom: 1em;
+    border-bottom: 2px solid #ddd;
+    margin-bottom: 2em;
+}
+div.enroller-widget div.enroller-widget-popup {
+    min-width: auto;
+}
+div.enroller-widget.outer-600 .enroller-login-switch {
+    width: 100%;
+}
+div.enroller-widget.outer-600 .enroller-group-booking-table td:nth-child(2),
+div.enroller-widget.outer-600 .enroller-group-booking-table th:nth-child(2) {
+    display: none;
+}
+
+div.enroller-widget div.enroller-error-message,
+div.enroller-widget-popup div.enroller-error-message {
+    padding: 0.5em;
+    padding-left: 2em;
+
+    color: #333;
+    max-width: 48em;
+    border: 1px rgba(220, 35, 35, 0.19) solid;
+    border-radius: 0.3em;
+    margin-top: 0.5em;
+    margin-bottom: 1.5em;
+    width: 24em;
+    max-width: 100%;
+}
+
+div.enroller-widget #payer_details a {
+    max-width: 24em;
+    width: 24em;
+}
+
+div.enroller-widget #payer_details div.ui-collapsible-content {
+    border-top-width: 1px;
+    border-radius: 0.3em;
+    background: transparent;
+    padding: 0;
+    margin-left: -1.25em;
+}
+div.enroller-widget.outer-600 #payer_details div.ui-collapsible-content {
+    margin-left: 0;
+}
+div.enroller-widget.outer-600 #payer_details a {
+    max-width: 100%;
+    width: 100%;
+}
+.ui-icon-required:after {
+    background-image: url(../images/asterisk-icon-cen-01.svg);
+}
+div.enroller-widget div#payer_details .ui-icon-required:after {
+    background-image: url(../images/asterisk-icon-cen-01.svg);
+}
+
+div.enroller-widget div.enroller-fieldgroup.required {
+    border: 1px red solid;
+    margin-bottom: 4px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+div.enroller-widget div.enroller-fieldgroup.required:before {
+    content: "One of these is required";
+    color: red;
+    font-size: 10px;
+    margin-left: 10px;
+}
+div.enroller-widget div.enroller-fieldgroup hr {
+    display: none;
+}
+div.enroller-widget div.enroller-fieldgroup.required hr {
+    display: block;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+div.enroller-widget div.enroller-blurb-holder.ui-icon-required:after {
+    background-color: transparent;
+}
+
+div.enroller-widget div.enroller-terms-holder div.enroller-info-text {
+    flex-direction: column;
+}
+
+/** Portfolio step update **/
+div.enroller-widget div.enroller-portfolio-head {
+    margin-right: 18em;
+    min-height: 7em;
+}
+div#enroller.outer-600 div.enroller-portfolio-head {
+    padding-top: 10em;
+    margin-right: 0;
+}
+
+div.enroller-widget div.points {
+    position: absolute;
+    z-index: 101;
+    top: 10px;
+    right: 10px;
+    width: 18em;
+}
+div#enroller.outer-600 div.points {
+    width: 95%;
+    right: inherit;
+    left: inherit;
+}
+
+div.enroller-widget div.points .enroller-save-button {
+    width: 100%;
+    max-width: 100%;
+}
+
+/***** EPAYMENT *****/
+
+div.enroller-widget div.epay-rule-holder {
+    max-width: 24em;
+    width: 100%;
+    display: inline-block;
+    margin-right: 1em;
+}
+div.enroller-widget div.epay-rule-details {
+    max-width: 24em;
+    display: inline-block;
+    margin-left: 17.5em;
+}
+div.enroller-widget.outer-720 div.epay-rule-details,
+div.enroller-widget.outer-800 div.epay-rule-details {
+    margin-left: 1em;
+}
+
+div.enroller-widget
+    div.enroller-step
+    div.epay-rule-holder
+    div.ui-btn.enroller-text-field.enroller-info-text {
+    max-width: 24em;
+    white-space: normal;
+}
+div.enroller-widget.outer-800
+    div.enroller-step
+    div.epay-rule-holder
+    div.ui-btn.enroller-text-field.enroller-info-text,
+div.enroller-widget.outer-800 div.epay-rule-holder {
+    max-width: 24em;
+}
+
+div.enroller-widget.outer-600
+    div.enroller-step
+    div.epay-rule-holder
+    div.ui-btn.enroller-text-field.enroller-info-text,
+div.enroller-widget.outer-600 div.epay-rule-holder,
+div.enroller-widget.outer-600 div.epay-rule-details {
+    max-width: 100%;
+    width: 100%;
+    margin: 0;
+}
+
+div.enroller-widget a.ui-flipswitch-on.ui-btn-icon-right::after {
+    right: 0.1em;
+}
+/*make the loading message bigger*/
+.ui-loader.ui-loader-verbose {
+    width: 20em;
+    margin-left: -10em;
+}
+/*correct for loading issues*/
+.ui-loading div.enroller-widget {
+    filter: Alpha(Opacity=30);
+    opacity: 0.3;
+    cursor: default !important;
+    pointer-events: none;
+}
+
+/* Fix for signature controls */
+
+div.enroller-widget div.enroller-signature-controls {
+    display: table;
+    padding-left: 0.5em;
+}
+
+div.enroller-widget.outer-720 div.enroller-signature-controls {
+    margin-top: 3em;
+}
+div.enroller-widget.outer-600 div.enroller-signature-controls div.ui-controlgroup-controls {
+    display: flex;
+    flex-direction: row;
+}
+div.enroller-widget.outer-600 div.enroller-signature-controls {
+    display: table;
+    width: 100%;
+    margin: 0;
+    padding-left: 0;
+    padding-top: 0.5em;
+}
+div.enroller-widget.outer-600 div.enroller-signature-controls div.ui-controlgroup-controls a {
+    width: 50%;
+}
+
+div.enroller-widget div.enroller-blurb-holder:not(.points) {
+    max-width: 40em;
+    width: 100%;
+}
+div.enroller-widget.outer-720 div.enroller-blurb-holder {
+    max-width: 24em;
+    margin-left: 1em;
+}
+div.enroller-widget.outer-600 div.enroller-blurb-holder {
+    max-width: 100%;
+    margin-left: 0;
+}
+div.enroller-widget div.debit-success-terms > div {
+    max-width: 42em;
+    width: 40em;
+    margin-bottom: 0.5em;
+    background: #f8f8f8;
+}
+
+div.enroller-widget.outer-720 div.debit-success-terms > div {
+    max-width: 24em;
+}
+
+div.enroller-widget iframe {
+    width: 100%;
+
+    background-color: #fcfcfc;
+    padding: 1.5em;
+}
+
+/*Extra items support*/
+
+.enroller-group-booking-table table th {
+    background: transparent;
+}
+.enroller-group-booking-table table th:hover {
+    background: transparent;
+}
+.enroller-group-booking-table table {
+    width: 95%;
+    margin: auto;
+}
+.enroller-group-booking-table table tr td {
+    background: transparent;
+}
+.enroller-group-booking-table td,
+.enroller-group-booking-table th {
+    text-align: left;
+}
+.enroller-group-booking-table .center-align,
+table.dataTable tr td.center-align,
+table.dataTable tr th.center-align {
+    text-align: center;
+}
+.enroller-group-booking-table table td:last-child,
+.enroller-group-booking-table table th:last-child {
+    text-align: center;
+}
+
+#loginFormPopup div.enroller-field-label,
+#forgotPassHolderPop div.enroller-field-label {
+    width: 12em;
+}
+
+.ew-address-group .auto-complete {
+    margin: 1em;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 100%;
+}
+.ew-address-group .auto-complete .ui-input-text {
+    line-height: 1.4em;
+    padding-top: 0.22em;
+    padding-bottom: 0.22em;
+    margin: 1.4em;
+    margin-left: 0.7em;
+}
+.ew-address-group {
+    max-width: 52em;
+}
+.outer-800 .ew-address-group {
+    max-width: 28em;
+}
+.outer-800 .ew-address-group .auto-complete .ui-input-text,
+.outer-800 .ew-address-group .enroller-error-message {
+    margin-left: 0;
+    margin-right: 2.5em;
+}
+.outer-600 .ew-address-group .auto-complete .ui-input-text,
+.outer-600 .ew-address-group .enroller-error-message {
+    margin-left: 0;
+    margin-right: 0;
+}
+.outer-600 .ew-address-group .auto-complete {
+    max-width: 100%;
+}
+.outer-600 .ew-address-group {
+    max-width: 100%;
+}
+
+#ez_holder {
+    width: 100%;
+    height: 100%;
+
+    background: rgba(138, 138, 138, 0.6);
+    overflow: hidden;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#ezypay_payment_section {
+    overflow: visible;
+    -webkit-overflow-scrolling: touch;
+    height: 100%;
+    width: 100%;
+    border-radius: 6px;
+    max-height: 100%;
+    background: #fcfcfc;
+    padding: 8px;
+    padding: 0;
+}
+#ezypay_payment_section iframe {
+    height: 80vh;
+    -webkit-overflow-scrolling: touch;
+    overflow: auto;
+    border: none;
+    padding: 0;
+}
+.payment-installment {
+    font-style: italic;
+    font-size: 12px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.ez_fees {
+    display: flex;
+    flex-direction: column;
+    width: 24em;
+    max-width: 100%;
+}
+
+div.enroller-widget .fee-header * {
+    font-weight: 500;
+}
+div.enroller-widget .fee-row.fee-header > div {
+    font-weight: 500 !important;
+}
+div.enroller-widget .fee-row.fee-header {
+    border-bottom: 1px solid #eaeaea;
+}
+div.enroller-widget .fee-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    padding: 4px;
+    border-radius: 0;
+    font-size: 12px;
+}
+
+div.enroller-widget .fee-row > div {
+    font-weight: 400 !important;
+}
+
+div.enroller-widget .fee-row > div.fee-value {
+    font-weight: 500 !important;
+}
+
+#enroller.enroller-layout-left {
+    display: flex;
+}
+#enroller.enroller-layout-left.enquiry-widget {
+    display: block;
+}
+#enroller.enroller-layout-top {
+    display: block;
+}
+
+.enroller-step.hidden-step {
+    display: none;
+}
+
+.enroller-blurb-holder {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.enroller-blurb-holder::-webkit-scrollbar {
+    -webkit-appearance: none;
+    width: 7px;
+}
+
+.enroller-blurb-holder::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0.5);
+    -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+.ui-btn-icon-right {
+    position: relative;
+}
+/* Removing jQM Styles*/
+
+#enroller_step_menu.enroller-layout-left {
+    display: flex;
+    flex-direction: column;
+}
+#enroller_step_menu.enroller-layout-left a {
+    width: 100%;
+    position: relative;
+}
+
+#enroller_step_menu.horizontal {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+#enroller_step_menu.horizontal a.ui-btn-active {
+    width: 100%;
+}
+
+.enroller-step.enroller-layout-left {
+    max-width: 100%;
+}
+
+#enroller {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    overflow-y: visible;
+}
+.enroller-step.enroller-layout-left {
+    max-width: calc(100% - 12em);
+}
+.enroller-step > form {
+    max-width: 100%;
+    padding: 0;
+}
+
+.enroller-field-holder {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+}
+.enroller-field-label {
+    width: 16em;
+}
+
+.enroller-field-input,
+input.enroller-field-input,
+.enroller-widget input[type="text"],
+.enroller-info-text {
+    display: flex;
+    flex: 2;
+    flex-shrink: 0;
+    flex-basis: 24em;
+    width: 100%;
+    max-width: 24em;
+    background: #fbfbfb;
+    border-color: #ddd;
+    border-width: 1px;
+    border-style: solid;
+    margin: 0;
+}
+div.enroller-widget.outer-600 .enroller-field-input {
+    width: 100%;
+    max-width: 100%;
+}
+
+div.enroller-widget .enroller-field-holder a.enroller-field-input:not(.ui-btn-active) {
+    background: #f6f6f6;
+}
+.enroller-field-input:hover:not(.no-hover):not(:focus),
+.enroller-widget input[type="text"]:hover:not(.no-hover):not(:focus) {
+    background-color: #dfe5ea;
+    background: #dfe5ea;
+    color: #333;
+}
+
+.enroller-field-label,
+.ui-btn,
+input.enroller-field-input {
+    line-height: 16px;
+    padding: 0.7em 1em;
+    font-size: 1em;
+}
+.enroller-widget .enroller-field-label.ui-btn {
+    background-color: transparent;
+    border: none;
+}
+
+.enroller-field-label,
+.enroller-field-label.ui-btn {
+    width: 16em;
+    max-width: 16em;
+    white-space: normal;
+    cursor: default;
+    padding-left: 1em;
+
+    text-align: left;
+    background-color: transparent;
+    border: none;
+}
+.enroller-field-holder .ui-btn {
+    margin: 0;
+}
+.enroller-field-holder {
+    margin-bottom: 12px;
+}
+
+.enroller-menu-link {
+    border: none;
+    margin: 0;
+}
+
+label.enrol-checkbox-label input[type="checkbox"],
+div.enroller-widget.outer-600 label.enrol-checkbox-label input[type="checkbox"] {
+    position: absolute;
+    flex: 0;
+    right: 12px;
+    display: flex;
+    flex-basis: 0;
+    width: 12px;
+    padding: 0;
+    min-width: 12px;
+    top: 4px;
+}
+div.enroller-widget.outer-600 label.enrol-checkbox-label {
+    width: 100%;
+    max-width: 100%;
+}
+.enroller-field-holder.enroller-checkboxes {
+    align-items: flex-start;
+}
+div.enroller-widget.outer-600 .enroller-field-holder.enroller-checkboxes .enroller-checkbox-holder {
+    max-width: 100%;
+    width: 100%;
+}
+label.enrol-checkbox-label {
+    padding-right: 2.5em;
+    box-sizing: border-box;
+    background-color: #f6f6f6;
+    border: 1px solid #fcfcfc;
+    border-bottom-width: 0px;
+    font-size: 14px;
+}
+label.enrol-checkbox-label:last-child {
+    border-bottom-width: 1px;
+}
+
+input[type="checkbox"] {
+    -moz-appearance: initial;
+}
+
+label.enrol-checkbox-label input[type="checkbox"]::after {
+    position: absolute;
+    top: -3px;
+    left: -2px;
+
+    border-radius: 0.3em;
+    background: #ddd;
+
+    content: "";
+    width: 20px;
+    height: 20px;
+
+    visibility: visible;
+}
+label.enrol-checkbox-label input[type="checkbox"] {
+    visibility: hidden;
+}
+
+label.enrol-checkbox-label input[type="checkbox"]:checked::after {
+    background-image: url(data:image/svg+xml;charset=US-ASCII,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22iso-8859-1%22%3F%3E%3C!DOCTYPE%20svg%20PUBLIC%20%22-%2F%2FW3C%2F%2FDTD%20SVG%201.1%2F%2FEN%22%20%22http%3A%2F%2Fwww.w3.org%2FGraphics%2FSVG%2F1.1%2FDTD%2Fsvg11.dtd%22%3E%3Csvg%20version%3D%221.1%22%20id%3D%22Layer_1%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20x%3D%220px%22%20y%3D%220px%22%20%20width%3D%2214px%22%20height%3D%2214px%22%20viewBox%3D%220%200%2014%2014%22%20style%3D%22enable-background%3Anew%200%200%2014%2014%3B%22%20xml%3Aspace%3D%22preserve%22%3E%3Cpolygon%20style%3D%22fill%3A%23FFFFFF%3B%22%20points%3D%2214%2C4%2011%2C1%205.003%2C6.997%203%2C5%200%2C8%204.966%2C13%204.983%2C12.982%205%2C13%20%22%2F%3E%3C%2Fsvg%3E);
+    content: "";
+    top: -3px;
+    left: -2px;
+    width: 20px;
+    position: absolute;
+    border-radius: 0.3em;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: #4097c5;
+
+    height: 20px;
+}
+
+/** IE doesn't like nested visibility, so IE doesn't get nice checkboxes. **/
+.is-ie label.enrol-checkbox-label input[type="checkbox"]::after {
+    display: none;
+}
+
+.is-ie label.enrol-checkbox-label input[type="checkbox"] {
+    visibility: visible;
+}
+
+/** modifier checkbox **/
+
+div.enroller-widget div.enroller-field-holder .modifier-checkbox .chosen-container {
+    float: none;
+}
+div.enroller-widget div.enroller-field-holder .modifier-checkbox {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: stretch;
+    width: 100%;
+}
+div.enroller-widget div.enroller-field-holder .modifier-checkbox .enrol-checkbox-label {
+    width: 24em;
+    width: min(100%, 24em);
+    white-space: normal;
+}
+div.enroller-widget.outer-600 div.enroller-field-holder .modifier-checkbox .enrol-checkbox-label,
+div.enroller-widget.outer-600 div.enroller-field-holder .modifier-checkbox .chosen-container {
+    width: 100%;
+}
+
+.enroller-step {
+    width: 100%;
+}
+
+/*TEXT-AREAS*/
+div.enroller-widget textarea.enroller-field-input {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-width: 24em;
+    text-align: left;
+    padding: 0.7em 1em;
+}
+
+div.enroller-widget.outer-600 textarea.enroller-field-input {
+    max-width: 100%;
+    width: 100%;
+}
+
+div.enroller-widget textarea.enroller-field-input {
+    -webkit-border-radius: 0.3125em;
+    border-radius: 0.3125em;
+    border-top-left-radius: 0.3125em;
+    border-top-right-radius: 0.3125em;
+    border-bottom-right-radius: 0.3125em;
+    border-bottom-left-radius: 0.3125em;
+}
+div.enroller-widget textarea.enroller-field-input:focus {
+    border-top-left-radius: 0;
+}
+
+div.enroller-widget.outer-600 .select-wrap {
+    max-width: 100%;
+    width: 100%;
+}
+
+div.enroller-widget div.ui-btn.enroller-text-field.enroller-info-text {
+    width: 24em;
+    min-width: 24em;
+    max-width: 24em;
+    box-sizing: border-box;
+}
+div.enroller-widget.outer-600 div.ui-btn.enroller-text-field.enroller-info-text {
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+div.enroller-widget
+    div.enroller-step
+    div.enroller-discount-cost
+    div.ui-btn.enroller-text-field.enroller-info-text {
+    width: 20em;
+}
+
+div.enroller-widget div.enroller-terms-holder div.ui-btn.enroller-text-field.enroller-info-text {
+    white-space: pre-wrap;
+    max-width: 100%;
+}
+.epay-rule-holder .ui-btn {
+    margin: 0;
+}
+.epay-rule-holder .ui-btn:not(.ui-btn-active) {
+    border-bottom-width: 0px;
+}
+.epay-rule-holder {
+    margin-bottom: 12px;
+}
+.epay-rule-holder .enroller-info-text span {
+    width: 100%;
+}
+.epay-rule-holder .enroller-info-text {
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+div.enroller-widget div.enroller-field-holder {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.e-payment-options {
+    margin-top: 1em;
+}
+
+#enrolmentHolder #ePayRuleDetail .enroller-info-text.ui-btn:nth-child(3) {
+    border-bottom-width: 1px;
+}
+
+div.enroller-widget .enroller-field-input.ui-btn-active {
+    justify-content: center;
+}
+
+div.enroller-widget .enroller-save-button {
+    width: 24em;
+    flex-basis: 24em;
+    max-width: 24em;
+}
+
+div.enroller-widget.outer-600 .enroller-save-button {
+    width: 100%;
+    flex-basis: 100%;
+    max-width: 100%;
+}
+
+.mode-switch-holder {
+    width: 100%;
+    display: flex;
+
+    flex-wrap: wrap;
+    flex-direction: row;
+    margin-bottom: 1.5em;
+}
+.mode-switch-holder > a {
+    display: inline-block;
+    width: 16em;
+    max-width: 100%;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    text-align: center;
+}
+div.enroller-widget.outer-720 .mode-switch-holder > a {
+    width: 24em;
+}
+div.enroller-widget.outer-600 .mode-switch-holder > a {
+    width: 100%;
+    max-width: 100%;
+}
+div.ez-plan-inner {
+    min-height: 10em;
+}
+
+div.ez-plan-inner {
+    min-height: 10em;
+}
+
+#payer_details > div {
+    margin-left: 16px;
+    margin-right: 16px;
+    width: 90%;
+    width: calc(100% - 32px);
+}
+
+/** Fix datepickers on mobile being too wide.**/
+div.enroller-widget div.enroller-field-holder input.flatpickr-mobile[type="date"],
+div.enroller-widget.outer-600 div.enroller-field-holder input.flatpickr-mobile[type="date"] {
+    width: 1px;
+}
+
+div.enroller-widget div.enroller-checkbox-holder {
+    width: 24em;
+    max-width: 100%;
+}
+input.enroller-field-input.address-lookup {
+    max-width: 100%;
+    width: 100%;
+}
+.enroller-terms-holder {
+    margin-bottom: 0;
+    margin-top: 2em;
+}
+
+.enroller-widget button,
+.enroller-widget a.ui-btn {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+.flatpickr-calendar.open .flatpickr-month {
+    height: 50px;
+}
+.flatpickr-calendar.open .numInputWrapper span {
+    opacity: 1;
+}
+
+div.enroller-widget .ax-cog-button span {
+    font-weight: 600 !important;
+}
+
+div.enroller-widget .ax-cog-button span {
+    font-weight: 600 !important;
+}
+
+div.enroller-widget span.login-blurb {
+    font-weight: 600 !important;
+}
+
+div.enroller-widget .email-obs {
+    border-radius: 4px;
+    padding: 2px 4px;
+    border: 1px solid #ddd;
+    background: #e9e9e9;
+    box-shadow: 0px 0px 1px 0px rgba(0, 0, 0, 0.2);
+}
+
+.fixed-alert.fixed-alert {
+    border: none;
+}
+.fixed-alert.fixed-alert li {
+    font-size: 14px;
+}
+.fixed-alert.fixed-alert li p {
+    font-size: 14px;
+    white-space: normal;
+}
+
+ul.fixed-alert li.ui-li-divider {
+    background-color: #38c;
+
+    color: #fff;
+    font-weight: 600 !important;
+}
+ul.fixed-alert.fixed-alert.fixed-alert li.ui-li-divider {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    font-size: 16px;
+    border: none;
+}
+ul.fixed-alert.fixed-alert.fixed-alert li.ui-list-divider + li:last-child {
+    border: none;
+}
+ul.fixed-alert.fixed-alert.fixed-alert li + li {
+    border: none;
+    border-top: 1px solid #ddd;
+}
+ul.fixed-alert.fixed-alert.fixed-alert li.ui-list-divider + li {
+    border: none;
+}
+
+
+.payment-flow-form section{
+    margin-bottom:12px;
+}

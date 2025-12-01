@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: shopify-axcelerate-integration
+    env: node
+    region: oregon
+    plan: starter
+    buildCommand: npm install && npm run migrate
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: shopify-axcelerate-db
+          property: connectionString
+      - key: SHOPIFY_WEBHOOK_SECRET
+        sync: false
+      - key: SHOPIFY_API_KEY
+        sync: false
+      - key: SHOPIFY_API_SECRET
+        sync: false
+      - key: SHOPIFY_STORE_DOMAIN
+        sync: false
+      - key: AXCELERATE_API_URL
+        sync: false
+      - key: AXCELERATE_API_TOKEN
+        sync: false
+      - key: AXCELERATE_WS_TOKEN
+        sync: false
+      - key: MAX_RETRY_ATTEMPTS
+        value: 3
+      - key: RETRY_DELAY_MS
+        value: 1000
+
+databases:
+  - name: shopify-axcelerate-db
+    databaseName: shopify_axcelerate
+    user: axcelerate_user
+    plan: starter
+

@@ -1,0 +1,5 @@
+# static/style.css can be served but we're using inline CSS in views for simplicity
+# Create this folder for any future static assets
+
+# Empty placeholder
+

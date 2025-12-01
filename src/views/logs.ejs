@@ -1,0 +1,113 @@
+<div class="card">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h2>📋 Sync Logs</h2>
+    <div>
+      <select id="statusFilter" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+        <option value="">All Statuses</option>
+        <option value="success" <%= statusFilter === 'success' ? 'selected' : '' %>>Success</option>
+        <option value="failed" <%= statusFilter === 'failed' ? 'selected' : '' %>>Failed</option>
+        <option value="pending" <%= statusFilter === 'pending' ? 'selected' : '' %>>Pending</option>
+        <option value="skipped" <%= statusFilter === 'skipped' ? 'selected' : '' %>>Skipped</option>
+        <option value="partial" <%= statusFilter === 'partial' ? 'selected' : '' %>>Partial</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="stats" style="margin-bottom: 20px;">
+    <div class="stat-card success">
+      <h3>Successful</h3>
+      <div class="value"><%= stats.success %></div>
+    </div>
+    <div class="stat-card failed">
+      <h3>Failed</h3>
+      <div class="value"><%= stats.failed %></div>
+    </div>
+    <div class="stat-card pending">
+      <h3>Pending</h3>
+      <div class="value"><%= stats.pending %></div>
+    </div>
+  </div>
+
+  <% if (logs.length === 0) { %>
+    <div class="empty-state">
+      <p>No logs found matching your criteria.</p>
+    </div>
+  <% } else { %>
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Order</th>
+          <th>Customer</th>
+          <th>Product</th>
+          <th>Status</th>
+          <th>aXcelerate IDs</th>
+          <th>Error</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% logs.forEach(log => { %>
+          <tr>
+            <td style="white-space: nowrap;">
+              <%= new Date(log.created_at).toLocaleString() %>
+            </td>
+            <td>
+              <strong><%= log.shopify_order_number || 'N/A' %></strong><br>
+              <small style="color: #7f8c8d;"><%= log.shopify_order_id %></small>
+            </td>
+            <td>
+              <%= log.customer_name || 'Unknown' %><br>
+              <small style="color: #7f8c8d;"><%= log.customer_email %></small>
+            </td>
+            <td><%= log.product_title %></td>
+            <td>
+              <span class="badge <%= log.status %>"><%= log.status %></span>
+              <% if (log.retry_count > 0) { %>
+                <br><small style="color: #7f8c8d;">Retries: <%= log.retry_count %></small>
+              <% } %>
+            </td>
+            <td>
+              <% if (log.axcelerate_contact_id) { %>
+                <strong>Contact:</strong> <code><%= log.axcelerate_contact_id %></code><br>
+              <% } %>
+              <% if (log.axcelerate_instance_id) { %>
+                <strong>Instance:</strong> <code><%= log.axcelerate_instance_id %></code><br>
+              <% } %>
+              <% if (log.axcelerate_enrolment_id) { %>
+                <strong>Enrolment:</strong> <code><%= log.axcelerate_enrolment_id %></code>
+              <% } %>
+              <% if (!log.axcelerate_contact_id && !log.axcelerate_instance_id && !log.axcelerate_enrolment_id) { %>
+                <span style="color: #7f8c8d;">—</span>
+              <% } %>
+            </td>
+            <td>
+              <% if (log.error_message) { %>
+                <small style="color: #e74c3c;"><%= log.error_message %></small>
+              <% } else { %>
+                <span style="color: #7f8c8d;">—</span>
+              <% } %>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+
+    <div style="margin-top: 20px; text-align: center;">
+      <% if (currentPage > 1) { %>
+        <a href="/admin/logs?page=<%= currentPage - 1 %><%= statusFilter ? '&status=' + statusFilter : '' %>" class="btn btn-sm">← Previous</a>
+      <% } %>
+      <span style="margin: 0 15px;">Page <%= currentPage %></span>
+      <% if (logs.length === 50) { %>
+        <a href="/admin/logs?page=<%= currentPage + 1 %><%= statusFilter ? '&status=' + statusFilter : '' %>" class="btn btn-sm">Next →</a>
+      <% } %>
+    </div>
+  <% } %>
+</div>
+
+<script>
+  document.getElementById('statusFilter').addEventListener('change', function() {
+    const status = this.value;
+    window.location.href = '/admin/logs' + (status ? '?status=' + status : '');
+  });
+</script>
+

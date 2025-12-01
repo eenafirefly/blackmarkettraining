@@ -1,0 +1,121 @@
+<div class="card">
+  <h2><%= mapping ? 'Edit' : 'Add' %> Product Mapping</h2>
+
+  <form action="<%= action %>" method="<%= method %>">
+    <div class="form-group">
+      <label for="shopifyProductId">Shopify Product ID *</label>
+      <input 
+        type="text" 
+        id="shopifyProductId" 
+        name="shopifyProductId" 
+        value="<%= mapping ? mapping.shopify_product_id : '' %>"
+        <%= mapping ? 'readonly' : '' %>
+        required
+        placeholder="e.g., 7234567890123"
+      >
+      <small style="color: #7f8c8d;">Found in Shopify admin or product URL</small>
+    </div>
+
+    <div class="form-group">
+      <label for="shopifyVariantId">Shopify Variant ID (Optional)</label>
+      <input 
+        type="text" 
+        id="shopifyVariantId" 
+        name="shopifyVariantId" 
+        value="<%= mapping ? (mapping.shopify_variant_id || '') : '' %>"
+        placeholder="Leave empty if not using variants"
+      >
+    </div>
+
+    <div class="form-group">
+      <label for="productTitle">Product Title (For Reference)</label>
+      <input 
+        type="text" 
+        id="productTitle" 
+        name="productTitle" 
+        value="<%= mapping ? (mapping.product_title || '') : '' %>"
+        placeholder="e.g., Advanced First Aid Training"
+      >
+    </div>
+
+    <div class="form-group">
+      <label for="axcelerateInstanceId">aXcelerate Instance ID *</label>
+      <input 
+        type="text" 
+        id="axcelerateInstanceId" 
+        name="axcelerateInstanceId" 
+        value="<%= mapping ? mapping.axcelerate_instance_id : '' %>"
+        required
+        placeholder="e.g., 22500"
+      >
+      <small style="color: #7f8c8d;">PDataID for workshops, ClassID for programs</small>
+    </div>
+
+    <div class="form-group">
+      <label for="axcelerateType">aXcelerate Type</label>
+      <select id="axcelerateType" name="axcelerateType">
+        <option value="p" <%= mapping && mapping.axcelerate_type === 'p' ? 'selected' : '' %>>p - Program/Class</option>
+        <option value="w" <%= mapping && mapping.axcelerate_type === 'w' ? 'selected' : '' %>>w - Workshop</option>
+        <option value="el" <%= mapping && mapping.axcelerate_type === 'el' ? 'selected' : '' %>>el - E-Learning</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="bookingMetadataKey">Booking Metadata Key (Optional)</label>
+      <input 
+        type="text" 
+        id="bookingMetadataKey" 
+        name="bookingMetadataKey" 
+        value="<%= mapping ? (mapping.booking_metadata_key || '') : '' %>"
+        placeholder="e.g., booking_date"
+      >
+      <small style="color: #7f8c8d;">Key name from Easy Appointment Booking metadata</small>
+    </div>
+
+    <div class="form-group">
+      <label for="notes">Notes (Optional)</label>
+      <textarea 
+        id="notes" 
+        name="notes" 
+        placeholder="Any additional notes about this mapping..."
+      ><%= mapping ? (mapping.notes || '') : '' %></textarea>
+    </div>
+
+    <% if (mapping) { %>
+      <div class="form-group">
+        <label>
+          <input 
+            type="checkbox" 
+            name="isActive" 
+            <%= mapping.is_active ? 'checked' : '' %>
+          >
+          Active (uncheck to disable this mapping)
+        </label>
+      </div>
+    <% } %>
+
+    <div class="form-actions">
+      <button type="submit" class="btn"><%= mapping ? 'Update' : 'Create' %> Mapping</button>
+      <a href="/admin/mappings" class="btn" style="background: #6c757d;">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>💡 Tips</h2>
+  <ul style="padding-left: 20px;">
+    <li style="margin-bottom: 10px;">
+      To find your Shopify Product ID, go to the product in Shopify admin and look at the URL
+    </li>
+    <li style="margin-bottom: 10px;">
+      To find your aXcelerate Instance ID, view the class/workshop in aXcelerate and check the ID in the URL or details page
+    </li>
+    <li style="margin-bottom: 10px;">
+      The "Type" should match the course type in aXcelerate (usually "p" for classes/programs)
+    </li>
+    <li style="margin-bottom: 10px;">
+      Test your mapping by making a test purchase in Shopify and checking the Sync Logs
+    </li>
+  </ul>
+</div>
+

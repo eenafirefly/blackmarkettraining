@@ -1,0 +1,203 @@
+.ax-collapse {
+    transition: all 0.3s ease;
+    border: 1px solid #eaeaea;
+    border-radius: 0.3em;
+
+    box-sizing: content-box !important;
+}
+.ax-collapse-action {
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f6f6f6;
+    padding: 0.5em 0.7em;
+    border-radius: 0.3em;
+    width: 100%;
+    margin: 0;
+}
+h3.ax-collapse-action {
+    margin: 0;
+    width: 100%;
+}
+.ax-collapse .ax-collapse-action::after {
+    position: relative;
+
+    background-color: #dadada;
+
+    color: #fff;
+    font-weight: 600;
+    border-radius: 50%;
+
+    font-size: 16px;
+    line-height: 16px;
+    width: 16px;
+    text-align: center;
+}
+.ax-collapse.open .ax-collapse-action::after {
+    content: "-";
+}
+.ax-collapse.closed .ax-collapse-action::after {
+    content: "+";
+}
+
+.ax-popup-holder {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    z-index: 10000;
+    top: 0;
+    left: 0;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.ax-popup-holder ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+.ax-popup-holder.no-overlay {
+    background-color: transparent;
+    pointer-events: none;
+}
+
+.ax-popup-holder.ax-pop-hidden {
+    display: none;
+}
+
+.ax-popup-holder > * {
+    background-color: #fcfcfc;
+    border: 1px solid #dadada;
+    box-shadow: 0 0 1px rgba(255, 255, 255, 0.5);
+    width: 80vw;
+    width: min(80vw, 700px);
+    position: relative;
+}
+
+div.enroller-widget.outer-600 .ax-popup-holder > * {
+    width: 100%;
+    max-width: 50em;
+}
+.ui-btn-icon-notext {
+    padding: 0;
+}
+.ax-popup-holder .ax-pop-close {
+    top: -22px;
+    right: -14px;
+}
+
+div.enroller-widget.outer-600 .ax-popup-holder .ax-pop-close {
+    top: 4px;
+    right: 12px;
+}
+
+.ax-tip {
+    padding: 4px 8px;
+    background: #222;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #fff;
+    z-index: 999999;
+    position: absolute;
+    pointer-events: none;
+    box-shadow: 0 0 1px rgba(255, 255, 255, 0.5);
+    max-width: 300px;
+    overflow: hidden;
+}
+.ax-tip a {
+    pointer-events: all;
+}
+
+.ax-tip.has-close {
+    padding-right: 3.5em;
+}
+
+.ax-tip.ax-tip .ax-pop-close {
+    width: 40px;
+    top: 0;
+    height: 100%;
+    margin: 0;
+    right: 0;
+
+    border: none;
+    border-left: 1px solid #fff;
+    border-radius: 0;
+    pointer-events: all;
+}
+.ax-tip .ax-pop-close.ui-btn {
+    background-color: #222;
+}
+
+.ax-flip {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    max-width: 24em;
+    background-color: #f6f6f6;
+    border-radius: 0.3em;
+    border: 1px solid #ddd;
+    box-sizing: border-box;
+    position: relative;
+    transition: all 0.3s ease;
+}
+.ax-flip::before {
+    content: "";
+    position: absolute;
+    z-index: 100;
+    top: 0;
+    background: #fcfff4;
+    background: linear-gradient(to bottom, #f6f6f6 0%, #f6f6f6 100%);
+
+    height: 32px;
+    width: 28px;
+    border-color: #ddd;
+    transition: right 0.3s ease;
+    box-shadow: 0px 2px 5px 0px rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    margin: 2px;
+    margin-top: 3px;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.ax-flip.on {
+    background-color: #4097c5;
+}
+.ax-flip.on::before {
+    right: 0;
+    background-image: url(data:image/svg+xml;charset=US-ASCII,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22iso-8859-1%22%3F%3E%3C!DOCTYPE%20svg%20PUBLIC%20%22-%2F%2FW3C%2F%2FDTD%20SVG%201.1%2F%2FEN%22%20%22http%3A%2F%2Fwww.w3.org%2FGraphics%2FSVG%2F1.1%2FDTD%2Fsvg11.dtd%22%3E%3Csvg%20version%3D%221.1%22%20id%3D%22Layer_1%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20x%3D%220px%22%20y%3D%220px%22%20%20width%3D%2214px%22%20height%3D%2214px%22%20viewBox%3D%220%200%2014%2014%22%20style%3D%22enable-background%3Anew%200%200%2014%2014%3B%22%20xml%3Aspace%3D%22preserve%22%3E%3Cpolygon%20style%3D%22fill%3A%23555%3B%22%20points%3D%2214%2C4%2011%2C1%205.003%2C6.997%203%2C5%200%2C8%204.966%2C13%204.983%2C12.982%205%2C13%20%22%2F%3E%3C%2Fsvg%3E),
+        linear-gradient(to bottom, #f6f6f6 0%, #ddd 100%);
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.ax-flip.off::before {
+    right: calc(100% - 32px);
+}
+.ax-flip input {
+    opacity: 0;
+    width: 0px;
+    max-width: 0px;
+}
+.ax-flip .text-wrap {
+    line-height: 1;
+    padding: 0.7em 1em;
+    margin-left: 0;
+    transition: all 0.3s ease;
+}
+.ax-flip.on .text-wrap {
+    margin-left: auto;
+}
+.ax-flip .ax-flip-on-text {
+    line-height: inherit;
+    padding-right: 2.5em;
+    color: #fff;
+}
+.ax-flip .ax-flip-off-text {
+    line-height: inherit;
+    padding-left: 2.5em;
+}

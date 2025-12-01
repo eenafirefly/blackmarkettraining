@@ -1,0 +1,77 @@
+{
+    "DISPLAY": {
+        "TYPE": "text",
+        "TITLE": "The Step Name shown to students in the step menu. It is recommended to keep these short",
+        "DISPLAY": "Display Name",
+        "DEFAULT_VALUE": "USI",
+        "GROUPING": "Standard Options",
+        "REQUIRED": true
+    },
+    "TYPE": {
+        "TYPE": "text",
+        "TITLE": "Step Type",
+        "DISPLAY": "Step Type",
+        "DEFAULT_VALUE": "usi-validation",
+        "EDITABLE": false,
+        "GROUPING": "Standard Options",
+        "REQUIRED": true
+    },
+
+    "STEP_ID": {
+        "DISPLAY": "Step ID",
+        "TYPE": "text",
+        "TITLE": "The Internal ID used to identify the step. Not shown to students.",
+        "DEFAULT_VALUE": "usi_validation",
+        "MAKE_UNIQUE": true,
+        "GROUPING": "Standard Options",
+        "REQUIRED": true,
+        "DISABLED": true
+    },
+
+    "HEADER": {
+        "DISPLAY": "Step Header",
+        "TYPE": "text",
+        "TITLE": "This Text appears above the step as a header.",
+        "DEFAULT_VALUE": "",
+        "GROUPING": "Appearance"
+    },
+
+    "BLURB_TOP": {
+        "DISPLAY": "Top Blurb",
+        "TYPE": "textarea",
+        "TITLE": "An information blurb that appears above any content on the step.",
+        "DEFAULT_VALUE": "",
+        "GROUPING": "Appearance"
+    },
+    "BLURB_BOTTOM": {
+        "DISPLAY": "Bottom Blurb",
+        "TYPE": "textarea",
+        "TITLE": "An information blurb that appears below any content on the step.",
+        "DEFAULT_VALUE": "",
+        "GROUPING": "Appearance"
+    },
+    "TERMS": {
+        "DISPLAY": "Step Terms",
+        "TYPE": "textarea",
+        "TITLE": "Adds a terms and conditions approval element to the step, required to be completed before the step is considered complete.",
+        "DEFAULT_VALUE": "",
+        "GROUPING": "Appearance"
+    },
+    "usi_optional": {
+        "DISPLAY": "Step Optional",
+        "TYPE": "select",
+        "TITLE": "This step is optional and may be skipped",
+        "VALUES": [
+            {
+                "DISPLAY": "No",
+                "VALUE": "false"
+            },
+            {
+                "DISPLAY": "Yes",
+                "VALUE": "true"
+            }
+        ],
+        "DEFAULT_VALUE": "false",
+        "GROUPING": "Appearance"
+    }
+}

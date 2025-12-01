@@ -1,0 +1,195 @@
+{
+  "id": 9171440369927,
+  "email": "sheena@noda.com.au",
+  "created_at": "2025-11-27T11:00:00-05:00",
+  "updated_at": "2025-11-27T11:00:00-05:00",
+  "number": 5012,
+  "note": null,
+  "token": "abc123token",
+  "gateway": "shopify_payments",
+  "test": false,
+  "total_price": "99.00",
+  "subtotal_price": "99.00",
+  "total_weight": 0,
+  "total_tax": "0.00",
+  "taxes_included": false,
+  "currency": "AUD",
+  "financial_status": "paid",
+  "confirmed": true,
+  "total_discounts": "0.00",
+  "buyer_accepts_marketing": false,
+  "name": "#5012",
+  "referring_site": "",
+  "landing_site": "/",
+  "cancelled_at": null,
+  "cancel_reason": null,
+  "total_price_usd": "199.00",
+  "checkout_token": "checkout123",
+  "reference": null,
+  "user_id": null,
+  "location_id": null,
+  "source_identifier": null,
+  "source_url": null,
+  "processed_at": "2025-11-27T10:00:00-05:00",
+  "device_id": null,
+    "phone": "+61412345679",
+  "customer_locale": "en",
+  "app_id": 1234567,
+  "browser_ip": "203.0.113.0",
+  "landing_site_ref": null,
+  "order_number": 5012,
+  "customer": {
+    "id": 9876543212,
+    "email": "sheena@noda.com.au",
+    "created_at": "2025-11-27T10:00:00-05:00",
+    "updated_at": "2025-11-27T11:00:00-05:00",
+    "first_name": "Joyce",
+    "last_name": "",
+    "orders_count": 2,
+    "state": "enabled",
+    "total_spent": "198.00",
+      "last_order_id": 9171440369927,
+    "note": null,
+    "verified_email": true,
+    "multipass_identifier": null,
+    "tax_exempt": false,
+    "phone": null,
+    "tags": "",
+    "last_order_name": "#5012",
+    "currency": "AUD",
+    "accepts_marketing": false,
+    "accepts_marketing_updated_at": "2025-11-27T10:00:00-05:00",
+    "marketing_opt_in_level": null,
+    "admin_graphql_api_id": "gid://shopify/Customer/9876543212",
+    "default_address": {
+      "id": 1234567892,
+      "customer_id": 9876543212,
+      "first_name": "Joyce",
+      "last_name": "",
+      "company": null,
+      "address1": "74 B",
+      "address2": null,
+      "city": "Ball",
+      "province": "",
+      "country": "Australia",
+      "zip": "",
+      "phone": null,
+      "name": "Joyce",
+      "province_code": "",
+      "country_code": "AU",
+      "country_name": "Australia",
+      "default": true
+    }
+  },
+  "billing_address": {
+    "first_name": "John",
+    "last_name": "Smith",
+    "address1": "74 B",
+    "address2": null,
+    "city": "Ball",
+    "province": "",
+    "province_code": "",
+    "country": "Australia",
+    "country_code": "AU",
+    "zip": "",
+    "phone": "0887485815",
+    "name": "John Smith",
+    "company": null,
+    "latitude": null,
+    "longitude": null
+  },
+  "shipping_address": {
+    "first_name": "John",
+    "last_name": "Smith",
+    "address1": "74 B",
+    "address2": null,
+    "city": "Ball",
+    "province": "",
+    "province_code": "",
+    "country": "Australia",
+    "country_code": "AU",
+    "zip": "",
+    "phone": "0887485815",
+    "name": "John Smith",
+    "company": null,
+    "latitude": null,
+    "longitude": null
+  },
+  "line_items": [
+    {
+      "id": 12345678901236,
+      "variant_id": 43210987654321,
+      "title": "Home Barista Course",
+      "quantity": 1,
+      "sku": "FIRST-AID-001",
+      "variant_title": null,
+      "vendor": "Training Academy",
+      "fulfillment_service": "manual",
+      "product_id": 9171440369916,
+      "requires_shipping": false,
+      "taxable": false,
+      "gift_card": false,
+      "name": "Home Barista Course",
+      "variant_inventory_management": null,
+      "properties": [
+        {
+          "name": "Booking Date",
+          "value": "2025-12-06"
+        },
+        {
+          "name": "Booking Time",
+          "value": "09:00 AM"
+        },
+        {
+          "name": "Class Instance",
+          "value": "22500"
+        },
+        {
+          "name": "Attendee Name",
+          "value": "John Smith"
+        },
+        {
+          "name": "Attendee Email",
+          "value": "sheena@nodadev.com"
+        },
+        {
+          "name": "Attendee Phone",
+          "value": "0887485815"
+        }
+      ],
+      "product_exists": true,
+      "fulfillable_quantity": 0,
+      "grams": 0,
+      "price": "99.00",
+      "total_discount": "0.00",
+      "fulfillment_status": null,
+      "price_set": {
+        "shop_money": {
+          "amount": "99.00",
+          "currency_code": "AUD"
+        },
+        "presentment_money": {
+          "amount": "99.00",
+          "currency_code": "AUD"
+        }
+      },
+      "total_discount_set": {
+        "shop_money": {
+          "amount": "0.00",
+          "currency_code": "AUD"
+        },
+        "presentment_money": {
+          "amount": "0.00",
+          "currency_code": "AUD"
+        }
+      },
+      "discount_allocations": [],
+      "duties": [],
+      "admin_graphql_api_id": "gid://shopify/LineItem/12345678901236",
+      "tax_lines": []
+    }
+  ],
+  "fulfillments": [],
+  "refunds": []
+}
+

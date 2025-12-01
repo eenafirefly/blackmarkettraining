@@ -1,0 +1,89 @@
+<div class="stats">
+  <div class="stat-card">
+    <h3>Total Syncs</h3>
+    <div class="value"><%= stats.total %></div>
+  </div>
+  <div class="stat-card success">
+    <h3>Successful</h3>
+    <div class="value"><%= stats.success %></div>
+  </div>
+  <div class="stat-card failed">
+    <h3>Failed</h3>
+    <div class="value"><%= stats.failed %></div>
+  </div>
+  <div class="stat-card pending">
+    <h3>Pending</h3>
+    <div class="value"><%= stats.pending %></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📊 Overview</h2>
+  <p>Welcome to the Shopify to aXcelerate integration dashboard. This system automatically creates student enrolments in aXcelerate when orders are placed in your Shopify store.</p>
+  
+  <div style="margin-top: 20px;">
+    <p><strong>Recent Activity:</strong> <%= recentLogs.length %> recent syncs</p>
+    <p><strong>Product Mappings:</strong> <%= mappingsCount %> configured</p>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🔄 Recent Sync Activity</h2>
+  
+  <% if (recentLogs.length === 0) { %>
+    <div class="empty-state">
+      <p>No sync activity yet. Orders will appear here once they're processed.</p>
+    </div>
+  <% } else { %>
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Order</th>
+          <th>Customer</th>
+          <th>Product</th>
+          <th>Status</th>
+          <th>Enrolment ID</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% recentLogs.forEach(log => { %>
+          <tr>
+            <td><%= new Date(log.created_at).toLocaleString() %></td>
+            <td><%= log.shopify_order_number || log.shopify_order_id %></td>
+            <td>
+              <%= log.customer_name %><br>
+              <small style="color: #7f8c8d;"><%= log.customer_email %></small>
+            </td>
+            <td><%= log.product_title %></td>
+            <td>
+              <span class="badge <%= log.status %>"><%= log.status %></span>
+            </td>
+            <td>
+              <% if (log.axcelerate_enrolment_id) { %>
+                <code><%= log.axcelerate_enrolment_id %></code>
+              <% } else { %>
+                <span style="color: #7f8c8d;">—</span>
+              <% } %>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+    
+    <div style="margin-top: 20px; text-align: center;">
+      <a href="/admin/logs" class="btn">View All Logs</a>
+    </div>
+  <% } %>
+</div>
+
+<div class="card">
+  <h2>🔧 Quick Setup</h2>
+  <ol style="padding-left: 20px;">
+    <li style="margin-bottom: 10px;">Configure your environment variables (API tokens)</li>
+    <li style="margin-bottom: 10px;">Set up product mappings in the <a href="/admin/mappings">Product Mappings</a> section</li>
+    <li style="margin-bottom: 10px;">Configure Shopify webhook: <code>POST <%= process.env.RENDER_EXTERNAL_URL || 'https://your-domain.com' %>/webhook/shopify</code></li>
+    <li style="margin-bottom: 10px;">Monitor sync activity in the <a href="/admin/logs">Sync Logs</a> section</li>
+  </ol>
+</div>
+
