@@ -25,7 +25,25 @@ const PORT = process.env.PORT || 3000;
 app.use(helmet({
   contentSecurityPolicy: false // Disable for admin dashboard
 }));
-app.use(cors());
+
+// CORS configuration - allow Shopify store
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests from Shopify store or no origin (for widget files)
+    const allowedOrigins = [
+      'https://blackmarket-training.myshopify.com',
+      'https://www.blackmarkettraining.com'
+    ];
+    
+    // Allow requests with no origin (like mobile apps, Postman, or widget files)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all for widget files
+    }
+  },
+  credentials: true
+}));
 
 // Logging
 app.use(morgan('combined'));

@@ -4,15 +4,46 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
+// CORS middleware for widget static files
+router.use('/widget', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*'); // Allow all origins for widget files
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  
+  next();
+});
+
 // Serve widget static files from ax_plugin/enrollerWidget
 const widgetPath = path.join(__dirname, '../../ax_plugin/enrollerWidget');
-router.use('/widget', express.static(widgetPath));
+router.use('/widget', express.static(widgetPath, {
+  setHeaders: (res, path) => {
+    // Set CORS headers for all static files
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
+    // Set proper content types
+    if (path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    } else if (path.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    } else if (path.endsWith('.json')) {
+      res.setHeader('Content-Type', 'application/json');
+    }
+  }
+}));
 
 // Helper function to search course instances (POST method)
 async function searchCourseInstances(searchParams) {
