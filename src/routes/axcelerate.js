@@ -25,25 +25,70 @@ router.use('/widget', (req, res, next) => {
   next();
 });
 
-// Serve widget static files from ax_plugin/enrollerWidget
+// Serve widget static files with proper CORS and CORB headers
 const widgetPath = path.join(__dirname, '../../ax_plugin/enrollerWidget');
-router.use('/widget', express.static(widgetPath, {
-  setHeaders: (res, path) => {
-    // Set CORS headers for all static files
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    
-    // Set proper content types
-    if (path.endsWith('.css')) {
-      res.setHeader('Content-Type', 'text/css');
-    } else if (path.endsWith('.js')) {
-      res.setHeader('Content-Type', 'application/javascript');
-    } else if (path.endsWith('.json')) {
-      res.setHeader('Content-Type', 'application/json');
-    }
+
+router.get('/widget/*', (req, res, next) => {
+  // Set CORS headers BEFORE sending file
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  
+  // Remove headers that might cause CORB blocking
+  res.removeHeader('Cross-Origin-Resource-Policy');
+  res.removeHeader('Cross-Origin-Embedder-Policy');
+  
+  // Build file path
+  const filePath = path.join(widgetPath, req.params[0]);
+  
+  // Check if file exists
+  if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
+    return res.status(404).json({ error: 'File not found' });
   }
-}));
+  
+  // Set proper content type based on file extension
+  const ext = path.extname(filePath).toLowerCase();
+  const contentTypes = {
+    '.css': 'text/css; charset=utf-8',
+    '.js': 'application/javascript; charset=utf-8',
+    '.json': 'application/json; charset=utf-8',
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.svg': 'image/svg+xml',
+    '.gif': 'image/gif',
+    '.woff': 'font/woff',
+    '.woff2': 'font/woff2',
+    '.ttf': 'font/ttf',
+    '.eot': 'application/vnd.ms-fontobject',
+    '.html': 'text/html; charset=utf-8',
+    '.xml': 'application/xml; charset=utf-8'
+  };
+  
+  const contentType = contentTypes[ext] || 'application/octet-stream';
+  res.setHeader('Content-Type', contentType);
+  
+  // Set cache headers
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  
+  // Send file
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('Error sending widget file:', err);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Error serving file' });
+      }
+    }
+  });
+});
+
+// Handle OPTIONS requests
+router.options('/widget/*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.sendStatus(200);
+});
 
 // Helper function to search course instances (POST method)
 async function searchCourseInstances(searchParams) {

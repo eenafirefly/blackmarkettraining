@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 import webhookRoutes from './routes/webhook.js';
 import adminRoutes from './routes/admin.js';
@@ -23,8 +24,17 @@ const PORT = process.env.PORT || 3000;
 
 // Security middleware
 app.use(helmet({
-  contentSecurityPolicy: false // Disable for admin dashboard
+  contentSecurityPolicy: false, // Disable for admin dashboard
+  crossOriginResourcePolicy: false, // Disable CORP to allow widget files
+  crossOriginEmbedderPolicy: false // Disable COEP to allow widget files
 }));
+
+// Disable Helmet for widget routes (apply after helmet)
+app.use('/api/axcelerate/widget', (req, res, next) => {
+  res.removeHeader('Cross-Origin-Resource-Policy');
+  res.removeHeader('Cross-Origin-Embedder-Policy');
+  next();
+});
 
 // CORS configuration - allow Shopify store
 app.use(cors({
