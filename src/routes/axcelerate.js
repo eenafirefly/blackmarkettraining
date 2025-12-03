@@ -245,36 +245,32 @@ router.get('/courses/:id', async (req, res) => {
   }
 });
 
-// GET /api/axcelerate/courses
-router.get('/courses', async (req, res) => {
-  try {
-    console.log('Fetching all courses...');
-    
-    const [qualifications, workshops] = await Promise.all([
-      searchCourseInstances({ course_type: 'p' }).catch(err => {
-        console.error('Error fetching qualifications:', err);
-        return [];
-      }),
-      searchCourseInstances({ course_type: 'w' }).catch(err => {
-        console.error('Error fetching workshops:', err);
-        return [];
-      })
-    ]);
-    
-    res.json({
-      qualifications: Array.isArray(qualifications) ? qualifications : [],
-      workshops: Array.isArray(workshops) ? workshops : [],
-      total: (Array.isArray(qualifications) ? qualifications.length : 0) + 
-             (Array.isArray(workshops) ? workshops.length : 0)
-    });
-  } catch (error) {
-    console.error('Error fetching all courses:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch courses',
-      message: error.message 
-    });
-  }
-});
+// GET /api/axcelerate/courses/:id
+// Fetch course instance details by instanceID
+router.get('/courses/:id', async (req, res) => {
+    try {
+      const instanceId = req.params.id;
+      const courseType = req.query.type || 'p';
+      console.log(`Fetching course instance details for ID: ${instanceId}, type: ${courseType}`);
+      
+      // Use the search endpoint with instanceID to get specific instance
+      const data = await searchCourseInstances({ 
+        instanceID: instanceId,
+        course_type: courseType 
+      });
+      
+      console.log(`Successfully fetched course instance ${instanceId}`);
+      res.json(data);
+    } catch (error) {
+      console.error('Error fetching course details:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch course details',
+        message: error.message,
+        instanceId: req.params.id,
+        courseType: req.query.type || 'p'
+      });
+    }
+  });
 
 // Widget AJAX proxy - handles WordPress-style widget API calls
 router.post('/widget-ajax', async (req, res) => {
