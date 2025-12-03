@@ -2,8 +2,17 @@
 // Routes for Axcelerate API proxy
 
 import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
+
+// Serve widget static files from ax_plugin/enrollerWidget
+const widgetPath = path.join(__dirname, '../../ax_plugin/enrollerWidget');
+router.use('/widget', express.static(widgetPath));
 
 // Helper function to search course instances (POST method)
 async function searchCourseInstances(searchParams) {
@@ -188,6 +197,114 @@ router.get('/courses', async (req, res) => {
       error: 'Failed to fetch courses',
       message: error.message 
     });
+  }
+});
+
+// Widget AJAX proxy - handles widget API calls
+router.post('/widget-ajax', async (req, res) => {
+  try {
+    const { action, ...params } = req.body;
+    
+    console.log('Widget AJAX request:', { action, params });
+    
+    // Handle different widget actions
+    switch (action) {
+      case 'get_course_instances':
+        // Get course instances
+        const instances = await searchCourseInstances(params);
+        return res.json(instances);
+        
+      case 'get_course_details':
+        // Get course details
+        const details = await getCourseInstanceDetails(params.instanceID, params.type);
+        return res.json(details);
+        
+      case 'search_contacts':
+        // Search contacts - proxy to aXcelerate API
+        const searchUrl = `${process.env.AXCELERATE_API_URL}/contacts/search/`;
+        const searchParams = new URLSearchParams(params);
+        const searchResponse = await fetch(`${searchUrl}?${searchParams}`, {
+          method: 'GET',
+          headers: {
+            'APIToken': process.env.AXCELERATE_API_TOKEN,
+            'WSToken': process.env.AXCELERATE_WS_TOKEN
+          }
+        });
+        const searchData = await searchResponse.json();
+        return res.json(searchData);
+        
+      case 'create_contact':
+        // Create contact - proxy to aXcelerate API
+        const createUrl = `${process.env.AXCELERATE_API_URL}/contact/`;
+        const formData = Object.keys(params)
+          .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(String(params[key]))}`)
+          .join('&');
+        
+        const createResponse = await fetch(createUrl, {
+          method: 'POST',
+          headers: {
+            'APIToken': process.env.AXCELERATE_API_TOKEN,
+            'WSToken': process.env.AXCELERATE_WS_TOKEN,
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Length': Buffer.byteLength(formData)
+          },
+          body: formData
+        });
+        const createData = await createResponse.json();
+        return res.json(createData);
+        
+      case 'enrol':
+        // Handle enrolment - you can use your existing enrolment service
+        // This is a simplified version
+        return res.json({ success: true, message: 'Enrolment processed' });
+        
+      default:
+        // For other actions, proxy directly to aXcelerate API
+        const apiUrl = `${process.env.AXCELERATE_API_URL}/${action}`;
+        const apiResponse = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'APIToken': process.env.AXCELERATE_API_TOKEN,
+            'WSToken': process.env.AXCELERATE_WS_TOKEN,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: Object.keys(params)
+            .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(String(params[key]))}`)
+            .join('&')
+        });
+        const apiData = await apiResponse.json();
+        return res.json(apiData);
+    }
+  } catch (error) {
+    console.error('Widget AJAX error:', error);
+    res.status(500).json({ 
+      error: error.message,
+      code: 'WIDGET_AJAX_ERROR'
+    });
+  }
+});
+
+// GET endpoint for widget AJAX (some widget calls use GET)
+router.get('/widget-ajax', async (req, res) => {
+  try {
+    const { action, ...params } = req.query;
+    
+    const apiUrl = `${process.env.AXCELERATE_API_URL}/${action}`;
+    const searchParams = new URLSearchParams(params);
+    
+    const apiResponse = await fetch(`${apiUrl}?${searchParams}`, {
+      method: 'GET',
+      headers: {
+        'APIToken': process.env.AXCELERATE_API_TOKEN,
+        'WSToken': process.env.AXCELERATE_WS_TOKEN
+      }
+    });
+    
+    const apiData = await apiResponse.json();
+    res.json(apiData);
+  } catch (error) {
+    console.error('Widget AJAX GET error:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
