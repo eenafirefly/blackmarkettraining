@@ -246,23 +246,39 @@ router.get('/courses/:id', async (req, res) => {
 });
 
 // GET /api/axcelerate/courses/:id
-// Fetch course instance details by instanceID
 router.get('/courses/:id', async (req, res) => {
     try {
       const instanceId = req.params.id;
       const courseType = req.query.type || 'p';
       console.log(`Fetching course instance details for ID: ${instanceId}, type: ${courseType}`);
       
-      // Use the search endpoint with instanceID to get specific instance
-      const data = await searchCourseInstances({ 
-        instanceID: instanceId,
+      // Fetch all courses of this type
+      const allCourses = await searchCourseInstances({ 
         course_type: courseType 
       });
       
-      console.log(`Successfully fetched course instance ${instanceId}`);
-      res.json(data);
+      // Filter to find the specific instance
+      const course = Array.isArray(allCourses) 
+        ? allCourses.find(c => String(c.INSTANCEID) === String(instanceId))
+        : null;
+      
+      if (!course) {
+        console.log(`❌ Course instance ${instanceId} not found`);
+        return res.status(404).json({ 
+          error: 'Course not found',
+          message: `No course found with instance ID ${instanceId}`,
+          instanceId: instanceId,
+          courseType: courseType
+        });
+      }
+      
+      console.log(`✅ Successfully found course instance ${instanceId}`);
+      
+      // Return as array to match the format expected by frontend
+      res.json([course]);
     } catch (error) {
-      console.error('Error fetching course details:', error);
+      console.error('❌ Error fetching course details:', error);
+      
       res.status(500).json({ 
         error: 'Failed to fetch course details',
         message: error.message,
