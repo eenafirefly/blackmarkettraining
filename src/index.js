@@ -8,7 +8,9 @@ import { fileURLToPath } from 'url';
 
 import webhookRoutes from './routes/webhook.js';
 import adminRoutes from './routes/admin.js';
+import axcelerateRoutes from './routes/axcelerate.js';
 import { initDatabase } from './db/index.js';
+
 
 // Load environment variables
 dotenv.config();
@@ -61,6 +63,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/webhook', webhookRoutes);
 app.use('/admin', adminRoutes);
+app.use('/api/axcelerate', axcelerateRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -100,6 +103,7 @@ async function start() {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📊 Admin dashboard: http://localhost:${PORT}/admin`);
       console.log(`🪝 Webhook endpoint: http://localhost:${PORT}/webhook/shopify`);
+      console.log(`🔌 Axcelerate API proxy: http://localhost:${PORT}/api/axcelerate`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);
