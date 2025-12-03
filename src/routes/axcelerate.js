@@ -58,9 +58,20 @@ async function getCourseInstanceDetails(instanceID, type = 'p') {
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`Axcelerate API error: ${response.status} - ${errorText}`);
-    throw new Error(`Axcelerate API error: ${response.status} ${response.statusText}`);
+    let errorData;
+    try {
+      errorData = await response.json();
+    } catch (e) {
+      errorData = { message: await response.text() };
+    }
+    
+    console.error(`Axcelerate API error: ${response.status}`, errorData);
+    
+    // Create a more detailed error object
+    const error = new Error(errorData.MESSAGES || errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+    error.statusCode = response.status;
+    error.apiError = errorData;
+    throw error;
   }
 
   return response.json();
@@ -130,15 +141,21 @@ router.get('/courses/workshops', async (req, res) => {
 router.get('/courses/:id', async (req, res) => {
   try {
     const courseId = req.params.id;
-    const courseType = req.query.type || 'p'; // Default to 'p' for programs
+    const courseType = req.query.type || 'p';
     console.log(`Fetching course details for ID: ${courseId}, type: ${courseType}`);
     const data = await getCourseInstanceDetails(courseId, courseType);
     res.json(data);
   } catch (error) {
     console.error('Error fetching course details:', error);
-    res.status(500).json({ 
+    
+    // Pass through the status code from Axcelerate API
+    const statusCode = error.statusCode || 500;
+    res.status(statusCode).json({ 
       error: 'Failed to fetch course details',
-      message: error.message 
+      message: error.message,
+      details: error.apiError,
+      instanceId: req.params.id,
+      courseType: req.query.type || 'p'
     });
   }
 });
