@@ -276,85 +276,66 @@ router.get('/courses', async (req, res) => {
   }
 });
 
-// Widget AJAX proxy - handles widget API calls
+// Widget AJAX proxy - handles WordPress-style widget API calls
 router.post('/widget-ajax', async (req, res) => {
   try {
-    const { action, ...params } = req.body;
+    const { action, endpoint, method, ...params } = req.body;
     
-    console.log('Widget AJAX request:', { action, params });
+    console.log('Widget AJAX request:', { action, endpoint, method, params });
     
-    // Handle different widget actions
-    switch (action) {
-      case 'get_course_instances':
-        // Get course instances
-        const instances = await searchCourseInstances(params);
-        return res.json(instances);
-        
-      case 'get_course_details':
-        // Get course details
-        const details = await getCourseInstanceDetails(params.instanceID, params.type);
-        return res.json(details);
-        
-      case 'search_contacts':
-        // Search contacts - proxy to aXcelerate API
-        const searchUrl = `${process.env.AXCELERATE_API_URL}/contacts/search/`;
+    // Handle WordPress-style callResourceAX action
+    if (action === 'callResourceAX') {
+      const apiUrl = `${process.env.AXCELERATE_API_URL}${endpoint}`;
+      
+      // Handle different HTTP methods
+      if (method === 'GET') {
         const searchParams = new URLSearchParams(params);
-        const searchResponse = await fetch(`${searchUrl}?${searchParams}`, {
+        const response = await fetch(`${apiUrl}?${searchParams}`, {
           method: 'GET',
           headers: {
             'APIToken': process.env.AXCELERATE_API_TOKEN,
             'WSToken': process.env.AXCELERATE_WS_TOKEN
           }
         });
-        const searchData = await searchResponse.json();
-        return res.json(searchData);
         
-      case 'create_contact':
-        // Create contact - proxy to aXcelerate API
-        const createUrl = `${process.env.AXCELERATE_API_URL}/contact/`;
-        const formData = Object.keys(params)
+        const data = await response.json();
+        return res.json(data);
+        
+      } else if (method === 'POST' || method === 'PUT') {
+        // Convert params to form-encoded format
+        const formDataString = Object.keys(params)
+          .filter(key => key !== 'action' && key !== 'endpoint' && key !== 'method' && key !== 'ax_security' && key !== 'ax_session')
           .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(String(params[key]))}`)
           .join('&');
         
-        const createResponse = await fetch(createUrl, {
-          method: 'POST',
+        const response = await fetch(apiUrl, {
+          method: method,
           headers: {
             'APIToken': process.env.AXCELERATE_API_TOKEN,
             'WSToken': process.env.AXCELERATE_WS_TOKEN,
             'Content-Type': 'application/x-www-form-urlencoded',
-            'Content-Length': Buffer.byteLength(formData)
+            'Content-Length': Buffer.byteLength(formDataString)
           },
-          body: formData
+          body: formDataString
         });
-        const createData = await createResponse.json();
-        return res.json(createData);
         
-      case 'enrol':
-        // Handle enrolment - you can use your existing enrolment service
-        // This is a simplified version
-        return res.json({ success: true, message: 'Enrolment processed' });
-        
-      default:
-        // For other actions, proxy directly to aXcelerate API
-        const apiUrl = `${process.env.AXCELERATE_API_URL}/${action}`;
-        const apiResponse = await fetch(apiUrl, {
-          method: 'POST',
-          headers: {
-            'APIToken': process.env.AXCELERATE_API_TOKEN,
-            'WSToken': process.env.AXCELERATE_WS_TOKEN,
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          body: Object.keys(params)
-            .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(String(params[key]))}`)
-            .join('&')
-        });
-        const apiData = await apiResponse.json();
-        return res.json(apiData);
+        const data = await response.json();
+        return res.json(data);
+      }
     }
+    
+    // Fallback for other actions
+    return res.json({ 
+      error: false,
+      data: {},
+      message: 'Widget AJAX handler'
+    });
+    
   } catch (error) {
     console.error('Widget AJAX error:', error);
     res.status(500).json({ 
-      error: error.message,
+      error: true,
+      message: error.message,
       code: 'WIDGET_AJAX_ERROR'
     });
   }
