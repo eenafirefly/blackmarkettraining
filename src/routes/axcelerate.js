@@ -296,12 +296,51 @@ router.post('/widget-ajax', async (req, res) => {
       }
     }
     
+    // Handle cr_field_list action - get field metadata (e.g., country list)
+    if (action === 'cr_field_list') {
+      const { fieldReference } = req.body;
+      
+      if (!fieldReference) {
+        return res.json({ error: true, message: 'fieldReference is required' });
+      }
+      
+      console.log('→ Fetching field list for:', fieldReference);
+      
+      const apiUrl = `${process.env.AXCELERATE_API_URL}/report/field`;
+      const searchParams = new URLSearchParams({ fieldReference });
+      const fullUrl = `${apiUrl}?${searchParams}`;
+      
+      const response = await fetch(fullUrl, {
+        method: 'GET',
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN
+        }
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Axcelerate API error:', response.status, errorText);
+        return res.json({ 
+          error: true, 
+          message: `API error: ${response.status}`,
+          VALUEOPTIONS: []
+        });
+      }
+      
+      const data = await response.json();
+      console.log('✓ Field list response:', JSON.stringify(data).substring(0, 500));
+      
+      // Return the data as-is (Axcelerate API should return VALUEOPTIONS)
+      return res.json(data);
+    }
+    
     // Fallback for other actions
     console.log('Unknown action, returning default response');
     return res.json({ 
       error: false,
       data: {},
-      message: 'Widget AJAX handler'
+      message: 'Widget AJAX handler - unknown action: ' + action
     });
     
   } catch (error) {
