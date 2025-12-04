@@ -11,6 +11,7 @@ import webhookRoutes from './routes/webhook.js';
 import adminRoutes from './routes/admin.js';
 import axcelerateRoutes from './routes/axcelerate.js';
 import authRoutes from './routes/auth.js';
+import enrollmentRoutes from './routes/enrollment.js';
 import { initDatabase } from './db/index.js';
 
 
@@ -97,6 +98,7 @@ app.use('/webhook', webhookRoutes);
 app.use('/admin', adminRoutes);
 app.use('/api/axcelerate', axcelerateRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/enrollment', enrollmentRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
