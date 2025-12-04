@@ -464,4 +464,161 @@ export function requireAuth(req, res, next) {
   next();
 }
 
+// =============================================================================
+// Course Listing Endpoints (for Shopify frontend)
+// =============================================================================
+
+/**
+ * Get all qualifications (Programs)
+ * GET /api/axcelerate/courses/qualifications
+ */
+router.get('/courses/qualifications', async (req, res) => {
+  try {
+    console.log('Fetching qualifications...');
+    
+    const response = await fetch(
+      `${process.env.AXCELERATE_API_URL}/course/instances?type=p`,
+      {
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN
+        }
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error(`aXcelerate API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log(`Successfully fetched ${data?.length || 0} qualifications`);
+    
+    res.json(data || []);
+  } catch (error) {
+    console.error('Error fetching qualifications:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch qualifications',
+      message: error.message 
+    });
+  }
+});
+
+/**
+ * Get all workshops
+ * GET /api/axcelerate/courses/workshops
+ */
+router.get('/courses/workshops', async (req, res) => {
+  try {
+    console.log('Fetching workshops...');
+    
+    const response = await fetch(
+      `${process.env.AXCELERATE_API_URL}/course/instances?type=w`,
+      {
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN
+        }
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error(`aXcelerate API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log(`Successfully fetched ${data?.length || 0} workshops`);
+    
+    res.json(data || []);
+  } catch (error) {
+    console.error('Error fetching workshops:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch workshops',
+      message: error.message 
+    });
+  }
+});
+
+/**
+ * Get specific course details
+ * GET /api/axcelerate/courses/:id
+ */
+router.get('/courses/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { type } = req.query;
+    
+    if (!type) {
+      return res.status(400).json({ 
+        error: 'Missing required query parameter: type' 
+      });
+    }
+    
+    console.log(`Fetching course ${id} (type: ${type})`);
+    
+    const response = await fetch(
+      `${process.env.AXCELERATE_API_URL}/course/instance/${id}?type=${type}`,
+      {
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN
+        }
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error(`aXcelerate API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching course details:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch course details',
+      message: error.message 
+    });
+  }
+});
+
+/**
+ * Search contacts (for existing record check)
+ * GET /api/axcelerate/contact/search
+ */
+router.get('/contact/search', async (req, res) => {
+  try {
+    const { email } = req.query;
+    
+    if (!email) {
+      return res.status(400).json({ 
+        error: 'Missing required query parameter: email' 
+      });
+    }
+    
+    console.log('Searching for contact:', email);
+    
+    const response = await fetch(
+      `${process.env.AXCELERATE_API_URL}/contacts?email=${encodeURIComponent(email)}`,
+      {
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN
+        }
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error(`aXcelerate API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    res.json(data || []);
+  } catch (error) {
+    console.error('Error searching contacts:', error);
+    res.status(500).json({ 
+      error: 'Failed to search contacts',
+      message: error.message 
+    });
+  }
+});
+
 export default router;
