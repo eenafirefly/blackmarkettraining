@@ -469,24 +469,57 @@ export function requireAuth(req, res, next) {
 // =============================================================================
 
 /**
+ * Test endpoint to verify aXcelerate API connection
+ * GET /api/axcelerate/test
+ */
+router.get('/test', async (req, res) => {
+  try {
+    console.log('Testing aXcelerate API connection...');
+    console.log('Environment variables:');
+    console.log('- AXCELERATE_API_URL:', process.env.AXCELERATE_API_URL);
+    console.log('- AXCELERATE_API_TOKEN:', process.env.AXCELERATE_API_TOKEN ? 'SET' : 'NOT SET');
+    console.log('- AXCELERATE_WS_TOKEN:', process.env.AXCELERATE_WS_TOKEN ? 'SET' : 'NOT SET');
+    
+    res.json({
+      status: 'ok',
+      message: 'Test endpoint working',
+      config: {
+        apiUrl: process.env.AXCELERATE_API_URL,
+        hasApiToken: !!process.env.AXCELERATE_API_TOKEN,
+        hasWsToken: !!process.env.AXCELERATE_WS_TOKEN
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
  * Get all qualifications (Programs)
  * GET /api/axcelerate/courses/qualifications
  */
 router.get('/courses/qualifications', async (req, res) => {
   try {
     console.log('Fetching qualifications...');
+    console.log('API URL:', process.env.AXCELERATE_API_URL);
     
-    const response = await fetch(
-      `${process.env.AXCELERATE_API_URL}/course/instances?type=p`,
-      {
-        headers: {
-          'APIToken': process.env.AXCELERATE_API_TOKEN,
-          'WSToken': process.env.AXCELERATE_WS_TOKEN
-        }
+    // aXcelerate API: Get course instances for programs (course_type=p)
+    const fullUrl = `${process.env.AXCELERATE_API_URL}/course/instance?course_type=p`;
+    console.log('Fetching from:', fullUrl);
+    
+    const response = await fetch(fullUrl, {
+      method: 'GET',
+      headers: {
+        'APIToken': process.env.AXCELERATE_API_TOKEN,
+        'WSToken': process.env.AXCELERATE_WS_TOKEN
       }
-    );
+    });
+    
+    console.log('Response status:', response.status);
     
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('aXcelerate API error response:', errorText);
       throw new Error(`aXcelerate API error: ${response.status}`);
     }
     
@@ -510,18 +543,25 @@ router.get('/courses/qualifications', async (req, res) => {
 router.get('/courses/workshops', async (req, res) => {
   try {
     console.log('Fetching workshops...');
+    console.log('API URL:', process.env.AXCELERATE_API_URL);
     
-    const response = await fetch(
-      `${process.env.AXCELERATE_API_URL}/course/instances?type=w`,
-      {
-        headers: {
-          'APIToken': process.env.AXCELERATE_API_TOKEN,
-          'WSToken': process.env.AXCELERATE_WS_TOKEN
-        }
+    // aXcelerate API: Get course instances for workshops (course_type=w)
+    const fullUrl = `${process.env.AXCELERATE_API_URL}/course/instance?course_type=w`;
+    console.log('Fetching from:', fullUrl);
+    
+    const response = await fetch(fullUrl, {
+      method: 'GET',
+      headers: {
+        'APIToken': process.env.AXCELERATE_API_TOKEN,
+        'WSToken': process.env.AXCELERATE_WS_TOKEN
       }
-    );
+    });
+    
+    console.log('Response status:', response.status);
     
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('aXcelerate API error response:', errorText);
       throw new Error(`aXcelerate API error: ${response.status}`);
     }
     
