@@ -312,7 +312,8 @@ router.get('/google/login', (req, res) => {
   // Build Google OAuth URL
   const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
   googleAuthUrl.searchParams.set('client_id', process.env.GOOGLE_CLIENT_ID);
-  googleAuthUrl.searchParams.set('redirect_uri', `${req.protocol}://${req.get('host')}/api/auth/google/callback`);
+  // Force HTTPS for redirect_uri (Render always uses HTTPS)
+  googleAuthUrl.searchParams.set('redirect_uri', `https://${req.get('host')}/api/auth/google/callback`);
   googleAuthUrl.searchParams.set('response_type', 'code');
   googleAuthUrl.searchParams.set('scope', 'email profile');
   googleAuthUrl.searchParams.set('state', stateToken);
@@ -345,7 +346,8 @@ router.get('/google/callback', async (req, res) => {
         code,
         client_id: process.env.GOOGLE_CLIENT_ID,
         client_secret: process.env.GOOGLE_CLIENT_SECRET,
-        redirect_uri: `${req.protocol}://${req.get('host')}/api/auth/google/callback`,
+        // Force HTTPS for redirect_uri (Render always uses HTTPS)
+        redirect_uri: `https://${req.get('host')}/api/auth/google/callback`,
         grant_type: 'authorization_code'
       })
     });
