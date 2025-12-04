@@ -469,30 +469,36 @@ export function requireAuth(req, res, next) {
 // =============================================================================
 
 /**
- * Test endpoint to verify aXcelerate API connection
- * GET /api/axcelerate/test
+ * Helper function to search course instances (POST method required by aXcelerate)
  */
-router.get('/test', async (req, res) => {
-  try {
-    console.log('Testing aXcelerate API connection...');
-    console.log('Environment variables:');
-    console.log('- AXCELERATE_API_URL:', process.env.AXCELERATE_API_URL);
-    console.log('- AXCELERATE_API_TOKEN:', process.env.AXCELERATE_API_TOKEN ? 'SET' : 'NOT SET');
-    console.log('- AXCELERATE_WS_TOKEN:', process.env.AXCELERATE_WS_TOKEN ? 'SET' : 'NOT SET');
-    
-    res.json({
-      status: 'ok',
-      message: 'Test endpoint working',
-      config: {
-        apiUrl: process.env.AXCELERATE_API_URL,
-        hasApiToken: !!process.env.AXCELERATE_API_TOKEN,
-        hasWsToken: !!process.env.AXCELERATE_WS_TOKEN
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+async function searchCourseInstances(searchParams) {
+  const url = `${process.env.AXCELERATE_API_URL}/course/instance/search`;
+  
+  console.log(`Searching Axcelerate courses: ${url}`, searchParams);
+  
+  const formDataString = Object.keys(searchParams)
+    .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(String(searchParams[key]))}`)
+    .join('&');
+  
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'APIToken': process.env.AXCELERATE_API_TOKEN,
+      'WSToken': process.env.AXCELERATE_WS_TOKEN,
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Length': Buffer.byteLength(formDataString)
+    },
+    body: formDataString
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`Axcelerate API error: ${response.status} - ${errorText}`);
+    throw new Error(`Axcelerate API error: ${response.status} ${response.statusText}`);
   }
-});
+
+  return response.json();
+}
 
 /**
  * Get all qualifications (Programs)
@@ -501,32 +507,9 @@ router.get('/test', async (req, res) => {
 router.get('/courses/qualifications', async (req, res) => {
   try {
     console.log('Fetching qualifications...');
-    console.log('API URL:', process.env.AXCELERATE_API_URL);
-    
-    // aXcelerate API: Get course instances for programs (course_type=p)
-    const fullUrl = `${process.env.AXCELERATE_API_URL}/course/instance?course_type=p`;
-    console.log('Fetching from:', fullUrl);
-    
-    const response = await fetch(fullUrl, {
-      method: 'GET',
-      headers: {
-        'APIToken': process.env.AXCELERATE_API_TOKEN,
-        'WSToken': process.env.AXCELERATE_WS_TOKEN
-      }
-    });
-    
-    console.log('Response status:', response.status);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('aXcelerate API error response:', errorText);
-      throw new Error(`aXcelerate API error: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    console.log(`Successfully fetched ${data?.length || 0} qualifications`);
-    
-    res.json(data || []);
+    const data = await searchCourseInstances({ course_type: 'p' });
+    console.log(`Successfully fetched ${Array.isArray(data) ? data.length : 0} qualifications`);
+    res.json(data);
   } catch (error) {
     console.error('Error fetching qualifications:', error);
     res.status(500).json({ 
@@ -543,32 +526,9 @@ router.get('/courses/qualifications', async (req, res) => {
 router.get('/courses/workshops', async (req, res) => {
   try {
     console.log('Fetching workshops...');
-    console.log('API URL:', process.env.AXCELERATE_API_URL);
-    
-    // aXcelerate API: Get course instances for workshops (course_type=w)
-    const fullUrl = `${process.env.AXCELERATE_API_URL}/course/instance?course_type=w`;
-    console.log('Fetching from:', fullUrl);
-    
-    const response = await fetch(fullUrl, {
-      method: 'GET',
-      headers: {
-        'APIToken': process.env.AXCELERATE_API_TOKEN,
-        'WSToken': process.env.AXCELERATE_WS_TOKEN
-      }
-    });
-    
-    console.log('Response status:', response.status);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('aXcelerate API error response:', errorText);
-      throw new Error(`aXcelerate API error: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    console.log(`Successfully fetched ${data?.length || 0} workshops`);
-    
-    res.json(data || []);
+    const data = await searchCourseInstances({ course_type: 'w' });
+    console.log(`Successfully fetched ${Array.isArray(data) ? data.length : 0} workshops`);
+    res.json(data);
   } catch (error) {
     console.error('Error fetching workshops:', error);
     res.status(500).json({ 
@@ -584,38 +544,42 @@ router.get('/courses/workshops', async (req, res) => {
  */
 router.get('/courses/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    const { type } = req.query;
+    const instanceId = req.params.id;
+    const courseType = req.query.type || 'p';
+    console.log(`Fetching course instance details for ID: ${instanceId}, type: ${courseType}`);
     
-    if (!type) {
-      return res.status(400).json({ 
-        error: 'Missing required query parameter: type' 
+    // Fetch all courses of this type
+    const allCourses = await searchCourseInstances({ 
+      course_type: courseType 
+    });
+    
+    // Filter to find the specific instance
+    const course = Array.isArray(allCourses) 
+      ? allCourses.find(c => String(c.INSTANCEID) === String(instanceId))
+      : null;
+    
+    if (!course) {
+      console.log(`❌ Course instance ${instanceId} not found`);
+      return res.status(404).json({ 
+        error: 'Course not found',
+        message: `No course found with instance ID ${instanceId}`,
+        instanceId: instanceId,
+        courseType: courseType
       });
     }
     
-    console.log(`Fetching course ${id} (type: ${type})`);
+    console.log(`✅ Successfully found course instance ${instanceId}`);
     
-    const response = await fetch(
-      `${process.env.AXCELERATE_API_URL}/course/instance/${id}?type=${type}`,
-      {
-        headers: {
-          'APIToken': process.env.AXCELERATE_API_TOKEN,
-          'WSToken': process.env.AXCELERATE_WS_TOKEN
-        }
-      }
-    );
-    
-    if (!response.ok) {
-      throw new Error(`aXcelerate API error: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    res.json(data);
+    // Return as array to match the format expected by frontend
+    res.json([course]);
   } catch (error) {
-    console.error('Error fetching course details:', error);
+    console.error('❌ Error fetching course details:', error);
+    
     res.status(500).json({ 
       error: 'Failed to fetch course details',
-      message: error.message 
+      message: error.message,
+      instanceId: req.params.id,
+      courseType: req.query.type || 'p'
     });
   }
 });
