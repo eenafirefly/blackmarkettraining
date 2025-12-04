@@ -10,6 +10,7 @@ import fs from 'fs';
 import webhookRoutes from './routes/webhook.js';
 import adminRoutes from './routes/admin.js';
 import axcelerateRoutes from './routes/axcelerate.js';
+import authRoutes from './routes/auth.js';
 import { initDatabase } from './db/index.js';
 
 
@@ -92,6 +93,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/webhook', webhookRoutes);
 app.use('/admin', adminRoutes);
 app.use('/api/axcelerate', axcelerateRoutes);
+app.use('/api/auth', authRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
