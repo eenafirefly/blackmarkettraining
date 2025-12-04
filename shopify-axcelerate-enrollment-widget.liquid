@@ -40,22 +40,24 @@
       <!-- Progress Steps -->
       <div class="ax-progress-steps">
         <div class="ax-step active" data-step="login">
-          <span class="ax-step-indicator">!</span>
+          <span class="ax-step-indicator">1</span>
           <span class="ax-step-label">Login</span>
         </div>
         <div class="ax-step" data-step="background">
-          <span class="ax-step-indicator">!</span>
+          <span class="ax-step-indicator">2</span>
           <span class="ax-step-label">Background</span>
         </div>
         <div class="ax-step" data-step="personal">
-          <span class="ax-step-indicator">!</span>
+          <span class="ax-step-indicator">3</span>
           <span class="ax-step-label">Personal Details</span>
         </div>
         <div class="ax-step" data-step="contact">
-          <span class="ax-step-indicator">!</span>
+          <span class="ax-step-indicator">4</span>
           <span class="ax-step-label">Contact Details</span>
         </div>
       </div>
+      
+      <!-- Step 1: Login -->
       
       <!-- Social Login Options -->
       <div class="ax-social-login">
@@ -100,7 +102,7 @@
       </div>
       
       <!-- Manual Entry Form -->
-      <form id="ax-enrollment-form-{{ widget_id }}" class="ax-manual-form">
+      <form id="ax-manual-form-{{ widget_id }}" class="ax-manual-form">
         <div class="ax-form-group">
           <label for="ax-given-name-{{ widget_id }}">
             Given Name:<span class="ax-required">*</span>
@@ -470,7 +472,7 @@
   'use strict';
   
   // ⚠️ IMPORTANT: Update this to your Render app URL
-  const RENDER_APP_URL = 'https://shopify-axcelerate-integration.onrender.com';
+  const RENDER_APP_URL = 'https://blackmarkettraining.onrender.com';
   
   function initWidget() {
     const widgetId = '{{ widget_id }}';
@@ -788,19 +790,11 @@
 </script>
 {% schema %}
 {
-  "name": "aXcelerate Enrollment Widget",
-  "settings": [
-    {
-      "type": "text",
-      "id": "render_app_url",
-      "label": "Render App URL",
-      "default": "https://shopify-axcelerate-integration.onrender.com",
-      "info": "Your Render app URL (without trailing slash)"
-    }
-  ],
+  "name": "Qualification Details",
+  "settings": [],
   "presets": [
     {
-      "name": "aXcelerate Enrollment"
+      "name": "Qualification Details"
     }
   ]
 }

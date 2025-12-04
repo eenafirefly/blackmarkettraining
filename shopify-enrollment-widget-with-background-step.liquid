@@ -1,0 +1,1010 @@
+{% comment %}
+  aXcelerate Enrollment Widget - With Multi-Step and Existing Record Check
+  
+  Features:
+  - Google OAuth login (working)
+  - aXcelerate OAuth login
+  - Manual form with existing record detection
+  - Background step with custom fields
+  
+  Usage: 
+  {% render 'axcelerate-enrollment-widget-v2', 
+    course_id: '94138', 
+    course_type: 'w', 
+    instance_id: '2103205'
+  %}
+{% endcomment %}
+
+{% assign widget_id = config_id | default: 'default' %}
+
+<div id="ax-enrol-widget-{{ widget_id }}" 
+     class="ax-enrollment-widget"
+     data-course-id="{{ course_id }}"
+     data-course-type="{{ course_type }}"
+     data-instance-id="{{ instance_id }}">
+  
+  <div class="ax-widget-container">
+    <h2 class="ax-widget-title">ENROLLING IN</h2>
+    
+    <!-- Loading State -->
+    <div id="ax-loading-{{ widget_id }}" class="ax-loading-state">
+      <div class="ax-spinner"></div>
+      <p>Loading enrollment form...</p>
+    </div>
+    
+    <!-- Error State -->
+    <div id="ax-error-{{ widget_id }}" class="ax-error-state" style="display: none;">
+      <p class="ax-error-message"></p>
+      <button class="ax-retry-btn">Retry</button>
+    </div>
+    
+    <!-- Multi-Step Form -->
+    <div id="ax-form-{{ widget_id }}" class="ax-enrollment-form" style="display: none;">
+      
+      <!-- Progress Steps -->
+      <div class="ax-progress-steps">
+        <div class="ax-step active" data-step="login">
+          <span class="ax-step-indicator">1</span>
+          <span class="ax-step-label">Login</span>
+        </div>
+        <div class="ax-step" data-step="background">
+          <span class="ax-step-indicator">2</span>
+          <span class="ax-step-label">Background</span>
+        </div>
+        <div class="ax-step" data-step="personal">
+          <span class="ax-step-indicator">3</span>
+          <span class="ax-step-label">Personal</span>
+        </div>
+        <div class="ax-step" data-step="contact">
+          <span class="ax-step-indicator">4</span>
+          <span class="ax-step-label">Contact</span>
+        </div>
+      </div>
+      
+      <!-- STEP 1: LOGIN -->
+      <div id="ax-step-login-{{ widget_id }}" class="ax-step-content" data-step="login">
+        <!-- Social Login Options -->
+        <div class="ax-social-login">
+          <button type="button" class="ax-social-btn ax-google-btn">
+            <svg class="ax-icon" viewBox="0 0 24 24" width="20" height="20">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Continue with Google
+          </button>
+          
+          <button type="button" class="ax-social-btn ax-axcelerate-btn">
+            <svg class="ax-icon" viewBox="0 0 24 24" width="20" height="20">
+              <path fill="currentColor" d="M13 3l-1.41 1.41L17.17 10H3v2h14.17l-5.58 5.59L13 19l8-8z"/>
+            </svg>
+            Continue with aXcelerate
+          </button>
+          
+          <p class="ax-login-powered">
+            Login Powered by <a href="https://www.axcelerate.com" target="_blank">aXcelerate Student Management System</a>
+          </p>
+        </div>
+        
+        <div class="ax-divider">
+          <span>Or continue with your name and email</span>
+        </div>
+        
+        <!-- Manual Entry Form -->
+        <form id="ax-manual-form-{{ widget_id }}" class="ax-manual-form">
+          <div class="ax-form-group">
+            <label for="ax-given-name-{{ widget_id }}">
+              Given Name:<span class="ax-required">*</span>
+            </label>
+            <input 
+              type="text" 
+              id="ax-given-name-{{ widget_id }}"
+              name="givenName"
+              class="ax-input"
+              required
+            />
+          </div>
+          
+          <div class="ax-form-group">
+            <label for="ax-family-name-{{ widget_id }}">
+              Family Name:<span class="ax-required">*</span>
+            </label>
+            <input 
+              type="text" 
+              id="ax-family-name-{{ widget_id }}"
+              name="familyName"
+              class="ax-input"
+              required
+            />
+          </div>
+          
+          <div class="ax-form-group">
+            <label for="ax-email-{{ widget_id }}">
+              Email:<span class="ax-required">*</span>
+            </label>
+            <input 
+              type="email" 
+              id="ax-email-{{ widget_id }}"
+              name="email"
+              class="ax-input"
+              required
+            />
+          </div>
+          
+          <button type="submit" class="ax-create-btn">
+            <span>CREATE</span>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M8 3V13M3 8H13" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </form>
+      </div>
+      
+      <!-- STEP 2: BACKGROUND QUESTIONS -->
+      <div id="ax-step-background-{{ widget_id }}" class="ax-step-content" data-step="background" style="display: none;">
+        <form id="ax-background-form-{{ widget_id }}" class="ax-background-form">
+          
+          <!-- USI -->
+          <div class="ax-form-group">
+            <label>
+              Have you obtained your USI?<span class="ax-required">*</span>
+            </label>
+            <select name="CUSTOMFIELD_OBTAINUSI" class="ax-input" required>
+              <option value="">Select...</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+            <p class="ax-help-text" style="display: none;">
+              Please refer to <a href="https://www.usi.gov.au" target="_blank">https://www.usi.gov.au</a>. 
+              Every student must provide their USI before commencing.
+            </p>
+          </div>
+          
+          <!-- Previous Study -->
+          <div class="ax-form-group">
+            <label>
+              Have you undertaken this type of study before?<span class="ax-required">*</span>
+            </label>
+            <select name="CUSTOMFIELD_PREVIOUSSTUDY" class="ax-input" required>
+              <option value="">Select...</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          
+          <!-- Study Outcome -->
+          <div class="ax-form-group">
+            <label>
+              Did you achieve a successful outcome?<span class="ax-required">*</span>
+            </label>
+            <select name="CUSTOMFIELD_STUDYOUTCOME" class="ax-input" required>
+              <option value="">Select...</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          
+          <!-- Dedicate Time -->
+          <div class="ax-form-group">
+            <label>
+              Can you dedicate time to pre-reading and study?<span class="ax-required">*</span>
+            </label>
+            <select name="CUSTOMFIELD_DEDICATETIME" class="ax-input" required>
+              <option value="">Select...</option>
+              <option value="Confirm">Confirm</option>
+              <option value="Deny">Deny</option>
+            </select>
+          </div>
+          
+          <!-- Deadlines -->
+          <div class="ax-form-group">
+            <label>
+              Are you comfortable meeting deadlines?<span class="ax-required">*</span>
+            </label>
+            <select name="CUSTOMFIELD_DEADLINES" class="ax-input" required>
+              <option value="">Select...</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          
+          <!-- Work/Life/Study Balance -->
+          <div class="ax-form-group">
+            <label>
+              Have you discussed this with family/employer?<span class="ax-required">*</span>
+            </label>
+            <select name="CUSTOMFIELD_WORKLIFESTUDY" class="ax-input" required>
+              <option value="">Select...</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          
+          <!-- Internet Access -->
+          <div class="ax-form-group">
+            <label>
+              Do you have reliable Internet access?<span class="ax-required">*</span>
+            </label>
+            <select name="CUSTOMFIELD_INTERNETACCESS" class="ax-input" required>
+              <option value="">Select...</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          
+          <!-- Standing Periods -->
+          <div class="ax-form-group">
+            <label>
+              Aware of standing for long periods?<span class="ax-required">*</span>
+            </label>
+            <select name="CUSTOMFIELD_STANDINGPERIODS" class="ax-input" required>
+              <option value="">Select...</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          
+          <!-- Multi-tasking -->
+          <div class="ax-form-group">
+            <label>
+              Aware of multi-tasking requirements?
+            </label>
+            <select name="CUSTOMFIELD_MULTITASKING" class="ax-input">
+              <option value="">Select...</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          
+          <!-- Language/Numeracy -->
+          <div class="ax-form-group">
+            <label>
+              Any language/literacy/numeracy concerns?<span class="ax-required">*</span>
+            </label>
+            <select name="CUSTOMFIELD_LANGUAGENUMERACY" class="ax-input" required>
+              <option value="">Select...</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+            <p class="ax-help-text" style="display: none;">
+              A BMT representative will discuss this with you.
+            </p>
+          </div>
+          
+          <!-- English Rating -->
+          <div class="ax-form-group">
+            <label>
+              Rate your spoken English (1=Poor, 5=Excellent)<span class="ax-required">*</span>
+            </label>
+            <select name="CUSTOMFIELD_SPEAKENGLISH" class="ax-input" required>
+              <option value="">Select...</option>
+              <option value="1">1 - Poor</option>
+              <option value="2">2</option>
+              <option value="3">3 - Average</option>
+              <option value="4">4</option>
+              <option value="5">5 - Excellent</option>
+            </select>
+          </div>
+          
+          <!-- Computer Skills -->
+          <div class="ax-form-group">
+            <label>
+              Rate your computer skills (1=Poor, 5=Excellent)<span class="ax-required">*</span>
+            </label>
+            <select name="CUSTOMFIELD_COMPUTERSKILLS" class="ax-input" required>
+              <option value="">Select...</option>
+              <option value="1">1 - Poor</option>
+              <option value="2">2</option>
+              <option value="3">3 - Average</option>
+              <option value="4">4</option>
+              <option value="5">5 - Excellent</option>
+            </select>
+          </div>
+          
+          <!-- Medical Issues -->
+          <div class="ax-form-group">
+            <label>
+              Any medical/physical conditions we should know about?<span class="ax-required">*</span>
+            </label>
+            <select name="CUSTOMFIELD_MEDICALISSUES" class="ax-input" required>
+              <option value="">Select...</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+            <p class="ax-help-text" style="display: none;">
+              A BMT representative will discuss this with you.
+            </p>
+          </div>
+          
+          <div class="ax-button-group">
+            <button type="button" class="ax-btn-secondary ax-btn-back">Back</button>
+            <button type="submit" class="ax-btn-primary">Continue</button>
+          </div>
+        </form>
+      </div>
+      
+      <!-- STEP 3: PERSONAL DETAILS (Placeholder for now) -->
+      <div id="ax-step-personal-{{ widget_id }}" class="ax-step-content" data-step="personal" style="display: none;">
+        <p>Personal details step coming soon...</p>
+        <div class="ax-button-group">
+          <button type="button" class="ax-btn-secondary ax-btn-back">Back</button>
+          <button type="button" class="ax-btn-primary ax-btn-next">Continue</button>
+        </div>
+      </div>
+      
+      <!-- STEP 4: CONTACT DETAILS (Placeholder for now) -->
+      <div id="ax-step-contact-{{ widget_id }}" class="ax-step-content" data-step="contact" style="display: none;">
+        <p>Contact details step coming soon...</p>
+        <div class="ax-button-group">
+          <button type="button" class="ax-btn-secondary ax-btn-back">Back</button>
+          <button type="button" class="ax-btn-primary">Submit Enrollment</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Success State -->
+    <div id="ax-success-{{ widget_id }}" class="ax-success-state" style="display: none;">
+      <div class="ax-success-icon">✓</div>
+      <h3>Enrollment Submitted Successfully!</h3>
+      <p class="ax-success-message"></p>
+    </div>
+  </div>
+  
+  <!-- Existing Record Modal -->
+  <div id="ax-existing-record-modal-{{ widget_id }}" class="ax-modal" style="display: none;">
+    <div class="ax-modal-overlay"></div>
+    <div class="ax-modal-content">
+      <button class="ax-modal-close">&times;</button>
+      <h3>Existing Record Found</h3>
+      <div class="ax-modal-body">
+        <p>An existing record has been found.</p>
+        <p>An email has been dispatched to <strong id="ax-modal-email"></strong> to verify your identity and allow you to continue enrolling.</p>
+      </div>
+      <div class="ax-modal-actions">
+        <button class="ax-btn-primary ax-modal-ok">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Base Styles */
+  .ax-enrollment-widget {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  .ax-widget-container {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    padding: 40px;
+  }
+  
+  .ax-widget-title {
+    font-size: 32px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  
+  /* Progress Steps */
+  .ax-progress-steps {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    padding: 0 20px;
+  }
+  
+  .ax-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+    color: #ccc;
+  }
+  
+  .ax-step::after {
+    content: '';
+    position: absolute;
+    top: 15px;
+    left: 60%;
+    right: -50%;
+    height: 2px;
+    background: #e0e0e0;
+    z-index: -1;
+  }
+  
+  .ax-step:last-child::after {
+    display: none;
+  }
+  
+  .ax-step.active {
+    color: #2196F3;
+  }
+  
+  .ax-step.completed {
+    color: #4CAF50;
+  }
+  
+  .ax-step-indicator {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    margin-bottom: 8px;
+    font-weight: bold;
+  }
+  
+  .ax-step.completed .ax-step-indicator::before {
+    content: '✓';
+  }
+  
+  .ax-step-label {
+    font-size: 12px;
+    text-align: center;
+  }
+  
+  /* Loading/Error States */
+  .ax-loading-state,
+  .ax-error-state {
+    text-align: center;
+    padding: 60px 20px;
+  }
+  
+  .ax-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #2196F3;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  /* Social Login */
+  .ax-social-login {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 30px;
+  }
+  
+  .ax-social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  
+  .ax-social-btn:hover {
+    background: #f5f5f5;
+    border-color: #999;
+  }
+  
+  .ax-login-powered {
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+    margin-top: 10px;
+  }
+  
+  /* Divider */
+  .ax-divider {
+    text-align: center;
+    position: relative;
+    margin: 30px 0;
+  }
+  
+  .ax-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #ddd;
+  }
+  
+  .ax-divider span {
+    position: relative;
+    background: white;
+    padding: 0 20px;
+    color: #666;
+    font-size: 14px;
+  }
+  
+  /* Form Styles */
+  .ax-form-group {
+    margin-bottom: 20px;
+  }
+  
+  .ax-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #333;
+  }
+  
+  .ax-required {
+    color: #f44336;
+  }
+  
+  .ax-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  
+  .ax-input:focus {
+    outline: none;
+    border-color: #2196F3;
+  }
+  
+  .ax-help-text {
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+  }
+  
+  /* Buttons */
+  .ax-create-btn,
+  .ax-btn-primary {
+    background: #000;
+    color: white;
+    border: none;
+    padding: 14px 30px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: background 0.2s;
+  }
+  
+  .ax-create-btn:hover,
+  .ax-btn-primary:hover {
+    background: #333;
+  }
+  
+  .ax-btn-secondary {
+    background: #fff;
+    color: #333;
+    border: 1px solid #ddd;
+    padding: 14px 30px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  
+  .ax-button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 30px;
+  }
+  
+  /* Modal */
+  .ax-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+  }
+  
+  .ax-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+  }
+  
+  .ax-modal-content {
+    position: relative;
+    background: white;
+    max-width: 500px;
+    margin: 100px auto;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  
+  .ax-modal-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+  }
+  
+  .ax-modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+  }
+  
+  .ax-modal-body p {
+    margin-bottom: 15px;
+    line-height: 1.6;
+  }
+  
+  .ax-modal-actions {
+    margin-top: 30px;
+    text-align: right;
+  }
+  
+  /* Success State */
+  .ax-success-state {
+    text-align: center;
+    padding: 60px 20px;
+  }
+  
+  .ax-success-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #4CAF50;
+    color: white;
+    font-size: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .ax-widget-container {
+      padding: 20px;
+    }
+    
+    .ax-progress-steps {
+      flex-wrap: wrap;
+    }
+  }
+</style>
+
+<script>
+(function() {
+  'use strict';
+  
+  // ⚠️ UPDATE THIS TO YOUR RENDER APP URL
+  const RENDER_APP_URL = 'https://blackmarkettraining.onrender.com';
+  
+  const widgetId = '{{ widget_id }}';
+  const widget = document.getElementById('ax-enrol-widget-' + widgetId);
+  
+  if (!widget) return;
+  
+  const courseId = widget.dataset.courseId;
+  const courseType = widget.dataset.courseType;
+  const instanceId = widget.dataset.instanceId;
+  
+  const elements = {
+    loading: document.getElementById('ax-loading-' + widgetId),
+    error: document.getElementById('ax-error-' + widgetId),
+    form: document.getElementById('ax-form-' + widgetId),
+    success: document.getElementById('ax-success-' + widgetId),
+    stepLogin: document.getElementById('ax-step-login-' + widgetId),
+    stepBackground: document.getElementById('ax-step-background-' + widgetId),
+    stepPersonal: document.getElementById('ax-step-personal-' + widgetId),
+    stepContact: document.getElementById('ax-step-contact-' + widgetId),
+    modal: document.getElementById('ax-existing-record-modal-' + widgetId)
+  };
+  
+  let currentStep = 'login';
+  let authToken = null;
+  let contactId = null;
+  
+  // Initialize
+  function init() {
+    checkOAuthReturn();
+    
+    setTimeout(() => {
+      elements.loading.style.display = 'none';
+      elements.form.style.display = 'block';
+      showStep('login');
+    }, 500);
+    
+    setupEventListeners();
+  }
+  
+  function setupEventListeners() {
+    // Social login buttons
+    const googleBtn = widget.querySelector('.ax-google-btn');
+    const axcelerateBtn = widget.querySelector('.ax-axcelerate-btn');
+    
+    if (googleBtn) {
+      googleBtn.addEventListener('click', () => handleOAuthLogin('google'));
+    }
+    if (axcelerateBtn) {
+      axcelerateBtn.addEventListener('click', () => handleOAuthLogin('axcelerate'));
+    }
+    
+    // Manual form
+    const manualForm = document.getElementById('ax-manual-form-' + widgetId);
+    if (manualForm) {
+      manualForm.addEventListener('submit', handleManualFormSubmit);
+    }
+    
+    // Background form
+    const backgroundForm = document.getElementById('ax-background-form-' + widgetId);
+    if (backgroundForm) {
+      backgroundForm.addEventListener('submit', handleBackgroundFormSubmit);
+    }
+    
+    // Back buttons
+    widget.querySelectorAll('.ax-btn-back').forEach(btn => {
+      btn.addEventListener('click', handleBack);
+    });
+    
+    // Modal close
+    const modalClose = elements.modal.querySelector('.ax-modal-close');
+    const modalOk = elements.modal.querySelector('.ax-modal-ok');
+    if (modalClose) modalClose.addEventListener('click', closeModal);
+    if (modalOk) modalOk.addEventListener('click', closeModal);
+  }
+  
+  // OAuth Login
+  function handleOAuthLogin(provider) {
+    const authUrl = `${RENDER_APP_URL}/api/auth/${provider}/login`;
+    const params = new URLSearchParams({
+      instanceId: instanceId,
+      courseId: courseId,
+      courseType: courseType,
+      redirectUrl: window.location.href
+    });
+    
+    window.location.href = `${authUrl}?${params}`;
+  }
+  
+  // Check OAuth return
+  function checkOAuthReturn() {
+    const urlParams = new URLSearchParams(window.location.search);
+    authToken = urlParams.get('auth_token');
+    contactId = urlParams.get('contact_id');
+    const authError = urlParams.get('auth_error');
+    
+    if (authError) {
+      showError('Authentication failed: ' + authError);
+      cleanUrl();
+      return;
+    }
+    
+    if (authToken && contactId) {
+      console.log('OAuth successful, showing background step');
+      cleanUrl();
+      showStep('background');
+    }
+  }
+  
+  // Manual form submission - Check for existing record
+  async function handleManualFormSubmit(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const email = formData.get('email');
+    const givenName = formData.get('givenName');
+    const familyName = formData.get('familyName');
+    
+    try {
+      elements.form.style.display = 'none';
+      elements.loading.style.display = 'block';
+      
+      // Check if contact exists
+      const response = await fetch(`${RENDER_APP_URL}/api/axcelerate/contact/search?email=${encodeURIComponent(email)}`);
+      
+      if (response.ok) {
+        const contacts = await response.json();
+        
+        if (contacts && contacts.length > 0) {
+          // Existing record found - show modal
+          showExistingRecordModal(email);
+          elements.loading.style.display = 'none';
+          elements.form.style.display = 'block';
+          return;
+        }
+      }
+      
+      // No existing record - create and proceed
+      const createResponse = await fetch(`${RENDER_APP_URL}/api/enrollment/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          givenName: givenName,
+          surname: familyName,
+          email: email,
+          instanceId: instanceId,
+          courseType: courseType
+        })
+      });
+      
+      const result = await createResponse.json();
+      
+      if (result.success) {
+        contactId = result.data.contactId;
+        showStep('background');
+      } else {
+        throw new Error(result.message);
+      }
+      
+    } catch (error) {
+      console.error('Error:', error);
+      showError(error.message);
+    } finally {
+      elements.loading.style.display = 'none';
+      elements.form.style.display = 'block';
+    }
+  }
+  
+  // Background form submission
+  async function handleBackgroundFormSubmit(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const customFields = {};
+    
+    for (let [key, value] of formData.entries()) {
+      customFields[key] = value;
+    }
+    
+    try {
+      elements.form.style.display = 'none';
+      elements.loading.style.display = 'block';
+      
+      const response = await fetch(`${RENDER_APP_URL}/api/enrollment/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contactId: contactId,
+          instanceId: instanceId,
+          courseType: courseType,
+          customFields: customFields
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        showSuccess(result);
+      } else {
+        throw new Error(result.message);
+      }
+      
+    } catch (error) {
+      console.error('Error:', error);
+      showError(error.message);
+    }
+  }
+  
+  // Show step
+  function showStep(step) {
+    currentStep = step;
+    
+    // Hide all steps
+    Object.values(elements).forEach(el => {
+      if (el && el.classList && el.classList.contains('ax-step-content')) {
+        el.style.display = 'none';
+      }
+    });
+    
+    // Show current step
+    const stepElement = document.getElementById('ax-step-' + step + '-' + widgetId);
+    if (stepElement) {
+      stepElement.style.display = 'block';
+    }
+    
+    // Update progress indicators
+    const steps = widget.querySelectorAll('.ax-step');
+    const stepOrder = ['login', 'background', 'personal', 'contact'];
+    const currentIndex = stepOrder.indexOf(step);
+    
+    steps.forEach((stepEl, index) => {
+      stepEl.classList.remove('active', 'completed');
+      if (index < currentIndex) {
+        stepEl.classList.add('completed');
+      } else if (index === currentIndex) {
+        stepEl.classList.add('active');
+      }
+    });
+  }
+  
+  // Handle back button
+  function handleBack() {
+    const stepOrder = ['login', 'background', 'personal', 'contact'];
+    const currentIndex = stepOrder.indexOf(currentStep);
+    if (currentIndex > 0) {
+      showStep(stepOrder[currentIndex - 1]);
+    }
+  }
+  
+  // Show existing record modal
+  function showExistingRecordModal(email) {
+    const emailEl = elements.modal.querySelector('#ax-modal-email');
+    if (emailEl) {
+      const masked = email.substring(0, 1) + '****' + email.substring(email.indexOf('@'));
+      emailEl.textContent = masked;
+    }
+    elements.modal.style.display = 'block';
+  }
+  
+  // Close modal
+  function closeModal() {
+    elements.modal.style.display = 'none';
+  }
+  
+  // Show success
+  function showSuccess(result) {
+    elements.loading.style.display = 'none';
+    elements.form.style.display = 'none';
+    elements.success.style.display = 'block';
+    
+    const messageEl = elements.success.querySelector('.ax-success-message');
+    if (messageEl) {
+      messageEl.textContent = result.message || 'Your enrollment has been submitted!';
+    }
+  }
+  
+  // Show error
+  function showError(message) {
+    elements.loading.style.display = 'none';
+    elements.form.style.display = 'none';
+    elements.error.style.display = 'block';
+    
+    const errorMsgEl = elements.error.querySelector('.ax-error-message');
+    if (errorMsgEl) {
+      errorMsgEl.textContent = message;
+    }
+  }
+  
+  // Clean URL
+  function cleanUrl() {
+    if (window.history && window.history.replaceState) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('auth_token');
+      url.searchParams.delete('contact_id');
+      url.searchParams.delete('auth_error');
+      window.history.replaceState({}, document.title, url.toString());
+    }
+  }
+  
+  // Initialize widget
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
