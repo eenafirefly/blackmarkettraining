@@ -164,30 +164,32 @@
   /* Base Widget Styles */
   .ax-enrollment-widget {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    max-width: 800px;
-    margin: 0 auto;
+    width: 100%;
+    margin: 0;
   }
   
   .ax-widget-container {
     background: #fff;
-    padding: 40px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
   }
   
   .ax-widget-title {
-    font-size: 32px;
+    font-size: 24px;
     font-weight: 700;
     text-align: center;
-    margin-bottom: 10px;
+    margin: 0 0 5px 0;
+    padding: 20px 20px 0 20px;
     color: #333;
   }
   
   .ax-course-title {
-    font-size: 24px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 400;
     text-align: center;
-    margin-bottom: 30px;
+    margin: 0 0 20px 0;
+    padding: 0 20px;
     color: #666;
     line-height: 1.4;
   }
@@ -240,12 +242,13 @@
   .ax-enrollment-form {
     display: flex;
     gap: 0;
-    min-height: 600px;
+    min-height: 700px;
+    border: 1px solid #e0e0e0;
   }
   
   .ax-sidebar {
-    width: 280px;
-    background: #f8f9fa;
+    width: 240px;
+    background: #fafafa;
     border-right: 1px solid #e0e0e0;
     padding: 0;
     flex-shrink: 0;
@@ -253,8 +256,9 @@
   
   .ax-main-content {
     flex: 1;
-    padding: 30px 40px;
+    padding: 40px 60px;
     overflow-y: auto;
+    background: #fff;
   }
   
   /* Sidebar Tabs */
@@ -267,16 +271,18 @@
   .ax-sidebar-tab {
     display: flex;
     align-items: center;
-    padding: 16px 20px;
+    padding: 12px 16px;
     border-left: 4px solid transparent;
-    cursor: pointer;
+    cursor: default;
     transition: all 0.2s;
     background: transparent;
     position: relative;
+    min-height: 48px;
   }
   
-  .ax-sidebar-tab:hover {
-    background: #e8eaed;
+  .ax-sidebar-tab:not(.disabled):not(.locked):hover {
+    background: #f0f0f0;
+    cursor: pointer;
   }
   
   .ax-sidebar-tab.active {
@@ -285,11 +291,12 @@
   }
   
   .ax-sidebar-tab.completed {
-    border-left-color: #4CAF50;
+    border-left-color: transparent;
   }
   
-  .ax-sidebar-tab.disabled {
-    opacity: 0.5;
+  .ax-sidebar-tab.disabled,
+  .ax-sidebar-tab.locked {
+    opacity: 0.7;
     cursor: not-allowed;
     pointer-events: none;
   }
@@ -298,16 +305,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
-    background: #e0e0e0;
+    background: #d0d0d0;
     color: #666;
     font-weight: 600;
-    font-size: 14px;
-    margin-right: 12px;
+    font-size: 13px;
+    margin-right: 10px;
     flex-shrink: 0;
     transition: all 0.2s;
+    position: relative;
   }
   
   .ax-sidebar-tab.active .ax-tab-number {
@@ -322,18 +330,48 @@
   
   .ax-sidebar-tab.completed .ax-tab-number::before {
     content: '✓';
+    font-size: 16px;
+    line-height: 1;
+  }
+  
+  .ax-sidebar-tab.locked .ax-tab-number,
+  .ax-sidebar-tab.disabled .ax-tab-number {
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    color: #999;
+  }
+  
+  /* Exclamation mark for locked/incomplete steps */
+  .ax-tab-status {
+    margin-left: auto;
+    font-size: 18px;
+    font-weight: bold;
+    color: #dc3545;
+  }
+  
+  .ax-sidebar-tab.completed .ax-tab-status {
+    color: #4CAF50;
+  }
+  
+  .ax-sidebar-tab.active .ax-tab-status {
+    display: none;
   }
   
   .ax-tab-label {
-    font-size: 14px;
-    font-weight: 500;
-    color: #333;
+    font-size: 13px;
+    font-weight: 400;
+    color: #555;
     line-height: 1.3;
+    flex: 1;
   }
   
   .ax-sidebar-tab.active .ax-tab-label {
     color: #2196F3;
-    font-weight: 600;
+    font-weight: 500;
+  }
+  
+  .ax-sidebar-tab.completed .ax-tab-label {
+    color: #333;
   }
   
   /* Step Content */
@@ -861,22 +899,28 @@
         }))
     ];
     
-    // Show all steps in sidebar (no limit)
-    sidebarContainer.innerHTML = allSteps.map((step, index) => `
-      <div class="ax-sidebar-tab ${index === 0 ? 'active' : 'disabled'}" 
-           data-step="${step.id}" 
-           data-step-number="${index + 1}">
-        <span class="ax-tab-number">${index + 1}</span>
-        <span class="ax-tab-label">${step.label}</span>
-      </div>
-    `).join('');
+    // Show all steps in sidebar - all locked except login by default
+    sidebarContainer.innerHTML = allSteps.map((step, index) => {
+      const isLogin = index === 0;
+      const isLocked = !isLogin && !contactId; // Lock all except login if not logged in
+      
+      return `
+        <div class="ax-sidebar-tab ${isLogin ? 'active' : 'locked'}" 
+             data-step="${step.id}" 
+             data-step-number="${index + 1}">
+          <span class="ax-tab-number">${index + 1}</span>
+          <span class="ax-tab-label">${step.label}</span>
+          ${!isLogin ? '<span class="ax-tab-status">!</span>' : ''}
+        </div>
+      `;
+    }).join('');
     
     // Add click handlers to tabs
     sidebarContainer.querySelectorAll('.ax-sidebar-tab').forEach(tab => {
       tab.addEventListener('click', (e) => {
         const stepId = tab.dataset.step;
-        // Only allow navigation to completed or active steps
-        if (!tab.classList.contains('disabled')) {
+        // Only allow navigation if not locked or disabled
+        if (!tab.classList.contains('locked') && !tab.classList.contains('disabled')) {
           showStep(stepId);
         }
       });
@@ -1301,6 +1345,9 @@
     if (authToken && contactId) {
       console.log('✅ OAuth successful! Contact ID:', contactId);
       
+      // Unlock all tabs now that user is logged in
+      unlockAllTabs();
+      
       // Get the first dynamic step (background)
       const firstStep = formSteps.find(s => s.id !== 'login');
       if (firstStep) {
@@ -1312,6 +1359,24 @@
     }
     
     return false;
+  }
+  
+  // =========================================================================
+  // Tab Management
+  // =========================================================================
+  
+  function unlockAllTabs() {
+    console.log('🔓 Unlocking all sidebar tabs');
+    const tabs = widget.querySelectorAll('.ax-sidebar-tab');
+    tabs.forEach((tab, index) => {
+      if (index > 0) { // Skip login tab
+        tab.classList.remove('locked');
+        // First step after login becomes available
+        if (index === 1) {
+          tab.classList.remove('disabled');
+        }
+      }
+    });
   }
   
   // =========================================================================
@@ -1375,6 +1440,9 @@
       if (result.success) {
         contactId = result.data.contactId;
         console.log('✅ Contact created:', contactId);
+        
+        // Unlock all tabs now that user is logged in
+        unlockAllTabs();
         
         // Move to first dynamic step
         const firstStep = formSteps.find(s => s.id !== 'login');
@@ -1599,21 +1667,45 @@
     const tabs = widget.querySelectorAll('.ax-sidebar-tab');
     const currentIndex = formSteps.findIndex(s => s.id === stepId);
     
+    // If not logged in, keep all steps except login locked
+    if (!contactId && stepId === 'login') {
+      // User is on login step, keep everything else locked
+      return;
+    }
+    
     tabs.forEach((tab, index) => {
-      tab.classList.remove('active', 'completed', 'disabled');
+      tab.classList.remove('active', 'completed', 'disabled', 'locked');
       
-      if (index < currentIndex) {
+      const statusIcon = tab.querySelector('.ax-tab-status');
+      
+      if (index === 0) {
+        // Login step - always completed after login
+        if (contactId) {
+          tab.classList.add('completed');
+          if (statusIcon) statusIcon.textContent = '✓';
+        }
+      } else if (index < currentIndex) {
         // Previous steps - completed and clickable
         tab.classList.add('completed');
+        if (statusIcon) statusIcon.textContent = '✓';
       } else if (index === currentIndex) {
         // Current step - active and clickable
         tab.classList.add('active');
+        if (statusIcon) statusIcon.style.display = 'none';
       } else if (index === currentIndex + 1) {
         // Next step - enabled (can click to proceed)
-        // No classes needed, just remove disabled
+        // Remove locked class, keep exclamation mark
+        if (statusIcon) {
+          statusIcon.textContent = '!';
+          statusIcon.style.display = 'block';
+        }
       } else {
         // Future steps - disabled
         tab.classList.add('disabled');
+        if (statusIcon) {
+          statusIcon.textContent = '!';
+          statusIcon.style.display = 'block';
+        }
       }
     });
   }
