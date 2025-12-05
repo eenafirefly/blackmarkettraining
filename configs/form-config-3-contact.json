@@ -1,0 +1,104 @@
+{
+  "configId": 3,
+  "configName": "Accredited Enrolment Form - Single - No Payment",
+  "step": "contact",
+  "stepName": "Contact Details",
+  "stepType": "contact-update",
+  "stepOrder": 5,
+  "fields": [
+    {
+      "order": 1,
+      "fieldId": "email",
+      "name": "Email",
+      "type": "email",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "EMAIL",
+      "validation": {
+        "type": "email",
+        "message": "Please enter a valid email address"
+      }
+    },
+    {
+      "order": 2,
+      "fieldId": "alternativeEmail",
+      "name": "Alternative email address",
+      "type": "email",
+      "required": false,
+      "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "ALTERNATIVEEMAIL",
+      "validation": {
+        "type": "email",
+        "message": "Please enter a valid email address"
+      }
+    },
+    {
+      "order": 3,
+      "fieldId": "organisation",
+      "name": "Organisation",
+      "type": "text",
+      "required": false,
+      "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "ORGANISATION"
+    },
+    {
+      "order": 4,
+      "fieldId": "position",
+      "name": "Position",
+      "type": "text",
+      "required": false,
+      "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "POSITION"
+    },
+    {
+      "order": 5,
+      "fieldId": "mobile",
+      "name": "Mobile",
+      "type": "tel",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "MOBILE",
+      "placeholder": "e.g., 0412 345 678",
+      "validation": {
+        "pattern": "^[0-9\\s\\+\\-\\(\\)]+$",
+        "message": "Please enter a valid phone number"
+      }
+    },
+    {
+      "order": 6,
+      "fieldId": "homePhone",
+      "name": "Home Phone",
+      "type": "tel",
+      "required": false,
+      "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "HOMEPHONE",
+      "placeholder": "e.g., (02) 1234 5678",
+      "validation": {
+        "pattern": "^[0-9\\s\\+\\-\\(\\)]+$",
+        "message": "Please enter a valid phone number"
+      }
+    },
+    {
+      "order": 7,
+      "fieldId": "workPhone",
+      "name": "Work Phone",
+      "type": "tel",
+      "required": false,
+      "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "WORKPHONE",
+      "placeholder": "e.g., (02) 1234 5678",
+      "validation": {
+        "pattern": "^[0-9\\s\\+\\-\\(\\)]+$",
+        "message": "Please enter a valid phone number"
+      }
+    }
+  ]
+}
+
