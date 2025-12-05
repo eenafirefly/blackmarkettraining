@@ -829,4 +829,62 @@ router.get('/enrollment-form/:instanceId', async (req, res) => {
   }
 });
 
+/**
+ * Get WordPress plugin form configuration
+ * GET /api/axcelerate/form-config/:configId/:step
+ * 
+ * Serves form configurations exported from WordPress aXcelerate plugin
+ */
+router.get('/form-config/:configId/:step?', async (req, res) => {
+  try {
+    const { configId, step } = req.params;
+    
+    console.log(`Fetching form config ${configId}, step: ${step || 'all'}`);
+    
+    // Import the config file
+    const fs = await import('fs/promises');
+    const path = await import('path');
+    const { fileURLToPath } = await import('url');
+    
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    
+    // Build config file path
+    const configFileName = step 
+      ? `form-config-${configId}-${step}.json`
+      : `form-config-${configId}.json`;
+    
+    const configPath = path.join(__dirname, '..', '..', 'configs', configFileName);
+    
+    // Read config file
+    const configData = await fs.readFile(configPath, 'utf-8');
+    const config = JSON.parse(configData);
+    
+    console.log(`✅ Loaded form config: ${configFileName}`);
+    
+    res.json({
+      success: true,
+      config
+    });
+    
+  } catch (error) {
+    console.error('Error loading form config:', error);
+    
+    // Return empty config if file not found
+    if (error.code === 'ENOENT') {
+      return res.status(404).json({
+        success: false,
+        error: 'Config not found',
+        message: `Form configuration ${req.params.configId}/${req.params.step || 'default'} not found`
+      });
+    }
+    
+    res.status(500).json({
+      success: false,
+      error: 'Failed to load form config',
+      message: error.message
+    });
+  }
+});
+
 export default router;

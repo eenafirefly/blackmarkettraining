@@ -1,0 +1,225 @@
+{
+  "configId": 3,
+  "configName": "Accredited Enrolment Form - Single - No Payment",
+  "step": "background",
+  "stepType": "contact-update",
+  "stepOrder": 2,
+  "fields": [
+    {
+      "order": 1,
+      "fieldId": "usiYesNo",
+      "name": "Have you obtained your USI?",
+      "type": "select",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": true,
+      "options": [
+        { "display": "Yes", "value": "Yes" },
+        { "display": "No", "value": "No" }
+      ],
+      "events": {
+        "usiNo": { "action": "show", "trigger": "change" },
+        "usiYes": { "action": "hide", "trigger": "change" }
+      }
+    },
+    {
+      "order": 2,
+      "fieldId": "usiInfo",
+      "name": "please refer to https://www.usi.gov.au Every student must provide his/her USI to Black Market Training before commencing the course.",
+      "displayName": "please refer to <a href=\"https://www.usi.gov.au\" target=\"_blank\">https://www.usi.gov.au</a> Every student must provide his/her USI to Black Market Training before commencing the course.",
+      "type": "information",
+      "required": false,
+      "hideInitially": "hidden",
+      "fieldType": "information-grouping"
+    },
+    {
+      "order": 3,
+      "fieldId": "previousStudy",
+      "name": "This course requires students to complete pre-reading of key information before attending class and to complete assessment tasks in their own time. Have you undertaken this type of study before?",
+      "type": "select",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": true,
+      "options": [
+        { "display": "Yes", "value": "Yes" },
+        { "display": "No", "value": "No" }
+      ]
+    },
+    {
+      "order": 4,
+      "fieldId": "studyOutcome",
+      "name": "Did you achieve a successful outcome?",
+      "type": "select",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": true,
+      "options": [
+        { "display": "Yes", "value": "Yes" },
+        { "display": "No", "value": "No" }
+      ]
+    },
+    {
+      "order": 5,
+      "fieldId": "dedicateTime",
+      "name": "Please confirm you are able to dedicate your time to pre-reading and study?",
+      "type": "select",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": true,
+      "options": [
+        { "display": "Confirm", "value": "Confirm" },
+        { "display": "Deny", "value": "Deny" }
+      ]
+    },
+    {
+      "order": 6,
+      "fieldId": "deadlines",
+      "name": "Are you comfortable with meeting specific, predetermined deadlines to complete self paced assessment?",
+      "type": "select",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": true,
+      "options": [
+        { "display": "Yes", "value": "Yes" },
+        { "display": "No", "value": "No" }
+      ]
+    },
+    {
+      "order": 7,
+      "fieldId": "workLifeStudy",
+      "name": "To confirm your work/life/study balance will be met, have you discussed commencing this program with your partner, family, employer and others?",
+      "type": "select",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": true,
+      "options": [
+        { "display": "Yes", "value": "Yes" },
+        { "display": "No", "value": "No" }
+      ]
+    },
+    {
+      "order": 8,
+      "fieldId": "internet",
+      "name": "Do you have access to reliable Internet and email?",
+      "type": "select",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": true,
+      "options": [
+        { "display": "Yes", "value": "Yes" },
+        { "display": "No", "value": "No" }
+      ]
+    },
+    {
+      "order": 9,
+      "fieldId": "standing",
+      "name": "Are you aware that working in the hospitality industry may require you to stand for long periods of time?",
+      "type": "select",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": true,
+      "options": [
+        { "display": "Yes", "value": "Yes" },
+        { "display": "No", "value": "No" }
+      ]
+    },
+    {
+      "order": 10,
+      "fieldId": "multiTask",
+      "name": "Are you aware that working in espresso coffee service may require you to multi-task and work in a 'time pressure' environment?",
+      "type": "select",
+      "required": false,
+      "dataField": true,
+      "syncToCustomField": true,
+      "options": [
+        { "display": "Yes", "value": "Yes" },
+        { "display": "No", "value": "No" }
+      ]
+    },
+    {
+      "order": 11,
+      "fieldId": "llnDiscuss",
+      "name": "Would you like to discuss any language, literacy or numeracy concerns you may have",
+      "type": "select",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": true,
+      "options": [
+        { "display": "Yes", "value": "Yes" },
+        { "display": "No", "value": "No" }
+      ],
+      "events": {
+        "LLNDiscussNo": { "action": "hide", "trigger": "change" },
+        "LLNDiscussYes": { "action": "show", "trigger": "change" }
+      }
+    },
+    {
+      "order": 12,
+      "fieldId": "llnDiscussInfo",
+      "name": "Black Market Training representative will have this conversation with you.",
+      "type": "information",
+      "required": false,
+      "hideInitially": "hidden",
+      "fieldType": "information-grouping"
+    },
+    {
+      "order": 13,
+      "fieldId": "spokenEnglish",
+      "name": "How do you rate your spoken English? (1 = Poor, 5 = Excellent)",
+      "type": "select",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": true,
+      "options": [
+        { "display": "1", "value": "1" },
+        { "display": "2", "value": "2" },
+        { "display": "3", "value": "3" },
+        { "display": "4", "value": "4" },
+        { "display": "5", "value": "5" }
+      ]
+    },
+    {
+      "order": 14,
+      "fieldId": "computerSkills",
+      "name": "How do you rate your computer skills? (1 = Poor, 5 = Excellent)",
+      "type": "select",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": true,
+      "options": [
+        { "display": "1", "value": "1" },
+        { "display": "2", "value": "2" },
+        { "display": "3", "value": "3" },
+        { "display": "4", "value": "4" },
+        { "display": "5", "value": "5" }
+      ]
+    },
+    {
+      "order": 15,
+      "fieldId": "medicalNotice",
+      "name": "Do you have any medical or physical conditions we need to be aware of?",
+      "type": "select",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": true,
+      "options": [
+        { "display": "Yes", "value": "Yes" },
+        { "display": "No", "value": "No" }
+      ],
+      "events": {
+        "medicalNo": { "action": "hide", "trigger": "change" },
+        "medicalYes": { "action": "show", "trigger": "change" }
+      }
+    },
+    {
+      "order": 16,
+      "fieldId": "medicalNoticeInfo",
+      "name": "Black Market Training representative will have this conversation with you.",
+      "type": "information",
+      "required": false,
+      "hideInitially": "hidden",
+      "fieldType": "information-grouping"
+    }
+  ]
+}
+
