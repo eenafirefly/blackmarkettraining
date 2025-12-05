@@ -643,4 +643,190 @@ router.get('/contact/search', async (req, res) => {
   }
 });
 
+/**
+ * Get enrollment form template for a course instance
+ * GET /api/axcelerate/form-template/:instanceId
+ * 
+ * Fetches the custom form fields for a specific course instance
+ */
+router.get('/form-template/:instanceId', async (req, res) => {
+  try {
+    const { instanceId } = req.params;
+    const { templateID } = req.query;
+    
+    if (!instanceId) {
+      return res.status(400).json({ 
+        error: 'Missing required parameter: instanceId' 
+      });
+    }
+    
+    console.log('Fetching form template for instance:', instanceId, 'with template:', templateID);
+    
+    // Build the request to aXcelerate
+    const requestBody = {
+      instanceID: instanceId
+    };
+    
+    // Add templateID if provided
+    if (templateID) {
+      requestBody.templateID = templateID;
+    }
+    
+    const formDataString = Object.keys(requestBody)
+      .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(String(requestBody[key]))}`)
+      .join('&');
+    
+    // Fetch form template from aXcelerate
+    const response = await fetch(
+      `${process.env.AXCELERATE_API_URL}/course/enrolment/form`,
+      {
+        method: 'POST',
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formDataString
+      }
+    );
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`aXcelerate form template API error: ${response.status}`, errorText);
+      
+      // Return a default/fallback form structure if API fails
+      return res.json({
+        success: false,
+        error: 'Failed to fetch form template',
+        message: errorText,
+        fallback: true,
+        fields: [] // Empty fields array for fallback
+      });
+    }
+    
+    const formData = await response.json();
+    console.log('Form template fetched successfully');
+    console.log('Form fields:', formData);
+    
+    res.json({
+      success: true,
+      instanceId,
+      templateId: templateID,
+      formData
+    });
+    
+  } catch (error) {
+    console.error('Error fetching form template:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch form template',
+      message: error.message,
+      fallback: true,
+      fields: []
+    });
+  }
+});
+
+/**
+ * Get enrollment form template with course details
+ * GET /api/axcelerate/enrollment-form/:instanceId
+ * 
+ * Fetches both course details and form template in one call
+ */
+router.get('/enrollment-form/:instanceId', async (req, res) => {
+  try {
+    const { instanceId } = req.params;
+    const { templateID, type } = req.query;
+    const courseType = type || 'w';
+    
+    console.log(`Fetching enrollment form for instance ${instanceId}, type: ${courseType}, template: ${templateID || 'default'}`);
+    
+    // Fetch course details
+    const courseResponse = await searchCourseInstances({ 
+      course_type: courseType 
+    });
+    
+    const course = Array.isArray(courseResponse) 
+      ? courseResponse.find(c => String(c.INSTANCEID) === String(instanceId))
+      : null;
+    
+    if (!course) {
+      return res.status(404).json({ 
+        error: 'Course not found',
+        message: `No course found with instance ID ${instanceId}`
+      });
+    }
+    
+    // Build form request
+    const requestBody = {
+      instanceID: instanceId
+    };
+    
+    if (templateID) {
+      requestBody.templateID = templateID;
+    }
+    
+    const formDataString = Object.keys(requestBody)
+      .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(String(requestBody[key]))}`)
+      .join('&');
+    
+    // Fetch form template
+    let formFields = [];
+    let formError = null;
+    
+    try {
+      const formResponse = await fetch(
+        `${process.env.AXCELERATE_API_URL}/course/enrolment/form`,
+        {
+          method: 'POST',
+          headers: {
+            'APIToken': process.env.AXCELERATE_API_TOKEN,
+            'WSToken': process.env.AXCELERATE_WS_TOKEN,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: formDataString
+        }
+      );
+      
+      if (formResponse.ok) {
+        const formData = await formResponse.json();
+        formFields = formData.fields || formData || [];
+      } else {
+        const errorText = await formResponse.text();
+        formError = `Form API error: ${formResponse.status} - ${errorText}`;
+        console.warn(formError);
+      }
+    } catch (error) {
+      formError = error.message;
+      console.warn('Failed to fetch form fields:', error.message);
+    }
+    
+    // Return combined data
+    res.json({
+      success: true,
+      course: {
+        instanceId: course.INSTANCEID,
+        name: course.NAME || course.COURSENAME,
+        code: course.COURSECODE,
+        type: courseType,
+        startDate: course.STARTDATE,
+        endDate: course.ENDDATE,
+        location: course.LOCATION,
+        cost: course.COST
+      },
+      form: {
+        templateId: templateID,
+        fields: formFields,
+        error: formError
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error fetching enrollment form:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch enrollment form',
+      message: error.message 
+    });
+  }
+});
+
 export default router;

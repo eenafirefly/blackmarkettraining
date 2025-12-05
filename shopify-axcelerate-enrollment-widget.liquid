@@ -574,6 +574,54 @@
     border-color: #2196F3;
   }
   
+  /* Radio buttons */
+  .ax-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 8px;
+  }
+  
+  .ax-radio-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background 0.2s;
+  }
+  
+  .ax-radio-label:hover {
+    background: #f5f5f5;
+  }
+  
+  .ax-radio {
+    margin-right: 10px;
+    cursor: pointer;
+  }
+  
+  /* Checkboxes */
+  .ax-checkbox {
+    width: auto;
+    margin-right: 10px;
+    cursor: pointer;
+  }
+  
+  /* Textarea */
+  .ax-input[type="textarea"],
+  textarea.ax-input {
+    min-height: 80px;
+    resize: vertical;
+    font-family: inherit;
+  }
+  
+  /* Dynamic fields container */
+  .ax-dynamic-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
   .ax-help-text {
     font-size: 12px;
     color: #666;
@@ -786,7 +834,7 @@
     setupEventListeners();
   }
   
-  // Fetch course details
+  // Fetch course details and form template
   async function fetchCourseDetails() {
     if (!instanceId) {
       console.log('No instance ID, skipping course fetch');
@@ -794,28 +842,251 @@
     }
     
     try {
-      console.log('Fetching course details for instance:', instanceId);
+      console.log('Fetching enrollment form for instance:', instanceId);
       
-      const response = await fetch(
-        `${RENDER_APP_URL}/api/axcelerate/courses/${instanceId}?type=${courseType || 'w'}`
-      );
+      // Get URL parameter for template ID if provided
+      const urlParams = new URLSearchParams(window.location.search);
+      const templateID = urlParams.get('template_id') || urlParams.get('templateID');
+      
+      let url = `${RENDER_APP_URL}/api/axcelerate/enrollment-form/${instanceId}?type=${courseType || 'w'}`;
+      if (templateID) {
+        url += `&templateID=${templateID}`;
+      }
+      
+      const response = await fetch(url);
       
       if (response.ok) {
-        const course = await response.json();
-        courseName = course.NAME || course.COURSENAME || 'Course';
+        const data = await response.json();
         
-        if (elements.courseTitle) {
-          elements.courseTitle.textContent = courseName;
-          elements.courseTitle.style.display = 'block';
+        // Set course name
+        if (data.course) {
+          courseName = data.course.name || 'Course';
+          if (elements.courseTitle) {
+            elements.courseTitle.textContent = courseName;
+            elements.courseTitle.style.display = 'block';
+          }
+          console.log('Course loaded:', courseName);
         }
         
-        console.log('Course loaded:', courseName);
+        // Render dynamic form fields if available
+        if (data.form && data.form.fields && data.form.fields.length > 0) {
+          console.log('Rendering dynamic form with', data.form.fields.length, 'fields');
+          renderDynamicFormFields(data.form.fields);
+        } else {
+          console.log('No dynamic form fields, using static form');
+          if (data.form && data.form.error) {
+            console.warn('Form template error:', data.form.error);
+          }
+        }
       } else {
-        console.warn('Failed to fetch course details:', response.status);
+        console.warn('Failed to fetch enrollment form:', response.status);
       }
     } catch (error) {
-      console.error('Error fetching course:', error);
+      console.error('Error fetching enrollment form:', error);
     }
+  }
+  
+  // Render dynamic form fields from aXcelerate template
+  function renderDynamicFormFields(fields) {
+    const backgroundForm = document.getElementById('ax-background-form-' + widgetId);
+    if (!backgroundForm) {
+      console.error('Background form not found');
+      return;
+    }
+    
+    // Find the container for fields (before the button group)
+    const buttonGroup = backgroundForm.querySelector('.ax-button-group');
+    if (!buttonGroup) {
+      console.error('Button group not found in form');
+      return;
+    }
+    
+    // Create a container for dynamic fields
+    let dynamicContainer = backgroundForm.querySelector('.ax-dynamic-fields');
+    if (!dynamicContainer) {
+      dynamicContainer = document.createElement('div');
+      dynamicContainer.className = 'ax-dynamic-fields';
+      backgroundForm.insertBefore(dynamicContainer, buttonGroup);
+    }
+    
+    // Clear existing dynamic fields
+    dynamicContainer.innerHTML = '';
+    
+    // Hide static fields (keep them as fallback but hidden)
+    const staticFields = backgroundForm.querySelectorAll('.ax-form-group:not(.ax-button-group)');
+    staticFields.forEach(field => {
+      if (!field.closest('.ax-dynamic-fields')) {
+        field.style.display = 'none';
+      }
+    });
+    
+    console.log('Rendering', fields.length, 'dynamic form fields');
+    
+    // Render each field from the template
+    fields.forEach((field, index) => {
+      const fieldElement = createFormField(field, index);
+      if (fieldElement) {
+        dynamicContainer.appendChild(fieldElement);
+      }
+    });
+  }
+  
+  // Create a form field element from aXcelerate field definition
+  function createFormField(field, index) {
+    const fieldGroup = document.createElement('div');
+    fieldGroup.className = 'ax-form-group';
+    
+    // Get field properties
+    const fieldName = field.name || field.fieldName || `field_${index}`;
+    const fieldLabel = field.label || field.displayName || fieldName;
+    const fieldType = field.type || field.fieldType || 'text';
+    const isRequired = field.required || field.mandatory || false;
+    const helpText = field.helpText || field.description || '';
+    const options = field.options || field.values || [];
+    
+    // Create label
+    const label = document.createElement('label');
+    label.textContent = fieldLabel;
+    if (isRequired) {
+      const required = document.createElement('span');
+      required.className = 'ax-required';
+      required.textContent = '*';
+      label.appendChild(required);
+    }
+    fieldGroup.appendChild(label);
+    
+    // Create input based on field type
+    let input;
+    
+    switch (fieldType.toLowerCase()) {
+      case 'select':
+      case 'dropdown':
+      case 'list':
+        input = document.createElement('select');
+        input.className = 'ax-input';
+        
+        // Add default option
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Select...';
+        input.appendChild(defaultOption);
+        
+        // Add options
+        options.forEach(opt => {
+          const option = document.createElement('option');
+          option.value = typeof opt === 'string' ? opt : (opt.value || opt.id);
+          option.textContent = typeof opt === 'string' ? opt : (opt.label || opt.name || opt.value);
+          input.appendChild(option);
+        });
+        break;
+        
+      case 'textarea':
+      case 'multiline':
+        input = document.createElement('textarea');
+        input.className = 'ax-input';
+        input.rows = field.rows || 4;
+        break;
+        
+      case 'checkbox':
+      case 'bool':
+      case 'boolean':
+        input = document.createElement('input');
+        input.type = 'checkbox';
+        input.className = 'ax-checkbox';
+        break;
+        
+      case 'radio':
+        // Create radio group
+        const radioGroup = document.createElement('div');
+        radioGroup.className = 'ax-radio-group';
+        
+        options.forEach((opt, i) => {
+          const radioWrapper = document.createElement('label');
+          radioWrapper.className = 'ax-radio-label';
+          
+          const radio = document.createElement('input');
+          radio.type = 'radio';
+          radio.name = fieldName;
+          radio.value = typeof opt === 'string' ? opt : (opt.value || opt.id);
+          radio.className = 'ax-radio';
+          if (isRequired) radio.required = true;
+          
+          const span = document.createElement('span');
+          span.textContent = typeof opt === 'string' ? opt : (opt.label || opt.name || opt.value);
+          
+          radioWrapper.appendChild(radio);
+          radioWrapper.appendChild(span);
+          radioGroup.appendChild(radioWrapper);
+        });
+        
+        fieldGroup.appendChild(radioGroup);
+        
+        // Add help text if present
+        if (helpText) {
+          const help = document.createElement('p');
+          help.className = 'ax-help-text';
+          help.textContent = helpText;
+          fieldGroup.appendChild(help);
+        }
+        
+        return fieldGroup;
+        
+      case 'date':
+        input = document.createElement('input');
+        input.type = 'date';
+        input.className = 'ax-input';
+        break;
+        
+      case 'number':
+      case 'integer':
+        input = document.createElement('input');
+        input.type = 'number';
+        input.className = 'ax-input';
+        if (field.min !== undefined) input.min = field.min;
+        if (field.max !== undefined) input.max = field.max;
+        break;
+        
+      case 'email':
+        input = document.createElement('input');
+        input.type = 'email';
+        input.className = 'ax-input';
+        break;
+        
+      case 'tel':
+      case 'phone':
+        input = document.createElement('input');
+        input.type = 'tel';
+        input.className = 'ax-input';
+        break;
+        
+      default:
+        input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'ax-input';
+    }
+    
+    if (input) {
+      input.name = fieldName;
+      input.id = `ax-field-${fieldName}-${widgetId}`;
+      if (isRequired && fieldType.toLowerCase() !== 'radio') {
+        input.required = true;
+      }
+      if (field.placeholder) {
+        input.placeholder = field.placeholder;
+      }
+      
+      fieldGroup.appendChild(input);
+      
+      // Add help text if present
+      if (helpText) {
+        const help = document.createElement('p');
+        help.className = 'ax-help-text';
+        help.textContent = helpText;
+        fieldGroup.appendChild(help);
+      }
+    }
+    
+    return fieldGroup;
   }
   
   function setupEventListeners() {
