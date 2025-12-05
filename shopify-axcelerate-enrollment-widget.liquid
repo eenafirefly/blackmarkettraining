@@ -754,12 +754,17 @@
   
   // Initialize
   function init() {
-    checkOAuthReturn();
+    // Check if user is returning from OAuth
+    const hasOAuthReturn = checkOAuthReturn();
     
     setTimeout(() => {
       elements.loading.style.display = 'none';
       elements.form.style.display = 'block';
-      showStep('login');
+      
+      // Only show login step if OAuth didn't succeed
+      if (!hasOAuthReturn) {
+        showStep('login');
+      }
     }, 500);
     
     setupEventListeners();
@@ -832,17 +837,25 @@
     contactId = urlParams.get('contact_id');
     const authError = urlParams.get('auth_error');
     
+    console.log('Checking OAuth return:', { authToken: !!authToken, contactId, authError });
+    
     if (authError) {
       showError('Authentication failed: ' + authError);
       cleanUrl();
-      return;
+      return false;
     }
     
     if (authToken && contactId) {
-      console.log('OAuth successful, showing background step');
-      cleanUrl();
+      console.log('✅ OAuth successful! Auth token:', authToken, 'Contact ID:', contactId);
+      console.log('Showing background step...');
       showStep('background');
+      // Clean URL after a short delay to ensure step is shown
+      setTimeout(() => cleanUrl(), 100);
+      return true; // OAuth was successful
     }
+    
+    console.log('No OAuth return detected, will show login step');
+    return false; // No OAuth return
   }
   
   // Manual form submission - Check for existing record
