@@ -1,0 +1,80 @@
+{
+  "configId": 3,
+  "configName": "Accredited Enrolment Form - Single - No Payment",
+  "step": "documents",
+  "stepName": "Enrolment Documents",
+  "stepType": "portfolio",
+  "stepOrder": 12,
+  "stepId": "portfolioUpload",
+  "stepOptional": false,
+  "checklistSettings": {
+    "useCRICOSChecklist": false,
+    "portfolioChecklistId": "3549"
+  },
+  "appearance": {
+    "topBlurb": "Enrolment Documents Instructions\n<ul>\n<li>Photo ID - Drivers License or NSW Photo Card</li>\n<li>Proof of Residency - Medicare Card or Passport</li>\n</ul>"
+  },
+  "qualificationSettings": {
+    "showType": false,
+    "showValue": true,
+    "showNumber": false,
+    "showIssuedBy": false,
+    "showIssuedDate": false,
+    "showExpiry": false,
+    "showDetails": false,
+    "showName": false,
+    "showSpeciality": false,
+    "showStartdate": false,
+    "showStatus": false
+  },
+  "registrationSettings": {
+    "showType": false,
+    "showValue": true,
+    "showNumber": false,
+    "showIssuedBy": false,
+    "showIssuedDate": false,
+    "showExpiry": false,
+    "showDetails": false,
+    "showName": false
+  },
+  "membershipSettings": {
+    "showType": false,
+    "showValue": true,
+    "showNumber": false,
+    "showIssuedBy": false,
+    "showIssuedDate": false,
+    "showExpiry": false,
+    "showDetails": false
+  },
+  "licenceSettings": {
+    "showType": false,
+    "showValue": true,
+    "showNumber": false,
+    "showIssuedBy": false,
+    "showIssuedDate": false,
+    "showExpiry": false,
+    "showDetails": false
+  },
+  "otherSettings": {
+    "showType": false,
+    "showValue": true,
+    "showNumber": false,
+    "showIssuedBy": false,
+    "showIssuedDate": false,
+    "showExpiry": false,
+    "showDetails": false
+  },
+  "fields": [
+    {
+      "order": 1,
+      "fieldId": "portfolioDocuments",
+      "name": "Upload Required Documents",
+      "type": "portfolio",
+      "required": false,
+      "portfolioChecklistId": "3549",
+      "instructions": "Please upload the following documents:\n- Photo ID (Drivers License or NSW Photo Card)\n- Proof of Residency (Medicare Card or Passport)"
+    }
+  ],
+  "note": "This step uses aXcelerate's portfolio checklist system (ID 3549). Document upload handled by aXcelerate API."
+}
+
