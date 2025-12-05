@@ -1,0 +1,113 @@
+{
+  "configId": 3,
+  "configName": "Accredited Enrolment Form - Single - No Payment",
+  "step": "nationality",
+  "stepName": "Nationality",
+  "stepType": "contact-update",
+  "stepOrder": 8,
+  "stepId": "contactAndthnas",
+  "contactType": "Student",
+  "buttonText": "Save",
+  "fields": [
+    {
+      "order": 1,
+      "fieldId": "citizenshipInfo",
+      "name": "Citizenship",
+      "type": "information",
+      "required": false
+    },
+    {
+      "order": 2,
+      "fieldId": "countryOfBirth",
+      "name": "Country of Birth",
+      "type": "search-select",
+      "required": false,
+      "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "COUNTRYOFBIRTH"
+    },
+    {
+      "order": 3,
+      "fieldId": "cityOfBirth",
+      "name": "City of Birth",
+      "type": "text",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": true
+    },
+    {
+      "order": 4,
+      "fieldId": "citizenshipStatus",
+      "name": "Citizenship Status",
+      "type": "search-select",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "CITIZENSHIPSTATUS",
+      "options": [
+        { "display": "Australian Citizen", "value": "1" },
+        { "display": "New Zealand Citizen", "value": "2" },
+        { "display": "Australian Permanent Resident", "value": "3" },
+        { "display": "Student Visa", "value": "4" },
+        { "display": "Temporary Resident Visa", "value": "5" },
+        { "display": "Visitor's Visa", "value": "6" },
+        { "display": "Business Visa", "value": "7" },
+        { "display": "Holiday Visa", "value": "8" },
+        { "display": "Other Visa", "value": "9" },
+        { "display": "Permanent Humanitarian Visa", "value": "10" },
+        { "display": "Overseas - No Visa or Citizenship", "value": "11" }
+      ]
+    },
+    {
+      "order": 5,
+      "fieldId": "countryOfCitizenship",
+      "name": "Country of Citizenship",
+      "type": "search-select",
+      "required": false,
+      "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "COUNTRYOFCITIZENSHIP"
+    },
+    {
+      "order": 6,
+      "fieldId": "languageInfo",
+      "name": "Language",
+      "type": "information",
+      "required": false
+    },
+    {
+      "order": 7,
+      "fieldId": "speakOtherLanguage",
+      "name": "Do you speak a language other than english at home?",
+      "type": "select",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": true,
+      "options": [
+        { "display": "Yes", "value": "Yes" },
+        { "display": "No", "value": "No" }
+      ]
+    },
+    {
+      "order": 8,
+      "fieldId": "languageSpokenMostOften",
+      "name": "Language spoken most often",
+      "type": "search-select",
+      "required": false,
+      "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "LANGUAGESPOKEN"
+    },
+    {
+      "order": 9,
+      "fieldId": "englishProficiency",
+      "name": "English Proficiency",
+      "type": "select",
+      "required": false,
+      "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "ENGLISHPROFICIENCY"
+    }
+  ]
+}
+
