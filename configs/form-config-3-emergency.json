@@ -1,0 +1,48 @@
+{
+  "configId": 3,
+  "configName": "Accredited Enrolment Form - Single - No Payment",
+  "step": "emergency",
+  "stepName": "Emergency Contact",
+  "stepType": "contact-update",
+  "stepOrder": 7,
+  "stepId": "emergencyContact",
+  "contactType": "Student",
+  "buttonText": "Save",
+  "fields": [
+    {
+      "order": 1,
+      "fieldId": "emergencyContactName",
+      "name": "Contact Name",
+      "type": "text",
+      "required": false,
+      "dataField": true,
+      "syncToCustomField": true,
+      "placeholder": "Emergency contact full name"
+    },
+    {
+      "order": 2,
+      "fieldId": "emergencyRelationship",
+      "name": "Relationship",
+      "type": "text",
+      "required": false,
+      "dataField": true,
+      "syncToCustomField": true,
+      "placeholder": "e.g., Mother, Father, Spouse, Friend"
+    },
+    {
+      "order": 3,
+      "fieldId": "emergencyContactNumber",
+      "name": "Contact Number",
+      "type": "tel",
+      "required": false,
+      "dataField": true,
+      "syncToCustomField": true,
+      "placeholder": "Emergency contact phone number",
+      "validation": {
+        "pattern": "^[0-9\\s\\+\\-\\(\\)]+$",
+        "message": "Please enter a valid phone number"
+      }
+    }
+  ]
+}
+
