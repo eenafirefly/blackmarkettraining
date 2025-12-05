@@ -1,0 +1,255 @@
+{
+  "configId": 3,
+  "configName": "Accredited Enrolment Form - Single - No Payment",
+  "step": "address",
+  "stepName": "Address",
+  "stepType": "address",
+  "stepOrder": 6,
+  "fields": [
+    {
+      "order": 1,
+      "fieldId": "residentialAddressInfo",
+      "name": "Usual Residential Address",
+      "type": "information",
+      "required": false
+    },
+    {
+      "order": 2,
+      "fieldId": "residentialAddressHelp",
+      "name": "Please provide the physical address (street number and name not post office box) where you usually reside rather than any temporary address at which you reside for training, work or other purposes before returning to your home. If you are from a rural area use the address from your state or territory's 'rural property addressing' or 'numbering' system as your residential street address.",
+      "type": "info_expandable",
+      "required": false
+    },
+    {
+      "order": 3,
+      "fieldId": "buildingPropertyName",
+      "name": "Building/property name",
+      "type": "text",
+      "required": false,
+      "dataField": true,
+      "tooltip": "Building/property name is the official place name or common usage name for an address site, including the name of a building, Aboriginal community, homestead, building complex, agricultural property, park or unbounded address site.",
+      "events": {
+        "postal_copy": { "action": "clone", "trigger": "click" },
+        "postal_toggle": { "action": "toggle", "trigger": "change" }
+      }
+    },
+    {
+      "order": 4,
+      "fieldId": "flatUnitDetails",
+      "name": "Flat/Unit details",
+      "type": "text",
+      "required": false,
+      "dataField": true,
+      "events": {
+        "postal_copy": { "action": "clone", "trigger": "click" },
+        "postal_toggle": { "action": "toggle", "trigger": "change" }
+      }
+    },
+    {
+      "order": 5,
+      "fieldId": "streetNumber",
+      "name": "Street or lot number",
+      "type": "text",
+      "required": false,
+      "dataField": true,
+      "events": {
+        "postal_copy": { "action": "clone", "trigger": "click" },
+        "postal_toggle": { "action": "toggle", "trigger": "change" }
+      }
+    },
+    {
+      "order": 6,
+      "fieldId": "streetName",
+      "name": "Street Name",
+      "type": "text",
+      "required": false,
+      "dataField": true,
+      "events": {
+        "postal_copy": { "action": "clone", "trigger": "click" },
+        "postal_toggle": { "action": "toggle", "trigger": "change" }
+      }
+    },
+    {
+      "order": 7,
+      "fieldId": "suburb",
+      "name": "Suburb, locality or town",
+      "type": "text",
+      "required": false,
+      "dataField": true,
+      "events": {
+        "postal_copy": { "action": "clone", "trigger": "click" },
+        "postal_toggle": { "action": "toggle", "trigger": "change" }
+      }
+    },
+    {
+      "order": 8,
+      "fieldId": "postcode",
+      "name": "Postcode",
+      "type": "text",
+      "required": false,
+      "dataField": true,
+      "validation": {
+        "pattern": "^[0-9]{4}$",
+        "message": "Please enter a valid 4-digit postcode"
+      },
+      "events": {
+        "postal_copy": { "action": "clone", "trigger": "click" },
+        "postal_toggle": { "action": "toggle", "trigger": "change" }
+      }
+    },
+    {
+      "order": 9,
+      "fieldId": "state",
+      "name": "State/Territory",
+      "type": "select",
+      "required": false,
+      "dataField": true,
+      "options": [
+        { "display": "NSW", "value": "NSW" },
+        { "display": "VIC", "value": "VIC" },
+        { "display": "QLD", "value": "QLD" },
+        { "display": "SA", "value": "SA" },
+        { "display": "WA", "value": "WA" },
+        { "display": "TAS", "value": "TAS" },
+        { "display": "NT", "value": "NT" },
+        { "display": "ACT", "value": "ACT" },
+        { "display": "Other Australian Territory", "value": "OTH" },
+        { "display": "Overseas", "value": "OVS" }
+      ],
+      "events": {
+        "postal_copy": { "action": "clone", "trigger": "click" },
+        "postal_toggle": { "action": "toggle", "trigger": "change" }
+      }
+    },
+    {
+      "order": 10,
+      "fieldId": "country",
+      "name": "Country",
+      "type": "search-select",
+      "required": true,
+      "dataField": true,
+      "defaultValue": "notset",
+      "events": {
+        "postal_copy": { "action": "clone", "trigger": "click" },
+        "postal_toggle": { "action": "toggle", "trigger": "change" }
+      }
+    },
+    {
+      "order": 11,
+      "fieldId": "copyResidentialToPostal",
+      "name": "Copy Residential Address to Postal",
+      "type": "button",
+      "required": false,
+      "buttonAction": "postal_copy",
+      "events": {
+        "postal_copy": { "action": "click", "trigger": "click" }
+      }
+    },
+    {
+      "order": 12,
+      "fieldId": "postalAddressInfo",
+      "name": "Postal Address",
+      "type": "information",
+      "required": false
+    },
+    {
+      "order": 13,
+      "fieldId": "postalBuildingPropertyName",
+      "name": "Building/property name",
+      "type": "text",
+      "required": false,
+      "dataField": true,
+      "addressType": "postal",
+      "tooltip": "Building/property name is the official place name or common usage name for an address site, including the name of a building, Aboriginal community, homestead, building complex, agricultural property, park or unbounded address site."
+    },
+    {
+      "order": 14,
+      "fieldId": "postalFlatUnitDetails",
+      "name": "Flat/Unit details",
+      "type": "text",
+      "required": false,
+      "dataField": true,
+      "addressType": "postal"
+    },
+    {
+      "order": 15,
+      "fieldId": "postalStreetNumber",
+      "name": "Street or lot number",
+      "type": "text",
+      "required": false,
+      "dataField": true,
+      "addressType": "postal"
+    },
+    {
+      "order": 16,
+      "fieldId": "postalStreetName",
+      "name": "Street Name",
+      "type": "text",
+      "required": false,
+      "dataField": true,
+      "addressType": "postal"
+    },
+    {
+      "order": 17,
+      "fieldId": "postalPOBox",
+      "name": "Postal delivery information (PO box)",
+      "type": "text",
+      "required": false,
+      "dataField": true,
+      "addressType": "postal"
+    },
+    {
+      "order": 18,
+      "fieldId": "postalSuburb",
+      "name": "Suburb, locality or town",
+      "type": "text",
+      "required": false,
+      "dataField": true,
+      "addressType": "postal"
+    },
+    {
+      "order": 19,
+      "fieldId": "postalState",
+      "name": "State/Territory",
+      "type": "select",
+      "required": false,
+      "dataField": true,
+      "addressType": "postal",
+      "options": [
+        { "display": "NSW", "value": "NSW" },
+        { "display": "VIC", "value": "VIC" },
+        { "display": "QLD", "value": "QLD" },
+        { "display": "SA", "value": "SA" },
+        { "display": "WA", "value": "WA" },
+        { "display": "TAS", "value": "TAS" },
+        { "display": "NT", "value": "NT" },
+        { "display": "ACT", "value": "ACT" },
+        { "display": "Other Australian Territory", "value": "OTH" },
+        { "display": "Overseas", "value": "OVS" }
+      ]
+    },
+    {
+      "order": 20,
+      "fieldId": "postalPostcode",
+      "name": "Postcode",
+      "type": "text",
+      "required": false,
+      "dataField": true,
+      "addressType": "postal",
+      "validation": {
+        "pattern": "^[0-9]{4}$",
+        "message": "Please enter a valid 4-digit postcode"
+      }
+    },
+    {
+      "order": 21,
+      "fieldId": "postalCountry",
+      "name": "Country",
+      "type": "search-select",
+      "required": false,
+      "dataField": true,
+      "addressType": "postal"
+    }
+  ]
+}
+
