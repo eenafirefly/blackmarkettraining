@@ -1,0 +1,37 @@
+{
+  "configId": 3,
+  "configName": "Accredited Enrolment Form - Single - No Payment",
+  "step": "declaration",
+  "stepName": "Declaration",
+  "stepType": "enrol",
+  "stepOrder": 14,
+  "stepId": "billing",
+  "requiresStep": "review",
+  "paymentOptions": {
+    "invoice": false,
+    "creditCard": false,
+    "tentativeEnrolment": false,
+    "directDebit": false,
+    "debitsuccess": false,
+    "ezypay": false,
+    "ezypaySinglePayment": false,
+    "eWaySharedPaymentPage": false
+  },
+  "stepTerms": "<h2 class=\"Privacy\">PRIVACY NOTICE</h2>\n\n<h3 class=\"Heading\">Why we collect your personal information</h3><p class=\"para-1\">As a registered training organisation (RTO), we collect your personal information so we can process and manage your enrolment in a vocational education and training (VET) course with us.</p><h3 class=\"Heading\">How we use your personal information</h3><p class=\"para-2\">We use your personal information to enable us to deliver VET courses to you, and otherwise, as needed, to comply with our obligations as an RTO.</p><h3 class=\"Heading\">How we disclose your personal information</h3><p class=\"para-3\">We are required by law (under the National Vocational Education and Training Regulator Act 2011 (Cth) (NVETR Act)) to disclose the personal information we collect about you to the National VET Data Collection kept by the National Centre for Vocational Education Research Ltd (NCVER). The NCVER is responsible for collecting, managing, analysing and communicating research and statistics about the Australian VET sector.</p><p class=\"para-4\">We are also authorised by law (under the NVETR Act) to disclose your personal information to the relevant state or territory training authority.</p><h3 class=\"Heading\">How the NCVER and other bodies handle your personal information</h3><p class=\"para-5\">The NCVER will collect, hold, use and disclose your personal information in accordance with the law, including the Privacy Act 1988 (Cth) (Privacy Act) and the NVETR Act. Your personal information may be used and disclosed by NCVER for purposes that include populating authenticated VET transcripts; administration of VET; facilitation of statistics and research relating to education, including surveys and data linkage; and understanding the VET market.</p><p class=\"para-6\">The NCVER is authorised to disclose information to the Australian Government Department of Education, Skills and Employment (DESE), Commonwealth authorities, State and Territory authorities (other than registered training organisations) that deal with matters relating to VET and VET regulators for the purposes of those bodies, including to enable:</p>\n<ul><li>administration of VET, including program administration, regulation, monitoring and evaluation</li>\n<li>facilitation of statistics and research relating to education, including surveys and data linkage</li>\n<li>understanding how the VET market operates, for policy, workforce planning and consumer information.</li></ul><p class=\"para-7\">The NCVER may also disclose personal information to persons engaged by NCVER to conduct research on NCVER's behalf.</p><p class=\"para-8\">The NCVER does not intend to disclose your personal information to any overseas recipients.</p><p class=\"para-9\">For more information about how the NCVER will handle your personal information please refer to the NCVER's Privacy Policy at <a href=\"http://www.ncver.edu.au/privacy\" target=\"_blank\">www.ncver.edu.au/privacy</a>.</p><p class=\"para-10\">If you would like to seek access to or correct your information, in the first instance, please contact Black Market Training using the contact details listed below.</p><p class=\"para-11\">DESE is authorised by law, including the Privacy Act and the NVETR Act, to collect, use and disclose your personal information to fulfil specified functions and activities. For more information about how the DESE will handle your personal information, please refer to the DESE VET Privacy Notice at <a href=\"https://www.dese.gov.au/national-vet-data/vet-privacy-notice\" target=\"_blank\">https://www.dese.gov.au/national-vet-data/vet-privacy-notice</a></p>\n<p class=\"para-12\">Please refer to the additional State or Territory Authority Privacy Notice included in this application process should this be relevant to your application.</p>\n<h3 class=\"Heading\">Surveys</h3>\n<p class=\"para-13\">You may receive a student survey which may be run by a government department or an NCVER employee, agent, third-party contractor or another authorised agency. Please note you may opt out of the survey at the time of being contacted.</p>\n<h3 class=\"Heading\">Contact information</h3>\n<p class=\"para-14\">At any time, you may contact Black Market Training to:</p><ul><li>request access to your personal information</li>\n<li>correct your personal information</li>\n<li>make a complaint about how your personal information has been handled</li>\n<li>ask a question about this Privacy Notice</li></ul>",
+  "fields": [
+    {
+      "order": 1,
+      "fieldId": "acceptTerms",
+      "name": "I have read and agree to the Privacy Notice and Terms & Conditions",
+      "type": "checkbox",
+      "required": true,
+      "dataField": false,
+      "validation": {
+        "required": true,
+        "message": "You must accept the terms and conditions to proceed"
+      }
+    }
+  ],
+  "note": "Final enrollment step. All payment options disabled (No Payment config). User must accept terms to complete enrollment."
+}
+
