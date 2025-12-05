@@ -125,7 +125,7 @@ router.get('/axcelerate/callback', async (req, res) => {
     console.log('aXcelerate callback received with params:', req.query);
     console.log('Full URL:', req.url);
     
-    const { code, state, error, token, contactid } = req.query;
+    const { code, state, error, token, contactid, access_code } = req.query;
     
     // Check for OAuth error
     if (error) {
@@ -169,14 +169,14 @@ router.get('/axcelerate/callback', async (req, res) => {
     }
     
     // Validate access code or token
-    if (!code && !token) {
+    if (!code && !token && !access_code) {
       console.error('Missing authorization code/token. Received params:', Object.keys(req.query));
       return res.status(400).send('Missing authorization code or token. Check Render logs for details.');
     }
     
-    // Exchange code/token for contact ID using aXcelerate's login API
-    const authCode = code || token;
-    console.log('Exchanging access code for contact ID...');
+    // Exchange code/token/access_code for contact ID using aXcelerate's login API
+    const authCode = code || token || access_code;
+    console.log('Exchanging access code for contact ID:', authCode ? 'Code received' : 'No code');
     
     const loginResponse = await fetch(
       `${process.env.AXCELERATE_API_URL}/user/login`,
