@@ -1,0 +1,111 @@
+{
+  "configId": 3,
+  "configName": "Accredited Enrolment Form - Single - No Payment",
+  "step": "additional",
+  "stepName": "Additional Details",
+  "stepType": "contact-update",
+  "stepOrder": 10,
+  "buttonText": "Save",
+  "fields": [
+    {
+      "order": 1,
+      "fieldId": "disabilitiesInfo",
+      "name": "Disabilities",
+      "type": "information",
+      "required": false,
+      "fieldType": "information-grouping"
+    },
+    {
+      "order": 2,
+      "fieldId": "hasDisability",
+      "name": "Do you consider yourself to have a disability, impairment or long-term condition?",
+      "type": "select",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": true,
+      "options": [
+        { "display": "No", "value": "false" },
+        { "display": "Yes", "value": "true" }
+      ],
+      "events": {
+        "hide_disabilities": { "action": "change", "trigger": "change" },
+        "show_disabilities": { "action": "change", "trigger": "change" }
+      }
+    },
+    {
+      "order": 3,
+      "fieldId": "disabilityTypes",
+      "name": "If you indicated the presence of a disability, impairment or long-term condition, please select the area(s) in the following list",
+      "type": "checkbox",
+      "required": false,
+      "dataField": true,
+      "hideInitially": "hidden",
+      "options": [
+        { "display": "Hearing / Deafness", "value": "11" },
+        { "display": "Physical", "value": "12" },
+        { "display": "Intellectual", "value": "13" },
+        { "display": "Learning", "value": "14" },
+        { "display": "Mental Illness", "value": "15" },
+        { "display": "Acquired Brain Impairment", "value": "16" },
+        { "display": "Vision", "value": "17" },
+        { "display": "Medical condition", "value": "18" },
+        { "display": "Other", "value": "19" }
+      ]
+    },
+    {
+      "order": 4,
+      "fieldId": "additionalDetailsInfo",
+      "name": "Additional Details",
+      "type": "information",
+      "required": false,
+      "fieldType": "information-grouping"
+    },
+    {
+      "order": 5,
+      "fieldId": "indigenousStatus",
+      "name": "Indigenous Status",
+      "type": "select",
+      "required": false,
+      "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "INDIGENOUSSTATUS",
+      "options": [
+        { "display": "No", "value": "4" },
+        { "display": "Aboriginal", "value": "1" },
+        { "display": "Torres Strait Islander", "value": "2" },
+        { "display": "Aboriginal & Torres Strait Islander", "value": "3" }
+      ]
+    },
+    {
+      "order": 6,
+      "fieldId": "employmentStatus",
+      "name": "Of the following categories, which best describes your current employment status?",
+      "type": "select",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "EMPLOYMENTSTATUS",
+      "tooltip": "For casual, seasonal, contract and shift work, use the current number of hours worked per week to determine whether full time (35 hours or more per week) or part-time employed (less than 35 hours per week).",
+      "options": [
+        { "display": "Full-time employee", "value": "1" },
+        { "display": "Part-time employee", "value": "2" },
+        { "display": "Self-employed - not employing others", "value": "3" },
+        { "display": "Self-employed - employing others", "value": "4" },
+        { "display": "Employed - unpaid worker in a family business", "value": "5" },
+        { "display": "Unemployed - Seeking full-time work", "value": "6" },
+        { "display": "Unemployed - Seeking part-time work", "value": "7" },
+        { "display": "Unemployed - Not Seeking employment", "value": "8" }
+      ]
+    },
+    {
+      "order": 7,
+      "fieldId": "referralSource",
+      "name": "How did you hear about us?",
+      "type": "search-select",
+      "required": false,
+      "dataField": true,
+      "syncToCustomField": true
+    }
+  ]
+}
+
