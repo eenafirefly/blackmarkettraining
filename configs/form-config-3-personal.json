@@ -1,0 +1,111 @@
+{
+  "configId": 3,
+  "configName": "Accredited Enrolment Form - Single - No Payment",
+  "step": "personal",
+  "stepName": "Personal Details",
+  "stepType": "contact-update",
+  "stepOrder": 4,
+  "fields": [
+    {
+      "order": 1,
+      "fieldId": "title",
+      "name": "Title",
+      "type": "select",
+      "required": true,
+      "dataField": true,
+      "options": [
+        { "display": "Mr", "value": "Mr" },
+        { "display": "Mrs", "value": "Mrs" },
+        { "display": "Ms", "value": "Ms" },
+        { "display": "Miss", "value": "Miss" },
+        { "display": "Other", "value": "Other" }
+      ]
+    },
+    {
+      "order": 2,
+      "fieldId": "givenName",
+      "name": "Given Name",
+      "type": "text",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "GIVENNAME"
+    },
+    {
+      "order": 3,
+      "fieldId": "preferredName",
+      "name": "Preferred Name",
+      "type": "text",
+      "required": false,
+      "dataField": true
+    },
+    {
+      "order": 4,
+      "fieldId": "middleName",
+      "name": "Middle Name",
+      "type": "text",
+      "required": false,
+      "dataField": true,
+      "mapsToContactField": "MIDDLENAME"
+    },
+    {
+      "order": 5,
+      "fieldId": "lastName",
+      "name": "Last Name",
+      "type": "text",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "SURNAME"
+    },
+    {
+      "order": 6,
+      "fieldId": "dateOfBirth",
+      "name": "Date Of Birth",
+      "type": "date",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "DOB"
+    },
+    {
+      "order": 7,
+      "fieldId": "usi",
+      "name": "Unique Student Identifier",
+      "type": "text",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "USI",
+      "tooltip": "From 1 January 2015, we can be prevented from issuing you with a nationally recognised VET qualification or statement of attainment when you complete your course if you do not have a Unique Student Identifier (USI). In addition, we are required to include your USI in the data we submit to NCVER. If you have not yet obtained a USI you can apply for it directly at <a target='_blank' href='https://www.usi.gov.au/your-usi/create-usi'>https://www.usi.gov.au/your-usi/create-usi</a> on computer or mobile device. Please note that if you would like to specify your gender as 'other' you will need to contact the USI Office for assistance.",
+      "validation": {
+        "pattern": "^[A-Z0-9]{10}$",
+        "message": "USI must be 10 characters (letters and numbers)"
+      }
+    },
+    {
+      "order": 8,
+      "fieldId": "usiWarning",
+      "name": "Please ensure your USI format is correct otherwise you will not be able to continue to the next step of the form",
+      "type": "info_expandable",
+      "required": false,
+      "fieldType": "information-expandable"
+    },
+    {
+      "order": 9,
+      "fieldId": "gender",
+      "name": "Gender",
+      "type": "select",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "GENDER",
+      "options": [
+        { "display": "Male", "value": "M" },
+        { "display": "Female", "value": "F" },
+        { "display": "Other", "value": "X" }
+      ]
+    }
+  ]
+}
+
