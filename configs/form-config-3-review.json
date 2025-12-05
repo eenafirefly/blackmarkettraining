@@ -1,0 +1,28 @@
+{
+  "configId": 3,
+  "configName": "Accredited Enrolment Form - Single - No Payment",
+  "step": "review",
+  "stepName": "Review Details",
+  "stepType": "review",
+  "stepOrder": 13,
+  "stepId": "review",
+  "description": "Review and confirm all your details before final submission",
+  "fields": [],
+  "displaySections": [
+    "background",
+    "subjectmatter",
+    "personal",
+    "contact",
+    "address",
+    "emergency",
+    "nationality",
+    "schooling",
+    "additional",
+    "studyreason",
+    "documents"
+  ],
+  "allowEdit": true,
+  "editBehavior": "navigate_back",
+  "note": "This is a review step that displays all previously entered data for confirmation. No input fields - just displays summaries from all previous steps."
+}
+
