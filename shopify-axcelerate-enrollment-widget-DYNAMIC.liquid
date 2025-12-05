@@ -777,7 +777,7 @@
     
     setTimeout(() => {
       elements.loading.style.display = 'none';
-      elements.form.style.display = 'block';
+      elements.form.style.display = 'flex';
       
       // Only show login step if OAuth didn't succeed
       if (!hasOAuthReturn) {
@@ -1413,7 +1413,7 @@
           console.log('✋ Existing contact found:', contacts[0].CONTACTID);
           showExistingRecordModal(email);
           elements.loading.style.display = 'none';
-          elements.form.style.display = 'block';
+          elements.form.style.display = 'flex';
           return;
         } else {
           console.log('✅ No existing contact found, proceeding to create');
@@ -1458,7 +1458,7 @@
       showError(error.message || 'Failed to process your request');
     } finally {
       elements.loading.style.display = 'none';
-      elements.form.style.display = 'block';
+      elements.form.style.display = 'flex';
     }
   }
   
@@ -1569,7 +1569,7 @@
       console.error('Enrollment error:', error);
       showError('Failed to submit enrollment: ' + error.message);
       elements.loading.style.display = 'none';
-      elements.form.style.display = 'block';
+      elements.form.style.display = 'flex';
     }
   }
   
@@ -1782,7 +1782,7 @@
       console.log('✅ Restored progress from', new Date(progress.timestamp).toLocaleString());
       
       elements.loading.style.display = 'none';
-      elements.form.style.display = 'block';
+      elements.form.style.display = 'flex';
       showStep(progress.currentStep);
       
       return true;
