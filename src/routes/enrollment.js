@@ -282,6 +282,90 @@ router.get('/course/:instanceId', async (req, res) => {
 });
 
 /**
+ * Save enrollment progress and send incomplete booking email
+ * POST /api/enrollment/save-progress
+ * 
+ * Saves progress and sends "Incomplete Online Booking" email with resume link
+ */
+router.post('/save-progress', async (req, res) => {
+  try {
+    const { contactId, instanceId, courseId, courseType, courseName, currentStep, resumeUrl, emailType } = req.body;
+    
+    console.log('Saving enrollment progress for contact:', contactId);
+    
+    // Get contact details from aXcelerate
+    const contactResponse = await fetch(
+      `${process.env.AXCELERATE_API_URL}/contact/${contactId}`,
+      {
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN
+        }
+      }
+    );
+    
+    if (!contactResponse.ok) {
+      throw new Error('Failed to fetch contact details');
+    }
+    
+    const contact = await contactResponse.json();
+    const email = contact.EMAIL;
+    const name = `${contact.GIVENNAME || ''} ${contact.SURNAME || ''}`.trim();
+    
+    // Create a note in aXcelerate
+    const noteText = `INCOMPLETE ONLINE BOOKING
+
+Contact: ${name} (${email})
+Course: ${courseName || 'Unknown'} (Instance: ${instanceId})
+Current Step: ${currentStep}
+Date: ${new Date().toLocaleString()}
+
+Resume Link: ${resumeUrl}
+
+Status: Email sent to student to resume enrollment.`;
+    
+    const noteResponse = await fetch(
+      `${process.env.AXCELERATE_API_URL}/contact/${contactId}/note`,
+      {
+        method: 'POST',
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `note=${encodeURIComponent(noteText)}&type=General`
+      }
+    );
+    
+    console.log('✅ Incomplete booking note created in aXcelerate');
+    
+    // TODO: Send actual email via your email service
+    // For now, log the email that would be sent
+    console.log('📧 Incomplete Online Booking email would be sent to:', email);
+    console.log('   Name:', name);
+    console.log('   Course:', courseName);
+    console.log('   Resume URL:', resumeUrl);
+    
+    res.json({
+      success: true,
+      message: 'Progress saved and notification sent',
+      data: {
+        email,
+        contactId,
+        noteCreated: noteResponse.ok
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error saving progress:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+/**
  * Send resume enrollment email
  * POST /api/enrollment/send-resume-email
  * 

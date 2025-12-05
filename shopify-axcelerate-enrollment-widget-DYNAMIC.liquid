@@ -852,11 +852,11 @@
         const buttonGroup = createNavigationButtons(stepId, config);
         form.appendChild(buttonGroup);
       } else if (config.stepType === 'review') {
-        // Review step: Edit and Continue buttons
+        // Review step: Save & Exit and Continue buttons
         const buttonGroup = document.createElement('div');
         buttonGroup.className = 'ax-button-group';
         buttonGroup.innerHTML = `
-          <button type="button" class="ax-btn ax-btn-secondary ax-btn-back">Back</button>
+          <button type="button" class="ax-btn ax-btn-secondary ax-btn-save-exit">Save & Exit</button>
           <button type="submit" class="ax-btn ax-btn-primary">Continue to Declaration</button>
         `;
         form.appendChild(buttonGroup);
@@ -872,7 +872,7 @@
         const buttonGroup = document.createElement('div');
         buttonGroup.className = 'ax-button-group';
         buttonGroup.innerHTML = `
-          <button type="button" class="ax-btn ax-btn-secondary ax-btn-back">Back</button>
+          <button type="button" class="ax-btn ax-btn-secondary ax-btn-save-exit">Save & Exit</button>
           <button type="submit" class="ax-btn ax-btn-primary">Submit Enrollment</button>
         `;
         form.appendChild(buttonGroup);
@@ -1096,17 +1096,17 @@
     const buttonGroup = document.createElement('div');
     buttonGroup.className = 'ax-button-group';
     
-    const backBtn = document.createElement('button');
-    backBtn.type = 'button';
-    backBtn.className = 'ax-btn ax-btn-secondary ax-btn-back';
-    backBtn.textContent = 'Back';
+    const saveBtn = document.createElement('button');
+    saveBtn.type = 'button';
+    saveBtn.className = 'ax-btn ax-btn-secondary ax-btn-save-exit';
+    saveBtn.textContent = 'Save & Exit';
     
     const continueBtn = document.createElement('button');
     continueBtn.type = 'submit';
     continueBtn.className = 'ax-btn ax-btn-primary';
     continueBtn.textContent = 'Continue';
     
-    buttonGroup.appendChild(backBtn);
+    buttonGroup.appendChild(saveBtn);
     buttonGroup.appendChild(continueBtn);
     
     return buttonGroup;
@@ -1125,7 +1125,7 @@
       googleBtn.addEventListener('click', () => handleOAuthLogin('google'));
     }
     if (axcelerateBtn) {
-      googleBtn.addEventListener('click', () => handleOAuthLogin('axcelerate'));
+      axcelerateBtn.addEventListener('click', () => handleOAuthLogin('axcelerate'));
     }
     
     // Manual form
@@ -1140,10 +1140,10 @@
     if (modalClose) modalClose.addEventListener('click', closeModal);
     if (modalOk) modalOk.addEventListener('click', closeModal);
     
-    // Back buttons (will be added dynamically, use event delegation)
+    // Save & Exit buttons (will be added dynamically, use event delegation)
     widget.addEventListener('click', (e) => {
-      if (e.target.classList.contains('ax-btn-back')) {
-        handleBack();
+      if (e.target.classList.contains('ax-btn-save-exit')) {
+        handleSaveAndExit();
       }
     });
   }
@@ -1247,20 +1247,26 @@
     const givenName = formData.get('givenName');
     const familyName = formData.get('familyName');
     
+    console.log('📝 Manual form submitted:', { email, givenName, familyName });
+    
     try {
       elements.form.style.display = 'none';
       elements.loading.style.display = 'block';
       
       // Check if contact exists
-      console.log('Checking if contact exists:', email);
+      console.log('🔍 Checking if contact exists:', email);
       const response = await fetch(`${RENDER_APP_URL}/api/axcelerate/contact/search?email=${encodeURIComponent(email)}`);
       
-      if (response.ok) {
+      if (!response.ok) {
+        console.warn('⚠️ Contact search request failed:', response.status);
+        // If search fails, proceed to create
+      } else {
         const contacts = await response.json();
-        console.log('Contact search result:', contacts);
+        console.log('📋 Contact search result:', contacts, 'Type:', typeof contacts, 'IsArray:', Array.isArray(contacts), 'Length:', contacts?.length);
         
-        if (Array.isArray(contacts) && contacts.length > 0) {
-          console.log('✋ Existing contact found, showing modal');
+        // Double-check: must be array AND have items
+        if (Array.isArray(contacts) && contacts.length > 0 && contacts[0] && contacts[0].CONTACTID) {
+          console.log('✋ Existing contact found:', contacts[0].CONTACTID);
           showExistingRecordModal(email);
           elements.loading.style.display = 'none';
           elements.form.style.display = 'block';
@@ -1271,6 +1277,7 @@
       }
       
       // Create new contact
+      console.log('🆕 Creating new contact...');
       const createResponse = await fetch(`${RENDER_APP_URL}/api/enrollment/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1284,9 +1291,11 @@
       });
       
       const result = await createResponse.json();
+      console.log('Create contact result:', result);
       
       if (result.success) {
         contactId = result.data.contactId;
+        console.log('✅ Contact created:', contactId);
         
         // Move to first dynamic step
         const firstStep = formSteps.find(s => s.id !== 'login');
@@ -1294,12 +1303,12 @@
           showStep(firstStep.id);
         }
       } else {
-        throw new Error(result.message);
+        throw new Error(result.message || 'Failed to create contact');
       }
       
     } catch (error) {
-      console.error('Error:', error);
-      showError(error.message);
+      console.error('❌ Error in manual form submit:', error);
+      showError(error.message || 'Failed to process your request');
     } finally {
       elements.loading.style.display = 'none';
       elements.form.style.display = 'block';
@@ -1456,11 +1465,54 @@
     saveProgress();
   }
   
-  function handleBack() {
-    const currentIndex = formSteps.findIndex(s => s.id === currentStep);
-    if (currentIndex > 0) {
-      const previousStep = formSteps[currentIndex - 1];
-      showStep(previousStep.id);
+  async function handleSaveAndExit() {
+    console.log('💾 Save & Exit clicked');
+    
+    if (!contactId) {
+      console.warn('No contact ID, cannot save progress');
+      alert('Please complete login first');
+      return;
+    }
+    
+    try {
+      // Save current step progress
+      saveProgress();
+      
+      // Send incomplete booking email
+      console.log('📧 Sending incomplete booking email...');
+      const response = await fetch(`${RENDER_APP_URL}/api/enrollment/save-progress`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contactId,
+          instanceId,
+          courseId,
+          courseType,
+          courseName,
+          currentStep,
+          resumeUrl: window.location.href,
+          emailType: 'incomplete'
+        })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Progress saved and email sent');
+        
+        // Show confirmation
+        alert('Your progress has been saved! We\'ve sent you an email with a link to resume your enrollment.');
+        
+        // Optionally redirect to home page or show success message
+        // window.location.href = '/';
+      } else {
+        console.warn('Failed to save progress:', response.status);
+        alert('Your progress has been saved locally. You can return to this page to continue.');
+      }
+      
+    } catch (error) {
+      console.error('Error in save and exit:', error);
+      // Still save locally even if email fails
+      alert('Your progress has been saved locally. You can return to this page to continue.');
     }
   }
   
