@@ -1,0 +1,80 @@
+{% comment %}
+  Simple Qualification Details Section
+  File location in Shopify: sections/axcelerate-qualifications.liquid
+  
+  This section renders the widget and tries to pass URL parameters,
+  but the widget will read them from the URL directly as a fallback
+  if the Liquid variables don't work.
+{% endcomment %}
+
+{% comment %} Try to extract URL parameters {% endcomment %}
+{% assign course_id = request.get_parameters.course_id %}
+{% assign course_type = request.get_parameters.course_type %}
+{% assign instance_id = request.get_parameters.instance_id %}
+
+<div class="qualification-details-section">
+  <div class="page-width">
+    
+    {% comment %} Optional page title {% endcomment %}
+    {% if section.settings.show_title %}
+      <h1 class="section-title">{{ section.settings.title | default: "Course Enrollment" }}</h1>
+    {% endif %}
+    
+    {% comment %} 
+      Render the enrollment widget
+      The widget now has JavaScript fallback to read URL parameters directly
+      if the Liquid variables are empty
+    {% endcomment %}
+    {% render 'axcelerate-enrollment-widget', 
+      course_id: course_id, 
+      course_type: course_type, 
+      instance_id: instance_id
+    %}
+    
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "aXcelerate Qualifications",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_title",
+      "label": "Show page title",
+      "default": false
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Page Title",
+      "default": "Course Enrollment"
+    }
+  ],
+  "presets": [
+    {
+      "name": "aXcelerate Qualifications",
+      "category": "Custom"
+    }
+  ]
+}
+{% endschema %}
+
+<style>
+  .qualification-details-section {
+    padding: 40px 0;
+  }
+  
+  .page-width {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+  
+  .section-title {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2em;
+  }
+</style>
+

@@ -85,11 +85,12 @@ router.get('/axcelerate/login', (req, res) => {
     });
     
     // Build aXcelerate login URL
-    const axLoginUrl = new URL(`https://${process.env.AXCELERATE_WS_URL}/portal/login`);
+    // Correct endpoint: /auth/user/login.cfm with return_to parameter
+    const axLoginUrl = new URL(`https://${process.env.AXCELERATE_WS_URL}/auth/user/login.cfm`);
     
-    // Set return URL to our callback
+    // Set return URL to our callback (use 'return_to' not 'return_url')
     const callbackUrl = `${req.protocol}://${req.get('host')}/api/auth/axcelerate/callback`;
-    axLoginUrl.searchParams.set('return_url', callbackUrl);
+    axLoginUrl.searchParams.set('return_to', callbackUrl);
     axLoginUrl.searchParams.set('state', stateToken);
     
     console.log('Redirecting to aXcelerate login:', axLoginUrl.toString());
