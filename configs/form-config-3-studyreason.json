@@ -1,0 +1,37 @@
+{
+  "configId": 3,
+  "configName": "Accredited Enrolment Form - Single - No Payment",
+  "step": "studyreason",
+  "stepName": "Study Reason",
+  "stepType": "enrol-details",
+  "stepOrder": 11,
+  "stepId": "enrolOptions",
+  "stepHeader": "Study Reason",
+  "fields": [
+    {
+      "order": 1,
+      "fieldId": "studyReason",
+      "name": "Of the following categories, select the one which best describes the main reason you are undertaking this course?",
+      "type": "select",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "STUDYREASON",
+      "tooltip": "Select the value that best represents the reason for study.",
+      "options": [
+        { "display": "To get a job", "value": "1" },
+        { "display": "To develop my existing business", "value": "2" },
+        { "display": "To start my own business", "value": "3" },
+        { "display": "To try for a different career", "value": "4" },
+        { "display": "To get a better job or promotion", "value": "5" },
+        { "display": "It was a requirement of my job", "value": "6" },
+        { "display": "I wanted extra skills for my job", "value": "7" },
+        { "display": "To get into another course of study", "value": "8" },
+        { "display": "Other reasons", "value": "11" },
+        { "display": "For personal interest or self-development", "value": "12" },
+        { "display": "To get skills for community/voluntary work", "value": "13" }
+      ]
+    }
+  ]
+}
+
