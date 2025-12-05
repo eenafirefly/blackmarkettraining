@@ -25,6 +25,7 @@
   
   <div class="ax-widget-container">
     <h2 class="ax-widget-title">ENROLLING IN</h2>
+    <h3 id="ax-course-title-{{ widget_id }}" class="ax-course-title" style="display: none;"></h3>
     
     <!-- Loading State -->
     <div id="ax-loading-{{ widget_id }}" class="ax-loading-state">
@@ -388,7 +389,17 @@
     font-size: 32px;
     font-weight: 700;
     text-align: center;
+    margin-bottom: 10px;
+    color: #333;
+  }
+  
+  .ax-course-title {
+    font-size: 24px;
+    font-weight: 600;
+    text-align: center;
     margin-bottom: 30px;
+    color: #666;
+    line-height: 1.4;
   }
   
   /* Progress Steps */
@@ -736,7 +747,8 @@
     stepBackground: document.getElementById('ax-step-background-' + widgetId),
     stepPersonal: document.getElementById('ax-step-personal-' + widgetId),
     stepContact: document.getElementById('ax-step-contact-' + widgetId),
-    modal: document.getElementById('ax-existing-record-modal-' + widgetId)
+    modal: document.getElementById('ax-existing-record-modal-' + widgetId),
+    courseTitle: document.getElementById('ax-course-title-' + widgetId)
   };
   
   // Verify all required elements exist
@@ -751,9 +763,13 @@
   let currentStep = 'login';
   let authToken = null;
   let contactId = null;
+  let courseName = '';
   
   // Initialize
   function init() {
+    // Fetch and display course details
+    fetchCourseDetails();
+    
     // Check if user is returning from OAuth
     const hasOAuthReturn = checkOAuthReturn();
     
@@ -768,6 +784,38 @@
     }, 500);
     
     setupEventListeners();
+  }
+  
+  // Fetch course details
+  async function fetchCourseDetails() {
+    if (!instanceId) {
+      console.log('No instance ID, skipping course fetch');
+      return;
+    }
+    
+    try {
+      console.log('Fetching course details for instance:', instanceId);
+      
+      const response = await fetch(
+        `${RENDER_APP_URL}/api/axcelerate/courses/${instanceId}?type=${courseType || 'w'}`
+      );
+      
+      if (response.ok) {
+        const course = await response.json();
+        courseName = course.NAME || course.COURSENAME || 'Course';
+        
+        if (elements.courseTitle) {
+          elements.courseTitle.textContent = courseName;
+          elements.courseTitle.style.display = 'block';
+        }
+        
+        console.log('Course loaded:', courseName);
+      } else {
+        console.warn('Failed to fetch course details:', response.status);
+      }
+    } catch (error) {
+      console.error('Error fetching course:', error);
+    }
   }
   
   function setupEventListeners() {
