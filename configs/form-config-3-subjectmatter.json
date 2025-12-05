@@ -1,0 +1,57 @@
+{
+  "configId": 3,
+  "configName": "Accredited Enrolment Form - Single - No Payment",
+  "step": "subjectmatter",
+  "stepName": "Subject Matter Aptitude",
+  "stepType": "contact-update",
+  "stepOrder": 3,
+  "fields": [
+    {
+      "order": 1,
+      "fieldId": "hospitalityExperience",
+      "name": "How would you describe your previous experience in the hospitality? (1 = Minimal - 5 = Extensive)",
+      "type": "select",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": true,
+      "options": [
+        { "display": "1", "value": "1" },
+        { "display": "2", "value": "2" },
+        { "display": "3", "value": "3" },
+        { "display": "4", "value": "4" },
+        { "display": "5", "value": "5" }
+      ]
+    },
+    {
+      "order": 2,
+      "fieldId": "milkTypes",
+      "name": "Nominate two (2) different types of milk that might be used in a coffee beverage:",
+      "type": "text",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": true,
+      "placeholder": "e.g., Full cream, Almond"
+    },
+    {
+      "order": 3,
+      "fieldId": "nonVerbalCommunication",
+      "name": "Identify two (2) elements of non-verbal communication",
+      "type": "text",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": true,
+      "placeholder": "e.g., Body language, Facial expressions"
+    },
+    {
+      "order": 4,
+      "fieldId": "foodContamination",
+      "name": "List three (3) things you can do to prevent food contamination",
+      "type": "text",
+      "required": false,
+      "dataField": true,
+      "syncToCustomField": true,
+      "placeholder": "e.g., Wash hands, Use clean utensils, Store properly"
+    }
+  ]
+}
+
