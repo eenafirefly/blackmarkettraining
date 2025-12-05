@@ -45,11 +45,16 @@
       <button class="ax-retry-btn" onclick="location.reload()">Retry</button>
     </div>
     
-    <!-- Multi-Step Form Container -->
+    <!-- Multi-Step Form Container with Sidebar -->
     <div id="ax-form-{{ widget_id }}" class="ax-enrollment-form" style="display: none;">
       
-      <!-- Progress Steps - Will be populated dynamically -->
-      <div id="ax-progress-steps-{{ widget_id }}" class="ax-progress-steps"></div>
+      <!-- Sidebar Navigation -->
+      <div class="ax-sidebar">
+        <div id="ax-sidebar-tabs-{{ widget_id }}" class="ax-sidebar-tabs"></div>
+      </div>
+      
+      <!-- Main Content Area -->
+      <div class="ax-main-content">
       
       <!-- Step 1: LOGIN (Static) -->
       <div id="ax-step-login-{{ widget_id }}" class="ax-step-content" data-step="login">
@@ -122,17 +127,19 @@
         </form>
       </div>
       
-      <!-- Dynamic Steps Container - Steps 2-14 will be rendered here -->
-      <div id="ax-dynamic-steps-{{ widget_id }}" class="ax-dynamic-steps-container"></div>
+        <!-- Dynamic Steps Container - Steps 2-14 will be rendered here -->
+        <div id="ax-dynamic-steps-{{ widget_id }}" class="ax-dynamic-steps-container"></div>
+        
+        <!-- Success State -->
+        <div id="ax-success-{{ widget_id }}" class="ax-success-state" style="display: none;">
+          <div class="ax-success-icon">✓</div>
+          <h3>Enrollment Submitted Successfully!</h3>
+          <p class="ax-success-message"></p>
+        </div>
+        
+      </div><!-- End Main Content -->
       
-      <!-- Success State -->
-      <div id="ax-success-{{ widget_id }}" class="ax-success-state" style="display: none;">
-        <div class="ax-success-icon">✓</div>
-        <h3>Enrollment Submitted Successfully!</h3>
-        <p class="ax-success-message"></p>
-      </div>
-      
-    </div>
+    </div><!-- End Enrollment Form -->
     
     <!-- Existing Record Modal -->
     <div id="ax-existing-record-modal-{{ widget_id }}" class="ax-modal" style="display: none;">
@@ -229,58 +236,104 @@
   }
   
   /* Progress Steps */
-  .ax-progress-steps {
+  /* Sidebar Layout */
+  .ax-enrollment-form {
     display: flex;
-    justify-content: space-between;
-    margin-bottom: 40px;
-    gap: 10px;
-    flex-wrap: wrap;
+    gap: 0;
+    min-height: 600px;
   }
   
-  .ax-step {
+  .ax-sidebar {
+    width: 280px;
+    background: #f8f9fa;
+    border-right: 1px solid #e0e0e0;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  
+  .ax-main-content {
     flex: 1;
-    min-width: 80px;
-    text-align: center;
-    padding: 10px;
+    padding: 30px 40px;
+    overflow-y: auto;
+  }
+  
+  /* Sidebar Tabs */
+  .ax-sidebar-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .ax-sidebar-tab {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    border-left: 4px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+    position: relative;
+  }
+  
+  .ax-sidebar-tab:hover {
+    background: #e8eaed;
+  }
+  
+  .ax-sidebar-tab.active {
+    background: #fff;
+    border-left-color: #2196F3;
+  }
+  
+  .ax-sidebar-tab.completed {
+    border-left-color: #4CAF50;
+  }
+  
+  .ax-sidebar-tab.disabled {
     opacity: 0.5;
-    transition: opacity 0.3s;
+    cursor: not-allowed;
+    pointer-events: none;
   }
   
-  .ax-step.active {
-    opacity: 1;
-  }
-  
-  .ax-step.completed {
-    opacity: 0.8;
-  }
-  
-  .ax-step-indicator {
-    display: block;
-    width: 40px;
-    height: 40px;
+  .ax-tab-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     background: #e0e0e0;
     color: #666;
-    line-height: 40px;
-    margin: 0 auto 8px;
     font-weight: 600;
-    transition: all 0.3s;
+    font-size: 14px;
+    margin-right: 12px;
+    flex-shrink: 0;
+    transition: all 0.2s;
   }
   
-  .ax-step.active .ax-step-indicator {
+  .ax-sidebar-tab.active .ax-tab-number {
     background: #2196F3;
     color: white;
   }
   
-  .ax-step.completed .ax-step-indicator {
+  .ax-sidebar-tab.completed .ax-tab-number {
     background: #4CAF50;
     color: white;
   }
   
-  .ax-step-label {
-    font-size: 12px;
-    color: #666;
-    display: block;
+  .ax-sidebar-tab.completed .ax-tab-number::before {
+    content: '✓';
+  }
+  
+  .ax-tab-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    line-height: 1.3;
+  }
+  
+  .ax-sidebar-tab.active .ax-tab-label {
+    color: #2196F3;
+    font-weight: 600;
   }
   
   /* Step Content */
@@ -569,19 +622,34 @@
       padding: 20px;
     }
     
-    .ax-progress-steps {
-      flex-wrap: wrap;
+    .ax-enrollment-form {
+      flex-direction: column;
     }
     
-    .ax-step {
-      min-width: 60px;
+    .ax-sidebar {
+      width: 100%;
+      border-right: none;
+      border-bottom: 1px solid #e0e0e0;
+      max-height: 200px;
+      overflow-y: auto;
     }
     
-    .ax-step-indicator {
-      width: 30px;
-      height: 30px;
-      line-height: 30px;
-      font-size: 14px;
+    .ax-sidebar-tab {
+      padding: 12px 16px;
+    }
+    
+    .ax-tab-number {
+      width: 28px;
+      height: 28px;
+      font-size: 12px;
+    }
+    
+    .ax-tab-label {
+      font-size: 13px;
+    }
+    
+    .ax-main-content {
+      padding: 20px;
     }
     
     .ax-button-group {
@@ -636,7 +704,7 @@
     success: document.getElementById('ax-success-' + widgetId),
     stepLogin: document.getElementById('ax-step-login-' + widgetId),
     dynamicSteps: document.getElementById('ax-dynamic-steps-' + widgetId),
-    progressSteps: document.getElementById('ax-progress-steps-' + widgetId),
+    sidebarTabs: document.getElementById('ax-sidebar-tabs-' + widgetId),
     modal: document.getElementById('ax-existing-record-modal-' + widgetId),
     courseTitle: document.getElementById('ax-course-title-' + widgetId)
   };
@@ -758,8 +826,8 @@
         }
       });
       
-      // Build progress steps
-      buildProgressSteps();
+      // Build sidebar tabs
+      buildSidebarTabs();
       
       // Render dynamic steps
       renderDynamicSteps();
@@ -776,9 +844,9 @@
   // Progress Steps
   // =========================================================================
   
-  function buildProgressSteps() {
-    const progressContainer = elements.progressSteps;
-    if (!progressContainer) return;
+  function buildSidebarTabs() {
+    const sidebarContainer = elements.sidebarTabs;
+    if (!sidebarContainer) return;
     
     // Build list of all steps
     const allSteps = [
@@ -793,18 +861,29 @@
         }))
     ];
     
-    // Limit to first 7 steps for display (to fit on screen)
-    const displaySteps = allSteps.slice(0, 7);
-    
-    progressContainer.innerHTML = displaySteps.map((step, index) => `
-      <div class="ax-step ${index === 0 ? 'active' : ''}" data-step="${step.id}">
-        <span class="ax-step-indicator">${index + 1}</span>
-        <span class="ax-step-label">${step.label}</span>
+    // Show all steps in sidebar (no limit)
+    sidebarContainer.innerHTML = allSteps.map((step, index) => `
+      <div class="ax-sidebar-tab ${index === 0 ? 'active' : 'disabled'}" 
+           data-step="${step.id}" 
+           data-step-number="${index + 1}">
+        <span class="ax-tab-number">${index + 1}</span>
+        <span class="ax-tab-label">${step.label}</span>
       </div>
     `).join('');
     
+    // Add click handlers to tabs
+    sidebarContainer.querySelectorAll('.ax-sidebar-tab').forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        const stepId = tab.dataset.step;
+        // Only allow navigation to completed or active steps
+        if (!tab.classList.contains('disabled')) {
+          showStep(stepId);
+        }
+      });
+    });
+    
     formSteps = allSteps;
-    console.log('📊 Progress steps built:', formSteps.length, 'steps');
+    console.log('📊 Sidebar tabs built:', formSteps.length, 'steps');
   }
   
   // =========================================================================
@@ -1447,8 +1526,8 @@
       stepElement.classList.add('active');
     }
     
-    // Update progress indicators
-    updateProgressIndicators(stepId);
+    // Update sidebar tabs
+    updateSidebarTabs(stepId);
     
     // Restore saved data for this step if available
     const saved = sessionStorage.getItem(`ax_form_${stepId}`);
@@ -1516,17 +1595,25 @@
     }
   }
   
-  function updateProgressIndicators(stepId) {
-    const steps = widget.querySelectorAll('.ax-progress-steps .ax-step');
+  function updateSidebarTabs(stepId) {
+    const tabs = widget.querySelectorAll('.ax-sidebar-tab');
     const currentIndex = formSteps.findIndex(s => s.id === stepId);
     
-    steps.forEach((step, index) => {
-      step.classList.remove('active', 'completed');
+    tabs.forEach((tab, index) => {
+      tab.classList.remove('active', 'completed', 'disabled');
       
       if (index < currentIndex) {
-        step.classList.add('completed');
+        // Previous steps - completed and clickable
+        tab.classList.add('completed');
       } else if (index === currentIndex) {
-        step.classList.add('active');
+        // Current step - active and clickable
+        tab.classList.add('active');
+      } else if (index === currentIndex + 1) {
+        // Next step - enabled (can click to proceed)
+        // No classes needed, just remove disabled
+      } else {
+        // Future steps - disabled
+        tab.classList.add('disabled');
       }
     });
   }
