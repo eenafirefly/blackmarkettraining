@@ -174,10 +174,11 @@ router.get('/axcelerate/callback', async (req, res) => {
       return res.status(400).send('Missing authorization code or token. Check Render logs for details.');
     }
     
-    // Exchange code/token/access_code for contact ID using aXcelerate's login API
-    const authCode = code || token || access_code;
-    console.log('Exchanging access code for contact ID:', authCode ? 'Code received' : 'No code');
+    // Exchange access_code for contact ID using aXcelerate's login API
+    const authCode = access_code || code || token;
+    console.log('Exchanging access code for contact ID:', authCode);
     
+    // aXcelerate expects "accessCode" (camelCase) not "code"
     const loginResponse = await fetch(
       `${process.env.AXCELERATE_API_URL}/user/login`,
       {
@@ -187,7 +188,7 @@ router.get('/axcelerate/callback', async (req, res) => {
           'WSToken': process.env.AXCELERATE_WS_TOKEN,
           'Content-Type': 'application/x-www-form-urlencoded'
         },
-        body: `code=${encodeURIComponent(authCode)}`
+        body: `accessCode=${encodeURIComponent(authCode)}`
       }
     );
     
