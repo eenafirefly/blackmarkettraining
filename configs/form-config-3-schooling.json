@@ -1,0 +1,114 @@
+{
+  "configId": 3,
+  "configName": "Accredited Enrolment Form - Single - No Payment",
+  "step": "schooling",
+  "stepName": "Schooling",
+  "stepType": "contact-update",
+  "stepOrder": 9,
+  "stepId": "EducationsHistory",
+  "contactType": "Student",
+  "buttonText": "Save",
+  "fields": [
+    {
+      "order": 1,
+      "fieldId": "secondaryEducationInfo",
+      "name": "Secondary Education",
+      "type": "information",
+      "required": false
+    },
+    {
+      "order": 2,
+      "fieldId": "highestSchoolLevel",
+      "name": "What is your highest completed school level?",
+      "type": "select",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "SCHOOLLEVEL",
+      "tooltip": "If you are currently enrolled in secondary education, the Highest school level completed refers to the highest school level you have actually completed and not the level you are currently undertaking. For example, if you are currently in Year 10 the Highest school level completed is Year 9.",
+      "options": [
+        { "display": "Did not attend school", "value": "2" },
+        { "display": "Year 8 or Below", "value": "8" },
+        { "display": "Year 9", "value": "9" },
+        { "display": "Year 10", "value": "10" },
+        { "display": "Year 11", "value": "11" },
+        { "display": "Year 12", "value": "12" }
+      ],
+      "events": {
+        "hide_high_school_fields": { "action": "hide", "trigger": "change" },
+        "show_high_school_fields": { "action": "show", "trigger": "change" },
+        "show_high_school_fields10": { "action": "show", "trigger": "change" },
+        "show_high_school_fields8": { "action": "show", "trigger": "change" },
+        "show_high_school_fields9": { "action": "show", "trigger": "change" }
+      }
+    },
+    {
+      "order": 3,
+      "fieldId": "yearHighestSchoolCompleted",
+      "name": "Year Highest School Completed",
+      "type": "text",
+      "required": false,
+      "dataField": true,
+      "syncToCustomField": true,
+      "tooltip": "The calendar year that the highest level of schooling was completed.",
+      "hideInitially": "visible",
+      "placeholder": "e.g., 2020"
+    },
+    {
+      "order": 4,
+      "fieldId": "stillEnrolledSecondary",
+      "name": "Are you still enrolled in secondary or senior secondary education?",
+      "type": "select",
+      "required": false,
+      "dataField": true,
+      "syncToCustomField": true,
+      "hideInitially": "visible",
+      "options": [
+        { "display": "Not Specified", "value": "" },
+        { "display": "Yes", "value": "true" },
+        { "display": "No", "value": "false" }
+      ],
+      "events": {
+        "hide_high_school_fields": { "action": "hide", "trigger": "change" },
+        "show_high_school_fields": { "action": "show", "trigger": "change" },
+        "show_high_school_fields10": { "action": "show", "trigger": "change" },
+        "show_high_school_fields11": { "action": "show", "trigger": "change" },
+        "show_high_school_fields8": { "action": "show", "trigger": "change" },
+        "show_high_school_fields9": { "action": "show", "trigger": "change" }
+      }
+    },
+    {
+      "order": 5,
+      "fieldId": "tertiaryEducationDetails",
+      "name": "Previous qualifications achieved",
+      "type": "information",
+      "required": false
+    },
+    {
+      "order": 6,
+      "fieldId": "priorEducationStatus",
+      "name": "Have you successfully completed any post-secondary education?",
+      "type": "select",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "PRIOREDUCATIONSTATUS",
+      "options": [
+        { "display": "Yes", "value": "true" },
+        { "display": "No", "value": "false" }
+      ]
+    },
+    {
+      "order": 7,
+      "fieldId": "priorEducation",
+      "name": "Prior Education",
+      "type": "modified-checkbox",
+      "required": true,
+      "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "PRIOREDUCATION",
+      "fieldType": "modified-checkbox"
+    }
+  ]
+}
+
