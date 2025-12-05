@@ -88,10 +88,16 @@ router.get('/axcelerate/login', (req, res) => {
     // Correct endpoint: /auth/user/login.cfm with return_to parameter
     const axLoginUrl = new URL(`https://${process.env.AXCELERATE_WS_URL}/auth/user/login.cfm`);
     
-    // Set return URL to our callback (use 'return_to' not 'return_url')
-    const callbackUrl = `${req.protocol}://${req.get('host')}/api/auth/axcelerate/callback`;
-    axLoginUrl.searchParams.set('return_to', callbackUrl);
-    axLoginUrl.searchParams.set('state', stateToken);
+    // Build callback URL with enrollment context as fallback (in case state is not preserved)
+    const callbackUrl = new URL(`${req.protocol}://${req.get('host')}/api/auth/axcelerate/callback`);
+    callbackUrl.searchParams.set('state', stateToken);
+    callbackUrl.searchParams.set('instanceId', instanceId);
+    if (courseId) callbackUrl.searchParams.set('courseId', courseId);
+    if (courseType) callbackUrl.searchParams.set('courseType', courseType);
+    if (redirectUrl) callbackUrl.searchParams.set('redirectUrl', redirectUrl);
+    
+    // Set return_to parameter for aXcelerate
+    axLoginUrl.searchParams.set('return_to', callbackUrl.toString());
     
     console.log('Redirecting to aXcelerate login:', axLoginUrl.toString());
     
@@ -115,7 +121,11 @@ router.get('/axcelerate/login', (req, res) => {
  */
 router.get('/axcelerate/callback', async (req, res) => {
   try {
-    const { code, state, error } = req.query;
+    // Log all query parameters to see what aXcelerate actually sends
+    console.log('aXcelerate callback received with params:', req.query);
+    console.log('Full URL:', req.url);
+    
+    const { code, state, error, token, contactid } = req.query;
     
     // Check for OAuth error
     if (error) {
@@ -123,22 +133,49 @@ router.get('/axcelerate/callback', async (req, res) => {
       return res.redirect(`/?auth_error=${encodeURIComponent(error)}`);
     }
     
-    // Validate state token
-    if (!state) {
-      return res.status(400).send('Missing state parameter');
+    // Check if aXcelerate sent contactid directly (some implementations do this)
+    if (contactid) {
+      console.log('Direct contactID received:', contactid);
+      // Create auth token and redirect
+      const authToken = generateStateToken();
+      storeSession(authToken, {
+        contactId: contactid,
+        // Get enrollment context from query params if available
+        instanceId: req.query.instanceId || req.query.instance_id,
+        courseType: req.query.courseType || req.query.course_type || 'w',
+        redirectUrl: req.query.redirectUrl || req.headers.referer || '/'
+      });
+      
+      const redirectUrl = new URL(req.query.redirectUrl || req.headers.referer || '/', `${req.protocol}://${req.get('host')}`);
+      redirectUrl.searchParams.set('auth_token', authToken);
+      redirectUrl.searchParams.set('contact_id', contactid);
+      return res.redirect(redirectUrl.toString());
     }
     
-    const session = getSession(state);
+    // Try to get session from state if available
+    let session = null;
+    if (state) {
+      session = getSession(state);
+    }
+    
+    // If no state or session, try to get enrollment context from URL params
     if (!session) {
-      return res.status(400).send('Invalid or expired session');
+      console.log('No session found from state, using URL params or defaults');
+      session = {
+        instanceId: req.query.instanceId || req.query.instance_id,
+        courseType: req.query.courseType || req.query.course_type || 'w',
+        redirectUrl: req.query.redirectUrl || req.headers.referer || '/'
+      };
     }
     
-    // Validate access code
-    if (!code) {
-      return res.status(400).send('Missing authorization code');
+    // Validate access code or token
+    if (!code && !token) {
+      console.error('Missing authorization code/token. Received params:', Object.keys(req.query));
+      return res.status(400).send('Missing authorization code or token. Check Render logs for details.');
     }
     
-    // Exchange code for contact ID using aXcelerate's login API
+    // Exchange code/token for contact ID using aXcelerate's login API
+    const authCode = code || token;
     console.log('Exchanging access code for contact ID...');
     
     const loginResponse = await fetch(
@@ -150,7 +187,7 @@ router.get('/axcelerate/callback', async (req, res) => {
           'WSToken': process.env.AXCELERATE_WS_TOKEN,
           'Content-Type': 'application/x-www-form-urlencoded'
         },
-        body: `code=${encodeURIComponent(code)}`
+        body: `code=${encodeURIComponent(authCode)}`
       }
     );
     
