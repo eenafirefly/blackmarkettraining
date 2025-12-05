@@ -1,0 +1,1651 @@
+{% comment %}
+  aXcelerate Enrollment Widget - DYNAMIC VERSION
+  
+  Features:
+  - Fetches form configuration from Config ID 3 (WordPress export)
+  - Renders all 14 steps dynamically
+  - Google & aXcelerate OAuth login
+  - Manual form with existing record detection
+  - Conditional field logic (show/hide)
+  - Progress saving and resume
+  - All field types supported
+  
+  Usage:
+  {% render 'axcelerate-enrollment-widget', 
+    course_id: '94138', 
+    course_type: 'w', 
+    instance_id: '2103213',
+    config_id: '3'
+  %}
+{% endcomment %}
+
+{% assign widget_id = widget_id | default: 'default' %}
+{% assign form_config_id = config_id | default: '3' %}
+
+<div id="ax-enrol-widget-{{ widget_id }}" 
+     class="ax-enrollment-widget"
+     data-course-id="{{ course_id }}"
+     data-course-type="{{ course_type }}"
+     data-instance-id="{{ instance_id }}"
+     data-config-id="{{ form_config_id }}">
+  
+  <div class="ax-widget-container">
+    <h2 class="ax-widget-title">ENROLLING IN</h2>
+    <h3 id="ax-course-title-{{ widget_id }}" class="ax-course-title" style="display: none;"></h3>
+    
+    <!-- Loading State -->
+    <div id="ax-loading-{{ widget_id }}" class="ax-loading-state">
+      <div class="ax-spinner"></div>
+      <p>Loading enrollment form...</p>
+    </div>
+    
+    <!-- Error State -->
+    <div id="ax-error-{{ widget_id }}" class="ax-error-state" style="display: none;">
+      <p class="ax-error-message"></p>
+      <button class="ax-retry-btn" onclick="location.reload()">Retry</button>
+    </div>
+    
+    <!-- Multi-Step Form Container -->
+    <div id="ax-form-{{ widget_id }}" class="ax-enrollment-form" style="display: none;">
+      
+      <!-- Progress Steps - Will be populated dynamically -->
+      <div id="ax-progress-steps-{{ widget_id }}" class="ax-progress-steps"></div>
+      
+      <!-- Step 1: LOGIN (Static) -->
+      <div id="ax-step-login-{{ widget_id }}" class="ax-step-content" data-step="login">
+        <!-- Social Login Options -->
+        <div class="ax-social-login">
+          <button type="button" class="ax-social-btn ax-google-btn">
+            <svg class="ax-icon" viewBox="0 0 24 24" width="20" height="20">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Continue with Google
+          </button>
+          
+          <button type="button" class="ax-social-btn ax-axcelerate-btn">
+            <svg class="ax-icon" viewBox="0 0 24 24" width="20" height="20">
+              <path fill="currentColor" d="M13 3l-1.41 1.41L17.17 10H3v2h14.17l-5.58 5.59L13 19l8-8z"/>
+            </svg>
+            Continue with aXcelerate
+          </button>
+          
+          <p class="ax-login-powered">
+            Login Powered by <a href="https://www.axcelerate.com" target="_blank">aXcelerate Student Management System</a>
+          </p>
+        </div>
+        
+        <div class="ax-divider">
+          <span>Or continue with your name and email</span>
+        </div>
+        
+        <!-- Manual Entry Form -->
+        <form id="ax-manual-form-{{ widget_id }}" class="ax-manual-form">
+          <div class="ax-form-group">
+            <label for="ax-given-name-{{ widget_id }}">
+              Given Name:<span class="ax-required">*</span>
+            </label>
+            <input type="text" 
+                   id="ax-given-name-{{ widget_id }}"
+                   name="givenName" 
+                   class="ax-input" 
+                   required>
+          </div>
+          
+          <div class="ax-form-group">
+            <label for="ax-family-name-{{ widget_id }}">
+              Family Name:<span class="ax-required">*</span>
+            </label>
+            <input type="text" 
+                   id="ax-family-name-{{ widget_id }}"
+                   name="familyName" 
+                   class="ax-input" 
+                   required>
+          </div>
+          
+          <div class="ax-form-group">
+            <label for="ax-email-{{ widget_id }}">
+              Email:<span class="ax-required">*</span>
+            </label>
+            <input type="email" 
+                   id="ax-email-{{ widget_id }}"
+                   name="email" 
+                   class="ax-input" 
+                   required>
+          </div>
+          
+          <button type="submit" class="ax-btn ax-btn-primary">
+            CREATE
+          </button>
+        </form>
+      </div>
+      
+      <!-- Dynamic Steps Container - Steps 2-14 will be rendered here -->
+      <div id="ax-dynamic-steps-{{ widget_id }}" class="ax-dynamic-steps-container"></div>
+      
+      <!-- Success State -->
+      <div id="ax-success-{{ widget_id }}" class="ax-success-state" style="display: none;">
+        <div class="ax-success-icon">✓</div>
+        <h3>Enrollment Submitted Successfully!</h3>
+        <p class="ax-success-message"></p>
+      </div>
+      
+    </div>
+    
+    <!-- Existing Record Modal -->
+    <div id="ax-existing-record-modal-{{ widget_id }}" class="ax-modal" style="display: none;">
+      <div class="ax-modal-overlay"></div>
+      <div class="ax-modal-content">
+        <button class="ax-modal-close">×</button>
+        <h3>Existing Record Found</h3>
+        <div class="ax-modal-body">
+          <p>An existing record has been found.</p>
+          <p>An email has been dispatched to <strong id="ax-modal-email"></strong> to verify your identity and allow you to continue enrolling.</p>
+        </div>
+        <div class="ax-modal-actions">
+          <button class="ax-btn ax-btn-primary ax-modal-ok">OK</button>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+</div>
+
+<style>
+  /* Base Widget Styles */
+  .ax-enrollment-widget {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .ax-widget-container {
+    background: #fff;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+  
+  .ax-widget-title {
+    font-size: 32px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 10px;
+    color: #333;
+  }
+  
+  .ax-course-title {
+    font-size: 24px;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 30px;
+    color: #666;
+    line-height: 1.4;
+  }
+  
+  /* Loading State */
+  .ax-loading-state {
+    text-align: center;
+    padding: 60px 20px;
+  }
+  
+  .ax-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #2196F3;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: ax-spin 1s linear infinite;
+    margin: 0 auto 20px;
+  }
+  
+  @keyframes ax-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  /* Error State */
+  .ax-error-state {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  
+  .ax-error-message {
+    color: #d32f2f;
+    margin-bottom: 20px;
+    font-size: 16px;
+  }
+  
+  .ax-retry-btn {
+    background: #2196F3;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  /* Progress Steps */
+  .ax-progress-steps {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  
+  .ax-step {
+    flex: 1;
+    min-width: 80px;
+    text-align: center;
+    padding: 10px;
+    opacity: 0.5;
+    transition: opacity 0.3s;
+  }
+  
+  .ax-step.active {
+    opacity: 1;
+  }
+  
+  .ax-step.completed {
+    opacity: 0.8;
+  }
+  
+  .ax-step-indicator {
+    display: block;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e0e0e0;
+    color: #666;
+    line-height: 40px;
+    margin: 0 auto 8px;
+    font-weight: 600;
+    transition: all 0.3s;
+  }
+  
+  .ax-step.active .ax-step-indicator {
+    background: #2196F3;
+    color: white;
+  }
+  
+  .ax-step.completed .ax-step-indicator {
+    background: #4CAF50;
+    color: white;
+  }
+  
+  .ax-step-label {
+    font-size: 12px;
+    color: #666;
+    display: block;
+  }
+  
+  /* Step Content */
+  .ax-step-content {
+    display: none;
+  }
+  
+  .ax-step-content.active {
+    display: block;
+    animation: ax-fadeIn 0.3s;
+  }
+  
+  @keyframes ax-fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* Form Elements */
+  .ax-form-group {
+    margin-bottom: 20px;
+  }
+  
+  .ax-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #333;
+  }
+  
+  .ax-required {
+    color: #d32f2f;
+    margin-left: 4px;
+  }
+  
+  .ax-input,
+  .ax-select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  
+  .ax-input:focus,
+  .ax-select:focus {
+    outline: none;
+    border-color: #2196F3;
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+  }
+  
+  textarea.ax-input {
+    min-height: 80px;
+    resize: vertical;
+  }
+  
+  .ax-help-text {
+    font-size: 13px;
+    color: #666;
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+  
+  .ax-help-text a {
+    color: #2196F3;
+    text-decoration: underline;
+  }
+  
+  /* Information Fields */
+  .ax-info-field {
+    background: #f5f5f5;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  
+  .ax-info-field h3 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    color: #333;
+  }
+  
+  .ax-info-field.expandable {
+    cursor: pointer;
+    border: 1px solid #ddd;
+  }
+  
+  /* Radio Buttons */
+  .ax-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 8px;
+  }
+  
+  .ax-radio-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background 0.2s;
+  }
+  
+  .ax-radio-label:hover {
+    background: #f5f5f5;
+  }
+  
+  .ax-radio {
+    margin-right: 10px;
+    cursor: pointer;
+  }
+  
+  /* Checkboxes */
+  .ax-checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  
+  .ax-checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 8px;
+  }
+  
+  .ax-checkbox {
+    margin-right: 10px;
+    cursor: pointer;
+  }
+  
+  /* Buttons */
+  .ax-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.3s;
+  }
+  
+  .ax-btn-primary {
+    background: #2196F3;
+    color: white;
+  }
+  
+  .ax-btn-primary:hover {
+    background: #1976D2;
+  }
+  
+  .ax-btn-secondary {
+    background: #f5f5f5;
+    color: #333;
+  }
+  
+  .ax-btn-secondary:hover {
+    background: #e0e0e0;
+  }
+  
+  .ax-button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 30px;
+    justify-content: space-between;
+  }
+  
+  /* Social Login */
+  .ax-social-login {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 30px;
+  }
+  
+  .ax-social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border: 2px solid #ddd;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.3s;
+  }
+  
+  .ax-social-btn:hover {
+    border-color: #2196F3;
+    background: #f5f9ff;
+  }
+  
+  .ax-divider {
+    text-align: center;
+    margin: 30px 0;
+    position: relative;
+  }
+  
+  .ax-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #ddd;
+  }
+  
+  .ax-divider span {
+    background: white;
+    padding: 0 15px;
+    position: relative;
+    color: #666;
+    font-size: 14px;
+  }
+  
+  /* Modal */
+  .ax-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+  }
+  
+  .ax-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+  }
+  
+  .ax-modal-content {
+    position: relative;
+    background: white;
+    max-width: 500px;
+    margin: 100px auto;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  
+  .ax-modal-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+  }
+  
+  /* Success State */
+  .ax-success-state {
+    text-align: center;
+    padding: 60px 20px;
+  }
+  
+  .ax-success-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #4CAF50;
+    color: white;
+    font-size: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .ax-widget-container {
+      padding: 20px;
+    }
+    
+    .ax-progress-steps {
+      flex-wrap: wrap;
+    }
+    
+    .ax-step {
+      min-width: 60px;
+    }
+    
+    .ax-step-indicator {
+      width: 30px;
+      height: 30px;
+      line-height: 30px;
+      font-size: 14px;
+    }
+    
+    .ax-button-group {
+      flex-direction: column;
+    }
+  }
+  
+  /* Hidden class */
+  .ax-hidden {
+    display: none !important;
+  }
+</style>
+
+<script>
+(function() {
+  'use strict';
+  
+  // ⚠️ UPDATE THIS TO YOUR RENDER APP URL
+  const RENDER_APP_URL = 'https://blackmarkettraining.onrender.com';
+  const CONFIG_ID = '3'; // WordPress Config ID
+  
+  const widgetId = '{{ widget_id }}';
+  const widget = document.getElementById('ax-enrol-widget-' + widgetId);
+  
+  if (!widget) {
+    console.error('Widget element not found: ax-enrol-widget-' + widgetId);
+    return;
+  }
+  
+  // Read from data attributes first (passed from Liquid)
+  let courseId = widget.dataset.courseId;
+  let courseType = widget.dataset.courseType;
+  let instanceId = widget.dataset.instanceId;
+  const configId = widget.dataset.configId || CONFIG_ID;
+  
+  // FALLBACK: If data attributes are empty, read directly from URL
+  if (!instanceId || !courseType) {
+    const urlParams = new URLSearchParams(window.location.search);
+    courseId = courseId || urlParams.get('course_id');
+    courseType = courseType || urlParams.get('course_type');
+    instanceId = instanceId || urlParams.get('instance_id');
+    
+    console.log('📌 Data attributes empty, read from URL:', { courseId, courseType, instanceId });
+  }
+  
+  console.log('Widget initialized:', { widgetId, courseId, courseType, instanceId, configId });
+  
+  const elements = {
+    loading: document.getElementById('ax-loading-' + widgetId),
+    error: document.getElementById('ax-error-' + widgetId),
+    form: document.getElementById('ax-form-' + widgetId),
+    success: document.getElementById('ax-success-' + widgetId),
+    stepLogin: document.getElementById('ax-step-login-' + widgetId),
+    dynamicSteps: document.getElementById('ax-dynamic-steps-' + widgetId),
+    progressSteps: document.getElementById('ax-progress-steps-' + widgetId),
+    modal: document.getElementById('ax-existing-record-modal-' + widgetId),
+    courseTitle: document.getElementById('ax-course-title-' + widgetId)
+  };
+  
+  // State
+  let currentStep = 'login';
+  let authToken = null;
+  let contactId = null;
+  let courseName = '';
+  let formSteps = [];
+  let formData = {}; // Stores data from all steps
+  let stepConfigs = {}; // Stores fetched configurations
+  
+  // =========================================================================
+  // Initialization
+  // =========================================================================
+  
+  async function init() {
+    console.log('🚀 Initializing dynamic enrollment widget...');
+    
+    // Fetch course and form configurations
+    await Promise.all([
+      fetchCourseDetails(),
+      fetchFormConfigurations()
+    ]);
+    
+    // Check if user is returning from OAuth
+    const hasOAuthReturn = checkOAuthReturn();
+    
+    // Setup event listeners
+    setupEventListeners();
+    
+    setTimeout(() => {
+      elements.loading.style.display = 'none';
+      elements.form.style.display = 'block';
+      
+      // Only show login step if OAuth didn't succeed
+      if (!hasOAuthReturn) {
+        showStep('login');
+      }
+    }, 500);
+  }
+  
+  // =========================================================================
+  // Fetch Configurations
+  // =========================================================================
+  
+  async function fetchCourseDetails() {
+    if (!instanceId) {
+      console.log('No instance ID, skipping course fetch');
+      return;
+    }
+    
+    try {
+      console.log('Fetching course details for instance:', instanceId);
+      
+      const response = await fetch(
+        `${RENDER_APP_URL}/api/axcelerate/courses/${instanceId}?type=${courseType || 'w'}`
+      );
+      
+      if (response.ok) {
+        const courses = await response.json();
+        const course = Array.isArray(courses) ? courses[0] : courses;
+        courseName = course.NAME || course.COURSENAME || 'Course';
+        
+        if (elements.courseTitle) {
+          elements.courseTitle.textContent = courseName;
+          elements.courseTitle.style.display = 'block';
+        }
+        
+        console.log('✅ Course loaded:', courseName);
+      } else {
+        console.warn('Failed to fetch course details:', response.status);
+      }
+    } catch (error) {
+      console.error('Error fetching course:', error);
+    }
+  }
+  
+  async function fetchFormConfigurations() {
+    console.log('📋 Fetching form configurations for config ID:', configId);
+    
+    // Define the steps we need to fetch (excluding login which is static)
+    const steps = [
+      'background',
+      'subjectmatter',
+      'personal',
+      'contact',
+      'address',
+      'emergency',
+      'nationality',
+      'schooling',
+      'additional',
+      'studyreason',
+      'documents',
+      'review',
+      'declaration'
+    ];
+    
+    try {
+      // Fetch all step configurations in parallel
+      const promises = steps.map(step => 
+        fetch(`${RENDER_APP_URL}/api/axcelerate/form-config/${configId}/${step}`)
+          .then(r => r.json())
+          .then(data => ({ step, config: data.config }))
+          .catch(err => {
+            console.warn(`Failed to fetch ${step} config:`, err);
+            return { step, config: null };
+          })
+      );
+      
+      const results = await Promise.all(promises);
+      
+      // Store configurations
+      results.forEach(({ step, config }) => {
+        if (config) {
+          stepConfigs[step] = config;
+          console.log(`✅ Loaded config for ${step}:`, config.fields?.length || 0, 'fields');
+        }
+      });
+      
+      // Build progress steps
+      buildProgressSteps();
+      
+      // Render dynamic steps
+      renderDynamicSteps();
+      
+      console.log('✅ All form configurations loaded');
+      
+    } catch (error) {
+      console.error('Error fetching form configurations:', error);
+      showError('Failed to load enrollment form. Please try again.');
+    }
+  }
+  
+  // =========================================================================
+  // Progress Steps
+  // =========================================================================
+  
+  function buildProgressSteps() {
+    const progressContainer = elements.progressSteps;
+    if (!progressContainer) return;
+    
+    // Build list of all steps
+    const allSteps = [
+      { id: 'login', label: 'Login', order: 1 },
+      ...Object.values(stepConfigs)
+        .filter(c => c && c.stepOrder)
+        .sort((a, b) => a.stepOrder - b.stepOrder)
+        .map(c => ({
+          id: c.step,
+          label: c.stepName || c.step,
+          order: c.stepOrder
+        }))
+    ];
+    
+    // Limit to first 7 steps for display (to fit on screen)
+    const displaySteps = allSteps.slice(0, 7);
+    
+    progressContainer.innerHTML = displaySteps.map((step, index) => `
+      <div class="ax-step ${index === 0 ? 'active' : ''}" data-step="${step.id}">
+        <span class="ax-step-indicator">${index + 1}</span>
+        <span class="ax-step-label">${step.label}</span>
+      </div>
+    `).join('');
+    
+    formSteps = allSteps;
+    console.log('📊 Progress steps built:', formSteps.length, 'steps');
+  }
+  
+  // =========================================================================
+  // Dynamic Step Rendering
+  // =========================================================================
+  
+  function renderDynamicSteps() {
+    const container = elements.dynamicSteps;
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    // Render each step from configuration
+    Object.entries(stepConfigs).forEach(([stepId, config]) => {
+      if (!config || !config.fields) return;
+      
+      const stepDiv = document.createElement('div');
+      stepDiv.id = `ax-step-${stepId}-${widgetId}`;
+      stepDiv.className = 'ax-step-content';
+      stepDiv.dataset.step = stepId;
+      
+      // Create form for this step
+      const form = document.createElement('form');
+      form.id = `ax-form-${stepId}-${widgetId}`;
+      form.className = 'ax-step-form';
+      
+      // Add step header if present
+      if (config.stepHeader || config.stepName) {
+        const header = document.createElement('h3');
+        header.className = 'ax-step-header';
+        header.textContent = config.stepHeader || config.stepName;
+        form.appendChild(header);
+      }
+      
+      // Render fields
+      config.fields.forEach(field => {
+        const fieldElement = createFormField(field, stepId);
+        if (fieldElement) {
+          form.appendChild(fieldElement);
+        }
+      });
+      
+      // Add navigation buttons (except for review and declaration)
+      if (config.stepType !== 'review' && config.stepType !== 'enrol') {
+        const buttonGroup = createNavigationButtons(stepId, config);
+        form.appendChild(buttonGroup);
+      } else if (config.stepType === 'review') {
+        // Review step: Edit and Continue buttons
+        const buttonGroup = document.createElement('div');
+        buttonGroup.className = 'ax-button-group';
+        buttonGroup.innerHTML = `
+          <button type="button" class="ax-btn ax-btn-secondary ax-btn-back">Back</button>
+          <button type="submit" class="ax-btn ax-btn-primary">Continue to Declaration</button>
+        `;
+        form.appendChild(buttonGroup);
+      } else if (config.stepType === 'enrol') {
+        // Declaration step: Show terms and submit
+        if (config.stepTerms) {
+          const termsDiv = document.createElement('div');
+          termsDiv.className = 'ax-terms-content';
+          termsDiv.innerHTML = config.stepTerms;
+          form.insertBefore(termsDiv, form.firstChild);
+        }
+        
+        const buttonGroup = document.createElement('div');
+        buttonGroup.className = 'ax-button-group';
+        buttonGroup.innerHTML = `
+          <button type="button" class="ax-btn ax-btn-secondary ax-btn-back">Back</button>
+          <button type="submit" class="ax-btn ax-btn-primary">Submit Enrollment</button>
+        `;
+        form.appendChild(buttonGroup);
+      }
+      
+      stepDiv.appendChild(form);
+      container.appendChild(stepDiv);
+      
+      // Setup form submit handler
+      form.addEventListener('submit', (e) => handleStepSubmit(e, stepId, config));
+    });
+    
+    console.log('✅ Dynamic steps rendered:', Object.keys(stepConfigs).length);
+  }
+  
+  // =========================================================================
+  // Field Creation
+  // =========================================================================
+  
+  function createFormField(field, stepId) {
+    const fieldGroup = document.createElement('div');
+    fieldGroup.className = 'ax-form-group';
+    fieldGroup.id = `ax-field-group-${field.fieldId}-${widgetId}`;
+    
+    // Handle information/help text fields
+    if (field.type === 'information' || field.type === 'info_expandable') {
+      const infoDiv = document.createElement('div');
+      infoDiv.className = 'ax-info-field' + (field.type === 'info_expandable' ? ' expandable' : '');
+      infoDiv.innerHTML = field.displayName || field.name;
+      fieldGroup.appendChild(infoDiv);
+      
+      if (field.hideInitially === 'hidden') {
+        fieldGroup.classList.add('ax-hidden');
+      }
+      
+      return fieldGroup;
+    }
+    
+    // Handle button fields
+    if (field.type === 'button') {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'ax-btn ax-btn-secondary';
+      button.textContent = field.name;
+      button.dataset.action = field.buttonAction;
+      fieldGroup.appendChild(button);
+      return fieldGroup;
+    }
+    
+    // Create label
+    const label = document.createElement('label');
+    label.htmlFor = `ax-${field.fieldId}-${widgetId}`;
+    label.innerHTML = field.name;
+    if (field.required) {
+      const required = document.createElement('span');
+      required.className = 'ax-required';
+      required.textContent = '*';
+      label.appendChild(required);
+    }
+    fieldGroup.appendChild(label);
+    
+    // Create input based on field type
+    let input;
+    
+    switch (field.type.toLowerCase()) {
+      case 'select':
+      case 'search-select':
+        input = document.createElement('select');
+        input.className = 'ax-input ax-select';
+        
+        // Add default option
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Select...';
+        input.appendChild(defaultOption);
+        
+        // Add options
+        if (field.options) {
+          field.options.forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt.value;
+            option.textContent = opt.display;
+            input.appendChild(option);
+          });
+        }
+        break;
+        
+      case 'textarea':
+        input = document.createElement('textarea');
+        input.className = 'ax-input';
+        input.rows = field.rows || 4;
+        break;
+        
+      case 'checkbox':
+        const checkboxGroup = document.createElement('div');
+        checkboxGroup.className = 'ax-checkbox-group';
+        
+        if (field.options) {
+          field.options.forEach((opt, i) => {
+            const label = document.createElement('label');
+            label.className = 'ax-checkbox-label';
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.name = field.fieldId;
+            checkbox.value = opt.value;
+            checkbox.className = 'ax-checkbox';
+            
+            const span = document.createElement('span');
+            span.textContent = opt.display;
+            
+            label.appendChild(checkbox);
+            label.appendChild(span);
+            checkboxGroup.appendChild(label);
+          });
+        }
+        
+        fieldGroup.appendChild(checkboxGroup);
+        
+        if (field.hideInitially === 'hidden') {
+          fieldGroup.classList.add('ax-hidden');
+        }
+        
+        return fieldGroup;
+        
+      case 'radio':
+        const radioGroup = document.createElement('div');
+        radioGroup.className = 'ax-radio-group';
+        
+        if (field.options) {
+          field.options.forEach((opt, i) => {
+            const label = document.createElement('label');
+            label.className = 'ax-radio-label';
+            
+            const radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.name = field.fieldId;
+            radio.value = opt.value;
+            radio.className = 'ax-radio';
+            if (field.required) radio.required = true;
+            
+            const span = document.createElement('span');
+            span.textContent = opt.display;
+            
+            label.appendChild(radio);
+            label.appendChild(span);
+            radioGroup.appendChild(label);
+          });
+        }
+        
+        fieldGroup.appendChild(radioGroup);
+        return fieldGroup;
+        
+      case 'date':
+        input = document.createElement('input');
+        input.type = 'date';
+        input.className = 'ax-input';
+        break;
+        
+      case 'email':
+        input = document.createElement('input');
+        input.type = 'email';
+        input.className = 'ax-input';
+        break;
+        
+      case 'tel':
+        input = document.createElement('input');
+        input.type = 'tel';
+        input.className = 'ax-input';
+        break;
+        
+      case 'number':
+        input = document.createElement('input');
+        input.type = 'number';
+        input.className = 'ax-input';
+        break;
+        
+      default:
+        input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'ax-input';
+    }
+    
+    if (input) {
+      input.id = `ax-${field.fieldId}-${widgetId}`;
+      input.name = field.fieldId;
+      if (field.required) input.required = true;
+      if (field.placeholder) input.placeholder = field.placeholder;
+      
+      // Add validation pattern if present
+      if (field.validation && field.validation.pattern) {
+        input.pattern = field.validation.pattern;
+        input.title = field.validation.message || '';
+      }
+      
+      fieldGroup.appendChild(input);
+      
+      // Add tooltip/help text
+      if (field.tooltip || field.helpText) {
+        const help = document.createElement('p');
+        help.className = 'ax-help-text';
+        help.innerHTML = field.tooltip || field.helpText;
+        fieldGroup.appendChild(help);
+      }
+      
+      // Handle conditional visibility
+      if (field.hideInitially === 'hidden') {
+        fieldGroup.classList.add('ax-hidden');
+      }
+      
+      // Setup event listeners for conditional logic
+      if (field.events) {
+        setupFieldEvents(input, field, stepId);
+      }
+    }
+    
+    return fieldGroup;
+  }
+  
+  function createNavigationButtons(stepId, config) {
+    const buttonGroup = document.createElement('div');
+    buttonGroup.className = 'ax-button-group';
+    
+    const backBtn = document.createElement('button');
+    backBtn.type = 'button';
+    backBtn.className = 'ax-btn ax-btn-secondary ax-btn-back';
+    backBtn.textContent = 'Back';
+    
+    const continueBtn = document.createElement('button');
+    continueBtn.type = 'submit';
+    continueBtn.className = 'ax-btn ax-btn-primary';
+    continueBtn.textContent = 'Continue';
+    
+    buttonGroup.appendChild(backBtn);
+    buttonGroup.appendChild(continueBtn);
+    
+    return buttonGroup;
+  }
+  
+  // =========================================================================
+  // Event Listeners
+  // =========================================================================
+  
+  function setupEventListeners() {
+    // Social login buttons
+    const googleBtn = widget.querySelector('.ax-google-btn');
+    const axcelerateBtn = widget.querySelector('.ax-axcelerate-btn');
+    
+    if (googleBtn) {
+      googleBtn.addEventListener('click', () => handleOAuthLogin('google'));
+    }
+    if (axcelerateBtn) {
+      googleBtn.addEventListener('click', () => handleOAuthLogin('axcelerate'));
+    }
+    
+    // Manual form
+    const manualForm = document.getElementById('ax-manual-form-' + widgetId);
+    if (manualForm) {
+      manualForm.addEventListener('submit', handleManualFormSubmit);
+    }
+    
+    // Modal
+    const modalClose = elements.modal?.querySelector('.ax-modal-close');
+    const modalOk = elements.modal?.querySelector('.ax-modal-ok');
+    if (modalClose) modalClose.addEventListener('click', closeModal);
+    if (modalOk) modalOk.addEventListener('click', closeModal);
+    
+    // Back buttons (will be added dynamically, use event delegation)
+    widget.addEventListener('click', (e) => {
+      if (e.target.classList.contains('ax-btn-back')) {
+        handleBack();
+      }
+    });
+  }
+  
+  function setupFieldEvents(input, field, stepId) {
+    if (!field.events) return;
+    
+    // Handle change events for conditional logic
+    input.addEventListener('change', (e) => {
+      Object.entries(field.events).forEach(([listenerName, eventConfig]) => {
+        if (eventConfig.trigger === 'change') {
+          handleConditionalLogic(listenerName, eventConfig.action, e.target.value, stepId);
+        }
+      });
+    });
+  }
+  
+  function handleConditionalLogic(listenerName, action, value, stepId) {
+    console.log('Conditional logic:', listenerName, action, value);
+    
+    // Find target field(s) based on listener name
+    // Example: usiNo -> show field with ID containing 'usiInfo'
+    const targetElements = widget.querySelectorAll(`[id*="${listenerName}"]`);
+    
+    targetElements.forEach(el => {
+      const fieldGroup = el.closest('.ax-form-group');
+      if (fieldGroup) {
+        if (action === 'show') {
+          fieldGroup.classList.remove('ax-hidden');
+        } else if (action === 'hide') {
+          fieldGroup.classList.add('ax-hidden');
+        } else if (action === 'toggle') {
+          fieldGroup.classList.toggle('ax-hidden');
+        }
+      }
+    });
+  }
+  
+  // =========================================================================
+  // OAuth Login
+  // =========================================================================
+  
+  function handleOAuthLogin(provider) {
+    console.log('Initiating OAuth login:', provider);
+    
+    if (!instanceId) {
+      alert('Error: Missing instance ID. Please make sure the URL has ?instance_id= parameter.');
+      return;
+    }
+    
+    const authUrl = `${RENDER_APP_URL}/api/auth/${provider}/login`;
+    const params = new URLSearchParams({
+      instanceId: instanceId,
+      courseId: courseId || '',
+      courseType: courseType || 'w',
+      redirectUrl: window.location.href
+    });
+    
+    window.location.href = `${authUrl}?${params}`;
+  }
+  
+  function checkOAuthReturn() {
+    const urlParams = new URLSearchParams(window.location.search);
+    authToken = urlParams.get('auth_token');
+    contactId = urlParams.get('contact_id');
+    const authError = urlParams.get('auth_error');
+    
+    console.log('Checking OAuth return:', { authToken: !!authToken, contactId, authError });
+    
+    if (authError) {
+      showError('Authentication failed: ' + authError);
+      cleanUrl();
+      return false;
+    }
+    
+    if (authToken && contactId) {
+      console.log('✅ OAuth successful! Contact ID:', contactId);
+      
+      // Get the first dynamic step (background)
+      const firstStep = formSteps.find(s => s.id !== 'login');
+      if (firstStep) {
+        showStep(firstStep.id);
+      }
+      
+      setTimeout(() => cleanUrl(), 100);
+      return true;
+    }
+    
+    return false;
+  }
+  
+  // =========================================================================
+  // Manual Form Submission
+  // =========================================================================
+  
+  async function handleManualFormSubmit(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const email = formData.get('email');
+    const givenName = formData.get('givenName');
+    const familyName = formData.get('familyName');
+    
+    try {
+      elements.form.style.display = 'none';
+      elements.loading.style.display = 'block';
+      
+      // Check if contact exists
+      console.log('Checking if contact exists:', email);
+      const response = await fetch(`${RENDER_APP_URL}/api/axcelerate/contact/search?email=${encodeURIComponent(email)}`);
+      
+      if (response.ok) {
+        const contacts = await response.json();
+        console.log('Contact search result:', contacts);
+        
+        if (Array.isArray(contacts) && contacts.length > 0) {
+          console.log('✋ Existing contact found, showing modal');
+          showExistingRecordModal(email);
+          elements.loading.style.display = 'none';
+          elements.form.style.display = 'block';
+          return;
+        } else {
+          console.log('✅ No existing contact found, proceeding to create');
+        }
+      }
+      
+      // Create new contact
+      const createResponse = await fetch(`${RENDER_APP_URL}/api/enrollment/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          givenName,
+          surname: familyName,
+          email,
+          instanceId,
+          courseType
+        })
+      });
+      
+      const result = await createResponse.json();
+      
+      if (result.success) {
+        contactId = result.data.contactId;
+        
+        // Move to first dynamic step
+        const firstStep = formSteps.find(s => s.id !== 'login');
+        if (firstStep) {
+          showStep(firstStep.id);
+        }
+      } else {
+        throw new Error(result.message);
+      }
+      
+    } catch (error) {
+      console.error('Error:', error);
+      showError(error.message);
+    } finally {
+      elements.loading.style.display = 'none';
+      elements.form.style.display = 'block';
+    }
+  }
+  
+  // =========================================================================
+  // Step Submission
+  // =========================================================================
+  
+  async function handleStepSubmit(e, stepId, config) {
+    e.preventDefault();
+    
+    console.log('Step submitted:', stepId);
+    
+    // Collect form data
+    const form = e.target;
+    const formDataObj = new FormData(form);
+    const stepData = {};
+    
+    // Handle different field types
+    config.fields.forEach(field => {
+      if (field.type === 'checkbox') {
+        // Collect all checked values
+        const checked = [];
+        form.querySelectorAll(`input[name="${field.fieldId}"]:checked`).forEach(cb => {
+          checked.push(cb.value);
+        });
+        if (checked.length > 0) {
+          stepData[field.fieldId] = checked;
+        }
+      } else if (field.type !== 'information' && field.type !== 'info_expandable' && field.type !== 'button') {
+        const value = formDataObj.get(field.fieldId);
+        if (value) {
+          stepData[field.fieldId] = value;
+        }
+      }
+    });
+    
+    // Store step data
+    formData[stepId] = stepData;
+    sessionStorage.setItem(`ax_form_${stepId}`, JSON.stringify(stepData));
+    
+    console.log('Step data collected:', stepData);
+    
+    // Handle based on step type
+    if (config.stepType === 'review') {
+      // Review step - move to declaration
+      const nextStep = formSteps.find(s => s.id === 'declaration');
+      if (nextStep) {
+        showStep(nextStep.id);
+      }
+    } else if (config.stepType === 'enrol') {
+      // Final submission
+      await submitEnrollment();
+    } else {
+      // Move to next step
+      const currentIndex = formSteps.findIndex(s => s.id === stepId);
+      if (currentIndex >= 0 && currentIndex < formSteps.length - 1) {
+        const nextStep = formSteps[currentIndex + 1];
+        showStep(nextStep.id);
+      }
+    }
+  }
+  
+  // =========================================================================
+  // Final Enrollment Submission
+  // =========================================================================
+  
+  async function submitEnrollment() {
+    try {
+      elements.form.style.display = 'none';
+      elements.loading.style.display = 'block';
+      
+      console.log('📤 Submitting final enrollment...');
+      console.log('All collected data:', formData);
+      
+      // Combine all form data
+      const enrollmentData = {
+        contactId,
+        instanceId,
+        courseType,
+        courseId,
+        customFields: {}
+      };
+      
+      // Flatten all step data into customFields
+      Object.values(formData).forEach(stepData => {
+        Object.assign(enrollmentData.customFields, stepData);
+      });
+      
+      const response = await fetch(`${RENDER_APP_URL}/api/enrollment/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(enrollmentData)
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Clear saved data
+        sessionStorage.clear();
+        localStorage.removeItem('ax_enrollment_progress');
+        
+        showSuccess(result);
+      } else {
+        throw new Error(result.message || 'Enrollment failed');
+      }
+      
+    } catch (error) {
+      console.error('Enrollment error:', error);
+      showError('Failed to submit enrollment: ' + error.message);
+      elements.loading.style.display = 'none';
+      elements.form.style.display = 'block';
+    }
+  }
+  
+  // =========================================================================
+  // Navigation
+  // =========================================================================
+  
+  function showStep(stepId) {
+    console.log('Showing step:', stepId);
+    
+    currentStep = stepId;
+    
+    // Hide all steps
+    widget.querySelectorAll('.ax-step-content').forEach(el => {
+      el.style.display = 'none';
+    });
+    
+    // Show current step
+    const stepElement = document.getElementById('ax-step-' + stepId + '-' + widgetId);
+    if (stepElement) {
+      stepElement.style.display = 'block';
+      stepElement.classList.add('active');
+    }
+    
+    // Update progress indicators
+    updateProgressIndicators(stepId);
+    
+    // Restore saved data for this step if available
+    const saved = sessionStorage.getItem(`ax_form_${stepId}`);
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        populateFormData(stepId, data);
+      } catch (e) {
+        console.error('Error restoring step data:', e);
+      }
+    }
+    
+    // Save progress
+    saveProgress();
+  }
+  
+  function handleBack() {
+    const currentIndex = formSteps.findIndex(s => s.id === currentStep);
+    if (currentIndex > 0) {
+      const previousStep = formSteps[currentIndex - 1];
+      showStep(previousStep.id);
+    }
+  }
+  
+  function updateProgressIndicators(stepId) {
+    const steps = widget.querySelectorAll('.ax-progress-steps .ax-step');
+    const currentIndex = formSteps.findIndex(s => s.id === stepId);
+    
+    steps.forEach((step, index) => {
+      step.classList.remove('active', 'completed');
+      
+      if (index < currentIndex) {
+        step.classList.add('completed');
+      } else if (index === currentIndex) {
+        step.classList.add('active');
+      }
+    });
+  }
+  
+  function populateFormData(stepId, data) {
+    console.log('Populating form data for step:', stepId, data);
+    
+    Object.entries(data).forEach(([fieldId, value]) => {
+      const input = document.getElementById(`ax-${fieldId}-${widgetId}`);
+      if (input) {
+        if (Array.isArray(value)) {
+          // Checkbox group
+          value.forEach(v => {
+            const checkbox = widget.querySelector(`input[name="${fieldId}"][value="${v}"]`);
+            if (checkbox) checkbox.checked = true;
+          });
+        } else {
+          input.value = value;
+        }
+      }
+    });
+  }
+  
+  // =========================================================================
+  // Progress Saving & Resume
+  // =========================================================================
+  
+  function saveProgress() {
+    if (contactId && currentStep !== 'login') {
+      const progress = {
+        contactId,
+        authToken,
+        currentStep,
+        instanceId,
+        courseId,
+        courseType,
+        formData,
+        timestamp: Date.now()
+      };
+      localStorage.setItem('ax_enrollment_progress', JSON.stringify(progress));
+      console.log('📌 Progress saved');
+    }
+  }
+  
+  function restoreProgress() {
+    try {
+      const saved = localStorage.getItem('ax_enrollment_progress');
+      if (!saved) return false;
+      
+      const progress = JSON.parse(saved);
+      
+      // Check if recent (within 7 days)
+      const daysSince = (Date.now() - progress.timestamp) / (1000 * 60 * 60 * 24);
+      if (daysSince > 7) {
+        localStorage.removeItem('ax_enrollment_progress');
+        return false;
+      }
+      
+      // Only restore if for same course
+      if (progress.instanceId !== instanceId) {
+        return false;
+      }
+      
+      // Restore state
+      contactId = progress.contactId;
+      authToken = progress.authToken;
+      formData = progress.formData || {};
+      
+      // Restore session storage for each step
+      Object.entries(formData).forEach(([step, data]) => {
+        sessionStorage.setItem(`ax_form_${step}`, JSON.stringify(data));
+      });
+      
+      console.log('✅ Restored progress from', new Date(progress.timestamp).toLocaleString());
+      
+      elements.loading.style.display = 'none';
+      elements.form.style.display = 'block';
+      showStep(progress.currentStep);
+      
+      return true;
+    } catch (error) {
+      console.error('Error restoring progress:', error);
+      return false;
+    }
+  }
+  
+  // Auto-save every 30 seconds
+  setInterval(() => {
+    if (contactId && currentStep !== 'login') {
+      saveProgress();
+    }
+  }, 30000);
+  
+  // Save on page unload
+  window.addEventListener('beforeunload', () => {
+    if (contactId && currentStep !== 'login') {
+      saveProgress();
+    }
+  });
+  
+  // =========================================================================
+  // UI Helpers
+  // =========================================================================
+  
+  function showSuccess(result) {
+    elements.loading.style.display = 'none';
+    elements.form.style.display = 'none';
+    elements.success.style.display = 'block';
+    
+    const messageEl = elements.success.querySelector('.ax-success-message');
+    if (messageEl) {
+      messageEl.textContent = result.message || 'Your enrollment has been submitted successfully!';
+    }
+  }
+  
+  function showError(message) {
+    elements.loading.style.display = 'none';
+    elements.form.style.display = 'none';
+    elements.error.style.display = 'block';
+    
+    const errorMsgEl = elements.error.querySelector('.ax-error-message');
+    if (errorMsgEl) {
+      errorMsgEl.textContent = message;
+    }
+  }
+  
+  function showExistingRecordModal(email) {
+    const emailEl = elements.modal.querySelector('#ax-modal-email');
+    if (emailEl) {
+      const masked = email.substring(0, 1) + '****' + email.substring(email.indexOf('@'));
+      emailEl.textContent = masked;
+    }
+    elements.modal.style.display = 'block';
+  }
+  
+  function closeModal() {
+    elements.modal.style.display = 'none';
+  }
+  
+  function cleanUrl() {
+    if (window.history && window.history.replaceState) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('auth_token');
+      url.searchParams.delete('contact_id');
+      url.searchParams.delete('auth_error');
+      window.history.replaceState({}, document.title, url.toString());
+    }
+  }
+  
+  // =========================================================================
+  // Initialize Widget
+  // =========================================================================
+  
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      init();
+      setTimeout(() => {
+        if (!authToken && !contactId) {
+          restoreProgress();
+        }
+      }, 1000);
+    });
+  } else {
+    init();
+    setTimeout(() => {
+      if (!authToken && !contactId) {
+        restoreProgress();
+      }
+    }, 1000);
+  }
+  
+})();
+</script>
+
