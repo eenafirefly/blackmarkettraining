@@ -611,11 +611,29 @@ router.get('/contact/search', async (req, res) => {
     );
     
     if (!response.ok) {
-      throw new Error(`aXcelerate API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error(`aXcelerate API error: ${response.status}`, errorText);
+      // Return empty array on error instead of throwing
+      return res.json([]);
     }
     
     const data = await response.json();
-    res.json(data || []);
+    console.log('Contact search result:', data);
+    
+    // Ensure we always return an array
+    if (Array.isArray(data)) {
+      res.json(data);
+    } else if (data && data.ERROR) {
+      // aXcelerate returned an error object
+      console.log('aXcelerate returned error:', data.MESSAGES);
+      res.json([]);
+    } else if (data) {
+      // Single contact returned, wrap in array
+      res.json([data]);
+    } else {
+      // No data
+      res.json([]);
+    }
   } catch (error) {
     console.error('Error searching contacts:', error);
     res.status(500).json({ 

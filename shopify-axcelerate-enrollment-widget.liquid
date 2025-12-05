@@ -794,6 +794,18 @@
       backgroundForm.addEventListener('submit', handleBackgroundFormSubmit);
     }
     
+    // Personal form
+    const personalForm = document.getElementById('ax-personal-form-' + widgetId);
+    if (personalForm) {
+      personalForm.addEventListener('submit', handlePersonalFormSubmit);
+    }
+    
+    // Contact form
+    const contactForm = document.getElementById('ax-contact-form-' + widgetId);
+    if (contactForm) {
+      contactForm.addEventListener('submit', handleContactFormSubmit);
+    }
+    
     // Back buttons
     widget.querySelectorAll('.ax-btn-back').forEach(btn => {
       btn.addEventListener('click', handleBack);
@@ -872,18 +884,26 @@
       elements.loading.style.display = 'block';
       
       // Check if contact exists
+      console.log('Checking if contact exists:', email);
       const response = await fetch(`${RENDER_APP_URL}/api/axcelerate/contact/search?email=${encodeURIComponent(email)}`);
       
       if (response.ok) {
         const contacts = await response.json();
+        console.log('Contact search result:', contacts);
         
-        if (contacts && contacts.length > 0) {
+        // Check if contacts is an array and has items
+        if (Array.isArray(contacts) && contacts.length > 0) {
           // Existing record found - show modal
+          console.log('✋ Existing contact found, showing modal');
           showExistingRecordModal(email);
           elements.loading.style.display = 'none';
           elements.form.style.display = 'block';
           return;
+        } else {
+          console.log('✅ No existing contact found, proceeding to create');
         }
+      } else {
+        console.log('⚠️ Contact search failed:', response.status);
       }
       
       // No existing record - create and proceed
@@ -921,6 +941,9 @@
   async function handleBackgroundFormSubmit(e) {
     e.preventDefault();
     
+    console.log('Background form submitted, moving to step 3...');
+    
+    // Store background form data temporarily
     const formData = new FormData(e.target);
     const customFields = {};
     
@@ -928,10 +951,35 @@
       customFields[key] = value;
     }
     
+    // Store in session storage for later
+    sessionStorage.setItem('ax_background_data', JSON.stringify(customFields));
+    
+    // Move to personal details step
+    showStep('personal');
+  }
+  
+  // Personal form submission (placeholder for now)
+  async function handlePersonalFormSubmit(e) {
+    e.preventDefault();
+    console.log('Personal form submitted, moving to step 4...');
+    // TODO: Implement personal details collection
+    showStep('contact');
+  }
+  
+  // Contact/final form submission
+  async function handleContactFormSubmit(e) {
+    e.preventDefault();
+    
+    console.log('Final enrollment submission...');
+    
     try {
       elements.form.style.display = 'none';
       elements.loading.style.display = 'block';
       
+      // Get background data from storage
+      const backgroundData = JSON.parse(sessionStorage.getItem('ax_background_data') || '{}');
+      
+      // For now, submit with background data only
       const response = await fetch(`${RENDER_APP_URL}/api/enrollment/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -939,13 +987,14 @@
           contactId: contactId,
           instanceId: instanceId,
           courseType: courseType,
-          customFields: customFields
+          customFields: backgroundData
         })
       });
       
       const result = await response.json();
       
       if (result.success) {
+        sessionStorage.removeItem('ax_background_data'); // Clean up
         showSuccess(result);
       } else {
         throw new Error(result.message);
@@ -954,6 +1003,8 @@
     } catch (error) {
       console.error('Error:', error);
       showError(error.message);
+      elements.loading.style.display = 'none';
+      elements.form.style.display = 'block';
     }
   }
   
@@ -1048,11 +1099,142 @@
     }
   }
   
+  // =========================================================================
+  // Save/Resume Enrollment Progress
+  // =========================================================================
+  
+  // Save enrollment progress
+  function saveProgress() {
+    if (contactId && currentStep !== 'login') {
+      const progress = {
+        contactId,
+        authToken,
+        currentStep,
+        instanceId,
+        courseId,
+        courseType,
+        backgroundData: sessionStorage.getItem('ax_background_data'),
+        timestamp: Date.now()
+      };
+      localStorage.setItem('ax_enrollment_progress', JSON.stringify(progress));
+      console.log('📌 Enrollment progress saved');
+    }
+  }
+  
+  // Restore enrollment progress
+  function restoreProgress() {
+    try {
+      const saved = localStorage.getItem('ax_enrollment_progress');
+      if (!saved) return false;
+      
+      const progress = JSON.parse(saved);
+      
+      // Check if progress is recent (within 7 days)
+      const daysSince = (Date.now() - progress.timestamp) / (1000 * 60 * 60 * 24);
+      if (daysSince > 7) {
+        localStorage.removeItem('ax_enrollment_progress');
+        return false;
+      }
+      
+      // Only restore if for the same course
+      if (progress.instanceId !== instanceId) {
+        return false;
+      }
+      
+      // Restore state
+      contactId = progress.contactId;
+      authToken = progress.authToken;
+      if (progress.backgroundData) {
+        sessionStorage.setItem('ax_background_data', progress.backgroundData);
+      }
+      
+      console.log('✅ Restored enrollment progress from', new Date(progress.timestamp).toLocaleString());
+      
+      // Show the step they were on
+      elements.loading.style.display = 'none';
+      elements.form.style.display = 'block';
+      showStep(progress.currentStep);
+      
+      return true;
+    } catch (error) {
+      console.error('Error restoring progress:', error);
+      return false;
+    }
+  }
+  
+  // Send resume email (using beacon for reliability)
+  function sendResumeEmail() {
+    if (!contactId || currentStep === 'login') return;
+    
+    try {
+      console.log('📧 Sending resume enrollment email...');
+      
+      const resumeUrl = window.location.href.split('?')[0] + 
+        `?instance_id=${instanceId}&course_type=${courseType}&course_id=${courseId || ''}`;
+      
+      const data = new Blob([JSON.stringify({
+        contactId,
+        instanceId,
+        resumeUrl,
+        currentStep
+      })], { type: 'application/json' });
+      
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(`${RENDER_APP_URL}/api/enrollment/send-resume-email`, data);
+      }
+      
+      console.log('✅ Resume email queued');
+    } catch (error) {
+      console.error('Failed to send resume email:', error);
+    }
+  }
+  
+  // Detect when user is leaving
+  let hasTriedToLeave = false;
+  window.addEventListener('beforeunload', (e) => {
+    if (contactId && currentStep !== 'login' && !hasTriedToLeave) {
+      saveProgress();
+      sendResumeEmail();
+      hasTriedToLeave = true;
+    }
+  });
+  
+  // Auto-save progress periodically
+  setInterval(() => {
+    if (contactId && currentStep !== 'login') {
+      saveProgress();
+    }
+  }, 30000); // Every 30 seconds
+  
+  // =========================================================================
+  // Initialize
+  // =========================================================================
+  
   // Initialize widget
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', () => {
+      init();
+      // Try to restore progress after init
+      setTimeout(() => {
+        if (!authToken && !contactId) {
+          const restored = restoreProgress();
+          if (restored) {
+            console.log('📋 Enrollment resumed from previous session');
+          }
+        }
+      }, 1000);
+    });
   } else {
     init();
+    // Try to restore progress after init
+    setTimeout(() => {
+      if (!authToken && !contactId) {
+        const restored = restoreProgress();
+        if (restored) {
+          console.log('📋 Enrollment resumed from previous session');
+        }
+      }
+    }, 1000);
   }
 })();
 </script>

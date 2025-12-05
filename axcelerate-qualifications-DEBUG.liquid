@@ -1,0 +1,106 @@
+{% comment %}
+  DEBUG VERSION - Qualification Details Section
+  File location in Shopify: sections/axcelerate-qualifications.liquid
+  
+  This version includes extensive debugging to diagnose parameter issues
+{% endcomment %}
+
+{% comment %} Try multiple ways to extract URL parameters {% endcomment %}
+{% assign course_id = request.get_parameters.course_id %}
+{% assign course_type = request.get_parameters.course_type %}
+{% assign instance_id = request.get_parameters.instance_id %}
+
+{% comment %} Also try with brackets notation {% endcomment %}
+{% assign course_id_alt = request.get_parameters['course_id'] %}
+{% assign course_type_alt = request.get_parameters['course_type'] %}
+{% assign instance_id_alt = request.get_parameters['instance_id'] %}
+
+<div class="qualification-details-section">
+  <div class="page-width">
+    
+    {% comment %} FULL DEBUG OUTPUT {% endcomment %}
+    <div class="ax-debug-panel" style="background: #f0f0f0; padding: 20px; margin: 20px 0; border: 2px solid #333; font-family: monospace; font-size: 12px;">
+      <h3 style="margin-top: 0;">🔍 DEBUG INFORMATION</h3>
+      
+      <h4>Request Object:</h4>
+      <pre>request.path: {{ request.path }}
+request.page_type: {{ request.page_type }}</pre>
+      
+      <h4>URL Parameters (dot notation):</h4>
+      <pre>course_id: {{ course_id | default: "NULL/EMPTY" }}
+course_type: {{ course_type | default: "NULL/EMPTY" }}
+instance_id: {{ instance_id | default: "NULL/EMPTY" }}</pre>
+      
+      <h4>URL Parameters (bracket notation):</h4>
+      <pre>course_id: {{ course_id_alt | default: "NULL/EMPTY" }}
+course_type: {{ course_type_alt | default: "NULL/EMPTY" }}
+instance_id: {{ instance_id_alt | default: "NULL/EMPTY" }}</pre>
+      
+      <h4>All GET Parameters:</h4>
+      <pre>{{ request.get_parameters | json }}</pre>
+      
+      <h4>Conditional Checks:</h4>
+      <pre>instance_id exists? {% if instance_id %}YES{% else %}NO{% endif %}
+course_type exists? {% if course_type %}YES{% else %}NO{% endif %}
+Both exist? {% if instance_id and course_type %}YES{% else %}NO{% endif %}</pre>
+      
+      <h4>Current URL (JavaScript):</h4>
+      <div id="js-current-url" style="background: white; padding: 10px; margin-top: 10px;"></div>
+      <script>
+        document.getElementById('js-current-url').textContent = window.location.href;
+      </script>
+    </div>
+    
+    {% comment %} Try to render widget regardless {% endcomment %}
+    <div style="background: #fff3cd; padding: 20px; margin: 20px 0;">
+      <h4>Attempting to render widget...</h4>
+      <p>Passing these values:</p>
+      <ul>
+        <li>course_id: {{ course_id | default: "(empty)" }}</li>
+        <li>course_type: {{ course_type | default: "(empty)" }}</li>
+        <li>instance_id: {{ instance_id | default: "(empty)" }}</li>
+      </ul>
+    </div>
+    
+    {% comment %} Render widget with whatever we have {% endcomment %}
+    {% render 'axcelerate-enrollment-widget', 
+      course_id: course_id, 
+      course_type: course_type, 
+      instance_id: instance_id
+    %}
+    
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "aXcelerate Qualifications DEBUG",
+  "settings": [],
+  "presets": [
+    {
+      "name": "aXcelerate Qualifications DEBUG",
+      "category": "Custom"
+    }
+  ]
+}
+{% endschema %}
+
+<style>
+  .qualification-details-section {
+    padding: 40px 0;
+  }
+  
+  .page-width {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+  
+  .ax-debug-panel pre {
+    background: white;
+    padding: 10px;
+    overflow-x: auto;
+    margin: 10px 0;
+  }
+</style>
+

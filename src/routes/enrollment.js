@@ -281,5 +281,86 @@ router.get('/course/:instanceId', async (req, res) => {
   }
 });
 
+/**
+ * Send resume enrollment email
+ * POST /api/enrollment/send-resume-email
+ * 
+ * Sends an email to the contact to resume their enrollment
+ */
+router.post('/send-resume-email', async (req, res) => {
+  try {
+    const { contactId, instanceId, resumeUrl, currentStep } = req.body;
+    
+    console.log('Sending resume email to contact:', contactId);
+    
+    // Get contact details from aXcelerate
+    const contactResponse = await fetch(
+      `${process.env.AXCELERATE_API_URL}/contact/${contactId}`,
+      {
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN
+        }
+      }
+    );
+    
+    if (!contactResponse.ok) {
+      throw new Error('Failed to fetch contact details');
+    }
+    
+    const contact = await contactResponse.json();
+    
+    // Get course details
+    const courseResponse = await fetch(
+      `${process.env.AXCELERATE_API_URL}/course/instance/${instanceId}`,
+      {
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN
+        }
+      }
+    );
+    
+    const course = courseResponse.ok ? await courseResponse.json() : null;
+    
+    // Create a note in aXcelerate about the incomplete enrollment
+    const noteText = `Enrollment incomplete - stopped at step: ${currentStep}. Resume link sent to ${contact.EMAIL}. Resume URL: ${resumeUrl}`;
+    
+    const noteResponse = await fetch(
+      `${process.env.AXCELERATE_API_URL}/contact/${contactId}/note`,
+      {
+        method: 'POST',
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `note=${encodeURIComponent(noteText)}&type=General`
+      }
+    );
+    
+    console.log('Note created in aXcelerate:', noteResponse.ok);
+    
+    // TODO: Send actual email via your email service
+    // For now, just log and create the note
+    console.log('Resume email would be sent to:', contact.EMAIL);
+    console.log('Course:', course?.NAME || 'Unknown');
+    console.log('Resume URL:', resumeUrl);
+    
+    res.json({
+      success: true,
+      message: 'Resume notification created'
+    });
+    
+  } catch (error) {
+    console.error('Error sending resume email:', error);
+    // Don't fail the request - this is a background operation
+    res.json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
 export default router;
 

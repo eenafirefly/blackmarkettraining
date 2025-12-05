@@ -1,0 +1,152 @@
+{% comment %}
+  Complete Qualification Details Section Template
+  File location in Shopify: sections/qualification-details.liquid
+  
+  This section:
+  1. Extracts URL parameters (course_id, course_type, instance_id)
+  2. Passes them to the enrollment widget snippet
+  3. Shows an error if parameters are missing
+{% endcomment %}
+
+{% comment %} Extract URL parameters from the page URL {% endcomment %}
+{% assign course_id = request.get_parameters.course_id %}
+{% assign course_type = request.get_parameters.course_type %}
+{% assign instance_id = request.get_parameters.instance_id %}
+
+<div class="qualification-details-section">
+  <div class="page-width">
+    
+    {% comment %} Optional: Add your page title or content here {% endcomment %}
+    {% if section.settings.show_title %}
+      <h1 class="section-title">{{ section.settings.title | default: "Course Enrollment" }}</h1>
+    {% endif %}
+    
+    {% comment %} Render the enrollment widget with URL parameters {% endcomment %}
+    {% if instance_id and course_type %}
+      {% render 'shopify-axcelerate-enrollment-widget', 
+        course_id: course_id, 
+        course_type: course_type, 
+        instance_id: instance_id
+      %}
+    {% else %}
+      <div class="ax-missing-params-warning">
+        <h3>⚠️ Missing Required Information</h3>
+        <p>The enrollment form requires course parameters in the URL.</p>
+        <p><strong>Required parameters:</strong></p>
+        <ul>
+          <li><code>instance_id</code> - The course instance ID</li>
+          <li><code>course_type</code> - Either 'w' (workshop) or 'q' (qualification)</li>
+          <li><code>course_id</code> - The course ID (optional)</li>
+        </ul>
+        <p><strong>Example URL:</strong></p>
+        <code>?course_id=94138&course_type=w&instance_id=2103212</code>
+        
+        {% comment %} Debug info - shows what parameters were received {% endcomment %}
+        <details style="margin-top: 20px;">
+          <summary>Debug Info (click to expand)</summary>
+          <pre style="background: #f5f5f5; padding: 10px; margin-top: 10px; overflow-x: auto;">
+Current URL parameters:
+- course_id: {{ course_id | default: "NOT SET" }}
+- course_type: {{ course_type | default: "NOT SET" }}
+- instance_id: {{ instance_id | default: "NOT SET" }}
+          </pre>
+        </details>
+      </div>
+    {% endif %}
+    
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Qualification Details",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_title",
+      "label": "Show page title",
+      "default": false
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Page Title",
+      "default": "Course Enrollment"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Qualification Details",
+      "category": "Custom"
+    }
+  ]
+}
+{% endschema %}
+
+<style>
+  .qualification-details-section {
+    padding: 40px 0;
+  }
+  
+  .page-width {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+  
+  .section-title {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2em;
+  }
+  
+  .ax-missing-params-warning {
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+    border-radius: 8px;
+    padding: 30px;
+    margin: 40px auto;
+    max-width: 800px;
+  }
+  
+  .ax-missing-params-warning h3 {
+    color: #856404;
+    margin-top: 0;
+    font-size: 1.5em;
+  }
+  
+  .ax-missing-params-warning code {
+    background: #f8f9fa;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.9em;
+    color: #c7254e;
+  }
+  
+  .ax-missing-params-warning ul {
+    margin: 15px 0;
+    padding-left: 25px;
+  }
+  
+  .ax-missing-params-warning li {
+    margin: 8px 0;
+  }
+  
+  .ax-missing-params-warning details {
+    cursor: pointer;
+  }
+  
+  .ax-missing-params-warning summary {
+    color: #856404;
+    font-weight: 600;
+    padding: 10px;
+    background: #ffeeba;
+    border-radius: 4px;
+  }
+  
+  .ax-missing-params-warning summary:hover {
+    background: #ffd966;
+  }
+</style>
+

@@ -1,0 +1,88 @@
+{% comment %}
+  This is how your Shopify SECTION should look
+  File location in Shopify: sections/qualification-details.liquid
+{% endcomment %}
+
+{% comment %} Extract URL parameters {% endcomment %}
+{% assign course_id = request.get_parameters.course_id %}
+{% assign course_type = request.get_parameters.course_type %}
+{% assign instance_id = request.get_parameters.instance_id %}
+
+<div class="qualification-details-section">
+  <div class="container">
+    
+    {% comment %} Your page content here {% endcomment %}
+    <h1>{{ section.settings.title | default: "Course Enrollment" }}</h1>
+    
+    {% comment %} Render the enrollment widget with URL parameters {% endcomment %}
+    {% if instance_id and course_type %}
+      {% render 'axcelerate-enrollment-widget-v2', 
+        course_id: course_id, 
+        course_type: course_type, 
+        instance_id: instance_id
+      %}
+    {% else %}
+      <div class="alert alert-warning">
+        <p>Missing required course information. Please make sure the URL includes:</p>
+        <ul>
+          <li>instance_id</li>
+          <li>course_type</li>
+        </ul>
+        <p>Example: <code>?course_id=94138&course_type=w&instance_id=2103213</code></p>
+      </div>
+    {% endif %}
+    
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Qualification Details",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Page Title",
+      "default": "Course Enrollment"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Qualification Details"
+    }
+  ]
+}
+{% endschema %}
+
+<style>
+  .qualification-details-section {
+    padding: 40px 0;
+  }
+  
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+  
+  .alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+  }
+  
+  .alert-warning {
+    color: #856404;
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+  }
+  
+  .alert code {
+    background: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: monospace;
+  }
+</style>
+
