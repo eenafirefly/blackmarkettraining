@@ -540,7 +540,7 @@
     display: flex;
     gap: 10px;
     margin-top: 30px;
-    justify-content: space-between;
+    justify-content: flex-end;
   }
   
   /* Social Login */
@@ -975,12 +975,11 @@
         const buttonGroup = createNavigationButtons(stepId, config);
         form.appendChild(buttonGroup);
       } else if (config.stepType === 'review') {
-        // Review step: Save & Exit and Continue buttons
+        // Review step: Single Save button
         const buttonGroup = document.createElement('div');
         buttonGroup.className = 'ax-button-group';
         buttonGroup.innerHTML = `
-          <button type="button" class="ax-btn ax-btn-secondary ax-btn-save-exit">Save & Exit</button>
-          <button type="submit" class="ax-btn ax-btn-primary">Continue to Declaration</button>
+          <button type="submit" class="ax-btn ax-btn-primary">Save</button>
         `;
         form.appendChild(buttonGroup);
       } else if (config.stepType === 'enrol') {
@@ -995,7 +994,6 @@
         const buttonGroup = document.createElement('div');
         buttonGroup.className = 'ax-button-group';
         buttonGroup.innerHTML = `
-          <button type="button" class="ax-btn ax-btn-secondary ax-btn-save-exit">Save & Exit</button>
           <button type="submit" class="ax-btn ax-btn-primary">Submit Enrollment</button>
         `;
         form.appendChild(buttonGroup);
@@ -1220,17 +1218,11 @@
     buttonGroup.className = 'ax-button-group';
     
     const saveBtn = document.createElement('button');
-    saveBtn.type = 'button';
-    saveBtn.className = 'ax-btn ax-btn-secondary ax-btn-save-exit';
-    saveBtn.textContent = 'Save & Exit';
-    
-    const continueBtn = document.createElement('button');
-    continueBtn.type = 'submit';
-    continueBtn.className = 'ax-btn ax-btn-primary';
-    continueBtn.textContent = 'Continue';
+    saveBtn.type = 'submit';
+    saveBtn.className = 'ax-btn ax-btn-primary';
+    saveBtn.textContent = 'Save';
     
     buttonGroup.appendChild(saveBtn);
-    buttonGroup.appendChild(continueBtn);
     
     return buttonGroup;
   }
@@ -1262,13 +1254,6 @@
     const modalOk = elements.modal?.querySelector('.ax-modal-ok');
     if (modalClose) modalClose.addEventListener('click', closeModal);
     if (modalOk) modalOk.addEventListener('click', closeModal);
-    
-    // Save & Exit buttons (will be added dynamically, use event delegation)
-    widget.addEventListener('click', (e) => {
-      if (e.target.classList.contains('ax-btn-save-exit')) {
-        handleSaveAndExit();
-      }
-    });
   }
   
   function setupFieldEvents(input, field, stepId) {
@@ -1276,33 +1261,52 @@
     
     // Handle change events for conditional logic
     input.addEventListener('change', (e) => {
-      Object.entries(field.events).forEach(([listenerName, eventConfig]) => {
+      const value = e.target.value;
+      
+      Object.entries(field.events).forEach(([eventName, eventConfig]) => {
         if (eventConfig.trigger === 'change') {
-          handleConditionalLogic(listenerName, eventConfig.action, e.target.value, stepId);
+          // Check if condition exists and evaluate it
+          let shouldExecute = true;
+          if (eventConfig.condition) {
+            try {
+              // Safely evaluate condition (value === 'Yes', etc.)
+              shouldExecute = eval(eventConfig.condition.replace(/value/g, `"${value}"`));
+            } catch (e) {
+              console.warn('Failed to evaluate condition:', eventConfig.condition, e);
+              shouldExecute = false;
+            }
+          }
+          
+          if (shouldExecute) {
+            // Extract target field ID from event name (remove _show/_hide suffix if present)
+            const targetFieldId = eventName.replace(/_show$|_hide$/, '');
+            handleConditionalLogic(targetFieldId, eventConfig.action, value, stepId);
+          }
         }
       });
     });
   }
   
-  function handleConditionalLogic(listenerName, action, value, stepId) {
-    console.log('Conditional logic:', listenerName, action, value);
+  function handleConditionalLogic(targetFieldId, action, value, stepId) {
+    console.log('Conditional logic:', { targetFieldId, action, value, stepId });
     
-    // Find target field(s) based on listener name
-    // Example: usiNo -> show field with ID containing 'usiInfo'
-    const targetElements = widget.querySelectorAll(`[id*="${listenerName}"]`);
+    // Find target field by exact fieldId
+    const fieldGroup = document.getElementById(`ax-field-group-${targetFieldId}-${widgetId}`);
     
-    targetElements.forEach(el => {
-      const fieldGroup = el.closest('.ax-form-group');
-      if (fieldGroup) {
-        if (action === 'show') {
-          fieldGroup.classList.remove('ax-hidden');
-        } else if (action === 'hide') {
-          fieldGroup.classList.add('ax-hidden');
-        } else if (action === 'toggle') {
-          fieldGroup.classList.toggle('ax-hidden');
-        }
+    if (fieldGroup) {
+      if (action === 'show') {
+        fieldGroup.classList.remove('ax-hidden');
+        console.log(`  ✅ Showing field: ${targetFieldId}`);
+      } else if (action === 'hide') {
+        fieldGroup.classList.add('ax-hidden');
+        console.log(`  ✅ Hiding field: ${targetFieldId}`);
+      } else if (action === 'toggle') {
+        fieldGroup.classList.toggle('ax-hidden');
+        console.log(`  ✅ Toggling field: ${targetFieldId}`);
       }
-    });
+    } else {
+      console.warn(`⚠️ Field group not found: ax-field-group-${targetFieldId}-${widgetId}`);
+    }
   }
   
   // =========================================================================
@@ -1348,6 +1352,9 @@
       // Unlock all tabs now that user is logged in
       unlockAllTabs();
       
+      // Mark login step as completed
+      markStepCompleted('login');
+      
       // Get the first dynamic step (background)
       const firstStep = formSteps.find(s => s.id !== 'login');
       if (firstStep) {
@@ -1377,6 +1384,25 @@
         }
       }
     });
+  }
+  
+  function markStepCompleted(stepId) {
+    const tabs = widget.querySelectorAll('.ax-sidebar-tab');
+    const stepIndex = formSteps.findIndex(s => s.id === stepId);
+    
+    if (stepIndex >= 0 && stepIndex < tabs.length) {
+      const tab = tabs[stepIndex];
+      tab.classList.add('completed');
+      tab.classList.remove('active', 'locked', 'disabled');
+      
+      const statusIcon = tab.querySelector('.ax-tab-status');
+      if (statusIcon) {
+        statusIcon.textContent = '✓';
+        statusIcon.style.display = 'block';
+      }
+      
+      console.log(`✅ Marked step ${stepId} as completed`);
+    }
   }
   
   // =========================================================================
@@ -1451,6 +1477,9 @@
         
         // Unlock all tabs now that user is logged in
         unlockAllTabs();
+        
+        // Mark login step as completed
+        markStepCompleted('login');
         
         // Move to first dynamic step
         const firstStep = formSteps.find(s => s.id !== 'login');

@@ -18,13 +18,13 @@
         { "display": "No", "value": "No" }
       ],
       "events": {
-        "usiNo": { "action": "show", "trigger": "change" },
-        "usiYes": { "action": "hide", "trigger": "change" }
+        "usiNotice_show": { "action": "show", "trigger": "change", "condition": "value === 'No'" },
+        "usiNotice_hide": { "action": "hide", "trigger": "change", "condition": "value === 'Yes'" }
       }
     },
     {
       "order": 2,
-      "fieldId": "usiInfo",
+      "fieldId": "usiNotice",
       "name": "please refer to https://www.usi.gov.au Every student must provide his/her USI to Black Market Training before commencing the course.",
       "displayName": "please refer to <a href=\"https://www.usi.gov.au\" target=\"_blank\">https://www.usi.gov.au</a> Every student must provide his/her USI to Black Market Training before commencing the course.",
       "type": "information",
@@ -138,7 +138,7 @@
     },
     {
       "order": 11,
-      "fieldId": "llnDiscuss",
+      "fieldId": "llnDiscussYesNo",
       "name": "Would you like to discuss any language, literacy or numeracy concerns you may have",
       "type": "select",
       "required": true,
@@ -149,13 +149,13 @@
         { "display": "No", "value": "No" }
       ],
       "events": {
-        "LLNDiscussNo": { "action": "hide", "trigger": "change" },
-        "LLNDiscussYes": { "action": "show", "trigger": "change" }
+        "llnDiscuss_show": { "action": "show", "trigger": "change", "condition": "value === 'Yes'" },
+        "llnDiscuss_hide": { "action": "hide", "trigger": "change", "condition": "value === 'No'" }
       }
     },
     {
       "order": 12,
-      "fieldId": "llnDiscussInfo",
+      "fieldId": "llnDiscuss",
       "name": "Black Market Training representative will have this conversation with you.",
       "type": "information",
       "required": false,
@@ -196,7 +196,7 @@
     },
     {
       "order": 15,
-      "fieldId": "medicalNotice",
+      "fieldId": "medicalYesNo",
       "name": "Do you have any medical or physical conditions we need to be aware of?",
       "type": "select",
       "required": true,
@@ -207,13 +207,13 @@
         { "display": "No", "value": "No" }
       ],
       "events": {
-        "medicalNo": { "action": "hide", "trigger": "change" },
-        "medicalYes": { "action": "show", "trigger": "change" }
+        "medicalNotice_show": { "action": "show", "trigger": "change", "condition": "value === 'Yes'" },
+        "medicalNotice_hide": { "action": "hide", "trigger": "change", "condition": "value === 'No'" }
       }
     },
     {
       "order": 16,
-      "fieldId": "medicalNoticeInfo",
+      "fieldId": "medicalNotice",
       "name": "Black Market Training representative will have this conversation with you.",
       "type": "information",
       "required": false,
