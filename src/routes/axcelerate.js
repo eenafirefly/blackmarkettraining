@@ -602,11 +602,12 @@ router.get('/courses/:id', async (req, res) => {
  */
 router.get('/contact/search', async (req, res) => {
   try {
-    const { email } = req.query;
+    // Accept emailAddress from query (frontend sends this) OR email for backwards compatibility
+    const email = req.query.emailAddress || req.query.email;
     
     if (!email) {
       return res.status(400).json({ 
-        error: 'Missing required query parameter: email' 
+        error: 'Missing required query parameter: emailAddress' 
       });
     }
     
