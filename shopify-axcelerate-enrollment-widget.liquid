@@ -1204,7 +1204,7 @@
       
       // Check if contact exists
       console.log('Checking if contact exists:', email);
-      const response = await fetch(`${RENDER_APP_URL}/api/axcelerate/contact/search?email=${encodeURIComponent(email)}`);
+      const response = await fetch(`${RENDER_APP_URL}/api/axcelerate/contact/search?emailAddress=${encodeURIComponent(email)}`);
       
       if (response.ok) {
         const contacts = await response.json();

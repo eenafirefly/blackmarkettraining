@@ -1397,9 +1397,9 @@
       elements.form.style.display = 'none';
       elements.loading.style.display = 'block';
       
-      // Check if contact exists
+      // Check if contact exists (use emailAddress parameter per aXcelerate API)
       console.log('🔍 Checking if contact exists:', email);
-      const response = await fetch(`${RENDER_APP_URL}/api/axcelerate/contact/search?email=${encodeURIComponent(email)}`);
+      const response = await fetch(`${RENDER_APP_URL}/api/axcelerate/contact/search?emailAddress=${encodeURIComponent(email)}`);
       
       if (!response.ok) {
         console.warn('⚠️ Contact search request failed:', response.status);
