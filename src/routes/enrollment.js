@@ -133,9 +133,9 @@ async function findOrCreateContact(contactData) {
     
     console.log('🔍 Searching for existing contact with email:', email);
     
-    // Search for existing contact by email
+    // Search for existing contact by email (use emailAddress parameter per aXcelerate API)
     const searchResponse = await fetch(
-      `${process.env.AXCELERATE_API_URL}/contacts/search?email=${encodeURIComponent(email)}`,
+      `${process.env.AXCELERATE_API_URL}/contacts/search?emailAddress=${encodeURIComponent(email)}`,
       {
         headers: {
           'APIToken': process.env.AXCELERATE_API_TOKEN,
@@ -179,7 +179,7 @@ async function findOrCreateContact(contactData) {
     const contactPayload = {
       givenName,
       surname,
-      email: email  // Use 'email' not 'emailAddress' per aXcelerate API
+      emailAddress: email  // Use 'emailAddress' per aXcelerate API spec
     };
     
     if (phone) {

@@ -443,9 +443,9 @@ router.get('/google/callback', async (req, res) => {
  */
 async function findOrCreateContact(givenName, surname, email) {
   try {
-    // Search for existing contact
+    // Search for existing contact (use emailAddress parameter per aXcelerate API)
     const searchResponse = await fetch(
-      `${process.env.AXCELERATE_API_URL}/contacts/search?email=${encodeURIComponent(email)}`,
+      `${process.env.AXCELERATE_API_URL}/contacts/search?emailAddress=${encodeURIComponent(email)}`,
       {
         headers: {
           'APIToken': process.env.AXCELERATE_API_TOKEN,
@@ -455,10 +455,22 @@ async function findOrCreateContact(givenName, surname, email) {
     );
     
     if (searchResponse.ok) {
-      const contacts = await searchResponse.json();
-      if (contacts && contacts.length > 0) {
-        console.log('Found existing contact:', contacts[0].CONTACTID);
-        return contacts[0].CONTACTID;
+      const data = await searchResponse.json();
+      const contacts = Array.isArray(data) ? data : (data && data.CONTACTID ? [data] : []);
+      
+      // Filter to only contacts that actually match the email
+      const matchingContacts = contacts.filter(contact => {
+        if (!contact.EMAIL) return false;
+        return contact.EMAIL.toLowerCase() === email.toLowerCase();
+      });
+      
+      if (matchingContacts.length > 0) {
+        console.log('Found existing contact:', matchingContacts[0].CONTACTID, matchingContacts[0].EMAIL);
+        return matchingContacts[0].CONTACTID;
+      }
+      
+      if (contacts.length > 0 && matchingContacts.length === 0) {
+        console.warn(`⚠️ API returned ${contacts.length} contacts but none matched email "${email}"`);
       }
     }
     
@@ -474,7 +486,7 @@ async function findOrCreateContact(givenName, surname, email) {
           'WSToken': process.env.AXCELERATE_WS_TOKEN,
           'Content-Type': 'application/x-www-form-urlencoded'
         },
-        body: `givenName=${encodeURIComponent(givenName)}&surname=${encodeURIComponent(surname)}&email=${encodeURIComponent(email)}`
+        body: `givenName=${encodeURIComponent(givenName)}&surname=${encodeURIComponent(surname)}&emailAddress=${encodeURIComponent(email)}`
       }
     );
     

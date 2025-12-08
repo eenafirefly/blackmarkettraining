@@ -396,9 +396,9 @@ router.get('/google/callback', async (req, res) => {
  */
 async function findOrCreateContact(givenName, surname, email) {
   try {
-    // Search for existing contact
+    // Search for existing contact (use emailAddress parameter per aXcelerate API)
     const searchResponse = await fetch(
-      `${process.env.AXCELERATE_API_URL}/contacts/search?email=${encodeURIComponent(email)}`,
+      `${process.env.AXCELERATE_API_URL}/contacts/search?emailAddress=${encodeURIComponent(email)}`,
       {
         headers: {
           'APIToken': process.env.AXCELERATE_API_TOKEN,
@@ -439,7 +439,7 @@ async function findOrCreateContact(givenName, surname, email) {
           'WSToken': process.env.AXCELERATE_WS_TOKEN,
           'Content-Type': 'application/x-www-form-urlencoded'
         },
-        body: `givenName=${encodeURIComponent(givenName)}&surname=${encodeURIComponent(surname)}&email=${encodeURIComponent(email)}`
+        body: `givenName=${encodeURIComponent(givenName)}&surname=${encodeURIComponent(surname)}&emailAddress=${encodeURIComponent(email)}`
       }
     );
     
@@ -613,7 +613,7 @@ router.get('/contact/search', async (req, res) => {
     console.log('Searching for contact:', email);
     
     const response = await fetch(
-      `${process.env.AXCELERATE_API_URL}/contacts/search?email=${encodeURIComponent(email)}`,
+      `${process.env.AXCELERATE_API_URL}/contacts/search?emailAddress=${encodeURIComponent(email)}`,
       {
         headers: {
           'APIToken': process.env.AXCELERATE_API_TOKEN,
