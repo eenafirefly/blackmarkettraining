@@ -1405,19 +1405,27 @@
         console.warn('⚠️ Contact search request failed:', response.status);
         // If search fails, proceed to create
       } else {
-        const contacts = await response.json();
-        console.log('📋 Contact search result:', contacts, 'Type:', typeof contacts, 'IsArray:', Array.isArray(contacts), 'Length:', contacts?.length);
-        
-        // Double-check: must be array AND have items
-        if (Array.isArray(contacts) && contacts.length > 0 && contacts[0] && contacts[0].CONTACTID) {
-          console.log('✋ Existing contact found:', contacts[0].CONTACTID);
-          showExistingRecordModal(email);
-          elements.loading.style.display = 'none';
-          elements.form.style.display = 'flex';
-          return;
-        } else {
-          console.log('✅ No existing contact found, proceeding to create');
-        }
+      const contacts = await response.json();
+      console.log('📋 Contact search result:', contacts, 'Type:', typeof contacts, 'IsArray:', Array.isArray(contacts), 'Length:', contacts?.length);
+      
+      // Double-check: must be array AND have items with valid CONTACTID
+      const hasValidContact = Array.isArray(contacts) && 
+                             contacts.length > 0 && 
+                             contacts[0] && 
+                             contacts[0].CONTACTID && 
+                             (typeof contacts[0].CONTACTID === 'number' 
+                               ? contacts[0].CONTACTID > 0 
+                               : String(contacts[0].CONTACTID).trim().length > 0);
+      
+      if (hasValidContact) {
+        console.log('✋ Existing contact found:', contacts[0].CONTACTID);
+        showExistingRecordModal(email);
+        elements.loading.style.display = 'none';
+        elements.form.style.display = 'flex';
+        return;
+      } else {
+        console.log('✅ No existing contact found or invalid CONTACTID, proceeding to create');
+      }
       }
       
       // Create new contact

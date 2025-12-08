@@ -408,10 +408,22 @@ async function findOrCreateContact(givenName, surname, email) {
     );
     
     if (searchResponse.ok) {
-      const contacts = await searchResponse.json();
-      if (contacts && contacts.length > 0) {
-        console.log('Found existing contact:', contacts[0].CONTACTID);
-        return contacts[0].CONTACTID;
+      const data = await searchResponse.json();
+      const contacts = Array.isArray(data) ? data : (data && data.CONTACTID ? [data] : []);
+      
+      // Filter to only contacts that actually match the email
+      const matchingContacts = contacts.filter(contact => {
+        if (!contact.EMAIL) return false;
+        return contact.EMAIL.toLowerCase() === email.toLowerCase();
+      });
+      
+      if (matchingContacts.length > 0) {
+        console.log('Found existing contact:', matchingContacts[0].CONTACTID, matchingContacts[0].EMAIL);
+        return matchingContacts[0].CONTACTID;
+      }
+      
+      if (contacts.length > 0 && matchingContacts.length === 0) {
+        console.warn(`⚠️ API returned ${contacts.length} contacts but none matched email "${email}"`);
       }
     }
     
@@ -601,7 +613,7 @@ router.get('/contact/search', async (req, res) => {
     console.log('Searching for contact:', email);
     
     const response = await fetch(
-      `${process.env.AXCELERATE_API_URL}/contacts?email=${encodeURIComponent(email)}`,
+      `${process.env.AXCELERATE_API_URL}/contacts/search?email=${encodeURIComponent(email)}`,
       {
         headers: {
           'APIToken': process.env.AXCELERATE_API_TOKEN,
@@ -621,19 +633,36 @@ router.get('/contact/search', async (req, res) => {
     console.log('Contact search result:', data);
     
     // Ensure we always return an array
+    let contacts = [];
     if (Array.isArray(data)) {
-      res.json(data);
+      contacts = data;
     } else if (data && data.ERROR) {
       // aXcelerate returned an error object
       console.log('aXcelerate returned error:', data.MESSAGES);
-      res.json([]);
-    } else if (data) {
+      return res.json([]);
+    } else if (data && data.CONTACTID) {
       // Single contact returned, wrap in array
-      res.json([data]);
+      contacts = [data];
     } else {
       // No data
-      res.json([]);
+      return res.json([]);
     }
+    
+    // Filter to only return contacts that actually match the email
+    const matchingContacts = contacts.filter(contact => {
+      if (!contact.EMAIL) return false;
+      // Case-insensitive email comparison
+      return contact.EMAIL.toLowerCase() === email.toLowerCase();
+    });
+    
+    console.log(`Found ${contacts.length} contacts, ${matchingContacts.length} matching email "${email}"`);
+    
+    if (matchingContacts.length === 0 && contacts.length > 0) {
+      console.warn(`⚠️ API returned contacts but none matched email "${email}". Returned IDs:`, 
+        contacts.map(c => `${c.CONTACTID} (${c.EMAIL || 'no email'})`).join(', '));
+    }
+    
+    res.json(matchingContacts);
   } catch (error) {
     console.error('Error searching contacts:', error);
     res.status(500).json({ 
