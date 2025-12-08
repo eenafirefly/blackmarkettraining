@@ -127,6 +127,13 @@ router.post('/create', async (req, res) => {
 /**
  * Find existing contact or create new one
  */
+/**
+ * Helper: Get email from contact object (try different field names)
+ */
+function getContactEmail(contact) {
+  return contact.EMAIL || contact.email || contact.emailAddress || contact.EMAILADDRESS || null;
+}
+
 async function findOrCreateContact(contactData) {
   try {
     const { givenName, surname, email, phone } = contactData;
@@ -151,13 +158,16 @@ async function findOrCreateContact(contactData) {
       console.log(`📋 Search returned ${contacts.length} contacts`);
       
       // Filter to only contacts that actually match the email
+      console.log('📋 Raw contacts returned from API:', JSON.stringify(contacts, null, 2));
+      
       const matchingContacts = contacts.filter(contact => {
-        if (!contact.EMAIL) {
-          console.log(`⚠️ Contact ${contact.CONTACTID} has no email`);
+        const contactEmail = getContactEmail(contact);
+        if (!contactEmail) {
+          console.log(`⚠️ Contact ${contact.CONTACTID} has no email field. Keys:`, Object.keys(contact));
           return false;
         }
-        const matches = contact.EMAIL.toLowerCase() === email.toLowerCase();
-        console.log(`   Contact ${contact.CONTACTID}: ${contact.EMAIL} - ${matches ? '✅ MATCH' : '❌ no match'}`);
+        const matches = contactEmail.toLowerCase() === email.toLowerCase();
+        console.log(`   Contact ${contact.CONTACTID}: "${contactEmail}" vs "${email}" - ${matches ? '✅ MATCH' : '❌ no match'}`);
         return matches;
       });
       

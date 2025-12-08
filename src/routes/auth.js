@@ -439,6 +439,13 @@ router.get('/google/callback', async (req, res) => {
 // =============================================================================
 
 /**
+ * Helper: Get email from contact object (try different field names)
+ */
+function getContactEmail(contact) {
+  return contact.EMAIL || contact.email || contact.emailAddress || contact.EMAILADDRESS || null;
+}
+
+/**
  * Find existing contact or create new one in aXcelerate
  */
 async function findOrCreateContact(givenName, surname, email) {
@@ -458,19 +465,28 @@ async function findOrCreateContact(givenName, surname, email) {
       const data = await searchResponse.json();
       const contacts = Array.isArray(data) ? data : (data && data.CONTACTID ? [data] : []);
       
+      console.log(`📋 Search returned ${contacts.length} contacts for email: "${email}"`);
+      
       // Filter to only contacts that actually match the email
       const matchingContacts = contacts.filter(contact => {
-        if (!contact.EMAIL) return false;
-        return contact.EMAIL.toLowerCase() === email.toLowerCase();
+        const contactEmail = getContactEmail(contact);
+        if (!contactEmail) {
+          console.log(`⚠️ Contact ${contact.CONTACTID} has no email field`);
+          return false;
+        }
+        const matches = contactEmail.toLowerCase() === email.toLowerCase();
+        console.log(`   Contact ${contact.CONTACTID}: "${contactEmail}" - ${matches ? '✅ MATCH' : '❌ no match'}`);
+        return matches;
       });
       
       if (matchingContacts.length > 0) {
-        console.log('Found existing contact:', matchingContacts[0].CONTACTID, matchingContacts[0].EMAIL);
+        console.log('✅ Found existing contact:', matchingContacts[0].CONTACTID, getContactEmail(matchingContacts[0]));
         return matchingContacts[0].CONTACTID;
       }
       
       if (contacts.length > 0 && matchingContacts.length === 0) {
         console.warn(`⚠️ API returned ${contacts.length} contacts but none matched email "${email}"`);
+        console.log('📋 Raw API response:', JSON.stringify(contacts, null, 2));
       }
     }
     

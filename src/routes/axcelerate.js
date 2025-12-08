@@ -597,6 +597,13 @@ router.get('/courses/:id', async (req, res) => {
 });
 
 /**
+ * Helper: Get email from contact object (try different field names)
+ */
+function getContactEmail(contact) {
+  return contact.EMAIL || contact.email || contact.emailAddress || contact.EMAILADDRESS || null;
+}
+
+/**
  * Search contacts (for existing record check)
  * GET /api/axcelerate/contact/search
  */
@@ -632,6 +639,7 @@ router.get('/contact/search', async (req, res) => {
     
     const data = await response.json();
     console.log('Contact search result:', data);
+    console.log('📋 Raw API response:', JSON.stringify(data, null, 2));
     
     // Ensure we always return an array
     let contacts = [];
@@ -649,18 +657,35 @@ router.get('/contact/search', async (req, res) => {
       return res.json([]);
     }
     
+    console.log(`📊 Processing ${contacts.length} contacts. Searching for email: "${email}"`);
+    
     // Filter to only return contacts that actually match the email
     const matchingContacts = contacts.filter(contact => {
-      if (!contact.EMAIL) return false;
+      console.log(`🔍 Checking contact ${contact.CONTACTID}:`, {
+        hasEMAIL: !!contact.EMAIL,
+        EMAIL: contact.EMAIL,
+        hasEmail: !!contact.email,
+        email: contact.email,
+        allKeys: Object.keys(contact)
+      });
+      
+      const contactEmail = getContactEmail(contact);
+      if (!contactEmail) {
+        console.log(`   ❌ No email field found for contact ${contact.CONTACTID}`);
+        return false;
+      }
+      
       // Case-insensitive email comparison
-      return contact.EMAIL.toLowerCase() === email.toLowerCase();
+      const matches = contactEmail.toLowerCase() === email.toLowerCase();
+      console.log(`   "${contactEmail}" vs "${email}" = ${matches ? '✅ MATCH' : '❌ NO MATCH'}`);
+      return matches;
     });
     
     console.log(`Found ${contacts.length} contacts, ${matchingContacts.length} matching email "${email}"`);
     
     if (matchingContacts.length === 0 && contacts.length > 0) {
-      console.warn(`⚠️ API returned contacts but none matched email "${email}". Returned IDs:`, 
-        contacts.map(c => `${c.CONTACTID} (${c.EMAIL || 'no email'})`).join(', '));
+      console.warn(`⚠️ API returned contacts but none matched email "${email}". Returned:`, 
+        contacts.map(c => `ID:${c.CONTACTID} EMAIL:"${getContactEmail(c) || 'NONE'}"`).join(', '));
     }
     
     res.json(matchingContacts);
