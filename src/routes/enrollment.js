@@ -131,9 +131,11 @@ async function findOrCreateContact(contactData) {
   try {
     const { givenName, surname, email, phone } = contactData;
     
+    console.log('🔍 Searching for existing contact with email:', email);
+    
     // Search for existing contact by email
     const searchResponse = await fetch(
-      `${process.env.AXCELERATE_API_URL}/contacts?email=${encodeURIComponent(email)}`,
+      `${process.env.AXCELERATE_API_URL}/contacts/search?email=${encodeURIComponent(email)}`,
       {
         headers: {
           'APIToken': process.env.AXCELERATE_API_TOKEN,
@@ -143,25 +145,48 @@ async function findOrCreateContact(contactData) {
     );
     
     if (searchResponse.ok) {
-      const contacts = await searchResponse.json();
-      if (contacts && contacts.length > 0) {
-        console.log('Found existing contact:', contacts[0].CONTACTID);
-        return contacts[0];
+      const data = await searchResponse.json();
+      const contacts = Array.isArray(data) ? data : (data && data.CONTACTID ? [data] : []);
+      
+      console.log(`📋 Search returned ${contacts.length} contacts`);
+      
+      // Filter to only contacts that actually match the email
+      const matchingContacts = contacts.filter(contact => {
+        if (!contact.EMAIL) {
+          console.log(`⚠️ Contact ${contact.CONTACTID} has no email`);
+          return false;
+        }
+        const matches = contact.EMAIL.toLowerCase() === email.toLowerCase();
+        console.log(`   Contact ${contact.CONTACTID}: ${contact.EMAIL} - ${matches ? '✅ MATCH' : '❌ no match'}`);
+        return matches;
+      });
+      
+      if (matchingContacts.length > 0) {
+        console.log('✅ Found existing contact with matching email:', matchingContacts[0].CONTACTID, matchingContacts[0].EMAIL);
+        return matchingContacts[0];
+      }
+      
+      if (contacts.length > 0 && matchingContacts.length === 0) {
+        console.warn(`⚠️ API returned ${contacts.length} contacts but NONE matched email "${email}". Proceeding to create new contact.`);
+      } else {
+        console.log('✅ No existing contacts found, will create new contact');
       }
     }
     
     // Create new contact
-    console.log('Creating new contact:', { givenName, surname, email });
+    console.log('🆕 Creating NEW contact:', { givenName, surname, email });
     
     const contactPayload = {
       givenName,
       surname,
-      emailAddress: email
+      email: email  // Use 'email' not 'emailAddress' per aXcelerate API
     };
     
     if (phone) {
       contactPayload.mobilePhone = phone;
     }
+    
+    console.log('📤 Sending contact creation request to aXcelerate:', contactPayload);
     
     const createResponse = await fetch(
       `${process.env.AXCELERATE_API_URL}/contact`,
@@ -178,13 +203,31 @@ async function findOrCreateContact(contactData) {
       }
     );
     
+    console.log('📥 Contact creation response status:', createResponse.status);
+    
     if (!createResponse.ok) {
       const errorText = await createResponse.text();
+      console.error('❌ Failed to create contact:', errorText);
       throw new Error(`Failed to create contact: ${errorText}`);
     }
     
     const newContact = await createResponse.json();
-    console.log('Created new contact:', newContact.CONTACTID);
+    console.log('✅ aXcelerate returned contact with ID:', newContact.CONTACTID);
+    console.log('   Email:', newContact.EMAIL || email);
+    console.log('   Name:', newContact.GIVENNAME, newContact.SURNAME);
+    
+    // Verify this is actually a NEW contact by checking if email matches what we sent
+    if (newContact.EMAIL && newContact.EMAIL.toLowerCase() !== email.toLowerCase()) {
+      console.error('🚨 WARNING: aXcelerate returned a contact with DIFFERENT email!');
+      console.error(`   Requested: ${email}`);
+      console.error(`   Returned: ${newContact.EMAIL}`);
+      console.error(`   This suggests aXcelerate did duplicate detection and returned existing contact`);
+    } else if (!newContact.EMAIL) {
+      console.warn('⚠️ Returned contact has no EMAIL field, cannot verify if it\'s new');
+    } else {
+      console.log('✅ Email matches - this appears to be a genuine new contact');
+    }
+    
     return newContact;
     
   } catch (error) {
