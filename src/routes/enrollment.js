@@ -592,21 +592,23 @@ router.post('/save-step', async (req, res) => {
       }
     }
     
-    // Send incomplete enrollment notification using aXcelerate email template
+    // Send incomplete enrollment notification using aXcelerate Mailer API
     // Template ID 111502 = Default incomplete/abandoned enrollment template
-    console.log('📧 Sending incomplete enrollment email using aXcelerate template 111502...');
+    console.log('📧 Sending incomplete enrollment email using aXcelerate Mailer API (template 111502)...');
     
     // Build resume URL
-    const resumeUrl = req.headers.referer || req.body.resumeUrl || `${req.protocol}://${req.get('host')}`;
+    const resumeUrl = req.body.resumeUrl || req.headers.referer || `${req.protocol}://${req.get('host')}`;
     
-    const emailData = {
-      contactID: contactId,
+    const emailPayload = {
+      learnerID: enrollResult?.LEARNERID || contactId,
       templateID: 111502, // Default incomplete enrollment template from WordPress config
       'Online Enrolment Link': resumeUrl // Replace placeholder in template
     };
     
+    console.log('📤 Email payload:', emailPayload);
+    
     const emailResponse = await fetch(
-      `${process.env.AXCELERATE_API_URL}/contact/${contactId}/email`,
+      `${process.env.AXCELERATE_API_URL}/mailer`,
       {
         method: 'POST',
         headers: {
@@ -614,17 +616,19 @@ router.post('/save-step', async (req, res) => {
           'WSToken': process.env.AXCELERATE_WS_TOKEN,
           'Content-Type': 'application/x-www-form-urlencoded'
         },
-        body: Object.keys(emailData)
-          .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(emailData[key])}`)
+        body: Object.keys(emailPayload)
+          .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(emailPayload[key])}`)
           .join('&')
       }
     );
     
     if (emailResponse.ok) {
-      console.log('✅ Incomplete enrollment email sent via aXcelerate template');
+      const result = await emailResponse.json();
+      console.log('✅ Incomplete enrollment email sent via aXcelerate Mailer:', result);
     } else {
       const emailError = await emailResponse.text();
-      console.warn('⚠️ Failed to send email via template:', emailError);
+      console.warn('⚠️ Failed to send email via Mailer API:', emailError);
+      console.log('💡 WordPress resumption system will handle sending this email within 2 hours');
       // Don't fail the request if email fails
     }
     
@@ -721,18 +725,20 @@ router.post('/send-verification', async (req, res) => {
       console.log('⚠️ Enrollment may already exist (this is OK):', errorText);
     }
     
-    // Send verification email using aXcelerate email template (same as WordPress plugin)
+    // Send verification email using aXcelerate Mailer API
     // Template ID 146004 = Verify Contact Template (for existing contacts)
-    console.log('📧 Sending verification email using aXcelerate template 146004...');
+    console.log('📧 Sending verification email using aXcelerate Mailer API (template 146004)...');
     
-    const emailData = {
-      contactID: contactId,
+    const emailPayload = {
+      learnerID: learnerId || contactId, // Use learner ID if available
       templateID: 146004, // Verify Contact Template from WordPress config
       'Online Enrolment Link': resumeUrl // Replace placeholder in template
     };
     
+    console.log('📤 Email payload:', emailPayload);
+    
     const emailResponse = await fetch(
-      `${process.env.AXCELERATE_API_URL}/contact/${contactId}/email`,
+      `${process.env.AXCELERATE_API_URL}/mailer`,
       {
         method: 'POST',
         headers: {
@@ -740,17 +746,19 @@ router.post('/send-verification', async (req, res) => {
           'WSToken': process.env.AXCELERATE_WS_TOKEN,
           'Content-Type': 'application/x-www-form-urlencoded'
         },
-        body: Object.keys(emailData)
-          .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(emailData[key])}`)
+        body: Object.keys(emailPayload)
+          .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(emailPayload[key])}`)
           .join('&')
       }
     );
     
     if (emailResponse.ok) {
-      console.log('✅ Verification email sent via aXcelerate template');
+      const result = await emailResponse.json();
+      console.log('✅ Verification email sent via aXcelerate Mailer:', result);
     } else {
       const emailError = await emailResponse.text();
-      console.error('⚠️ Failed to send email via template:', emailError);
+      console.error('⚠️ Failed to send email via Mailer API:', emailError);
+      console.log('💡 The tentative enrollment was created - aXcelerate may send email automatically based on resumption settings');
     }
     
     // Also create a note for reference
