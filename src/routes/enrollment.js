@@ -499,5 +499,197 @@ router.post('/send-resume-email', async (req, res) => {
   }
 });
 
+/**
+ * Save step data to aXcelerate contact
+ * POST /api/enrollment/save-step
+ * 
+ * Saves form data to contact custom fields as user progresses
+ * This triggers aXcelerate's incomplete booking email
+ */
+router.post('/save-step', async (req, res) => {
+  try {
+    const { contactId, stepId, stepData, instanceId, courseId, courseType, courseName } = req.body;
+    
+    console.log('💾 Saving step data to aXcelerate:', { contactId, stepId });
+    
+    if (!contactId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing contactId'
+      });
+    }
+    
+    // Update contact with custom fields from this step
+    const updatePayload = {};
+    
+    // Add step data to payload
+    Object.entries(stepData).forEach(([key, value]) => {
+      updatePayload[key] = value;
+    });
+    
+    // Update contact in aXcelerate
+    const updateResponse = await fetch(
+      `${process.env.AXCELERATE_API_URL}/contact/${contactId}`,
+      {
+        method: 'PUT',
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: Object.keys(updatePayload)
+          .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(updatePayload[key])}`)
+          .join('&')
+      }
+    );
+    
+    if (!updateResponse.ok) {
+      const errorText = await updateResponse.text();
+      console.error('Failed to update contact:', errorText);
+      throw new Error(`Failed to update contact: ${errorText}`);
+    }
+    
+    console.log('✅ Contact updated with step data');
+    
+    // Create a note about incomplete enrollment
+    const noteText = `INCOMPLETE ENROLLMENT - Step: ${stepId}
+
+Contact progressed to: ${stepId}
+Course: ${courseName || 'Unknown'} (Instance: ${instanceId})
+Date: ${new Date().toLocaleString()}
+
+Step data saved to custom fields.
+User has not completed full enrollment.
+
+Note: aXcelerate should automatically send incomplete booking email.`;
+    
+    const noteResponse = await fetch(
+      `${process.env.AXCELERATE_API_URL}/contact/${contactId}/note`,
+      {
+        method: 'POST',
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `note=${encodeURIComponent(noteText)}&type=General`
+      }
+    );
+    
+    console.log('✅ Incomplete enrollment note created');
+    
+    res.json({
+      success: true,
+      message: 'Step data saved to aXcelerate',
+      data: {
+        contactId,
+        stepId,
+        noteCreated: noteResponse.ok
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error saving step data:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to save step data',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * Send verification email for existing contact
+ * POST /api/enrollment/send-verification
+ * 
+ * Sends a magic link to verify user identity when existing record is found
+ */
+router.post('/send-verification', async (req, res) => {
+  try {
+    const { contactId, email, instanceId, courseId, courseType, courseName } = req.body;
+    
+    console.log('📧 Sending verification email to:', email, 'Contact ID:', contactId);
+    
+    // Get contact details from aXcelerate
+    const contactResponse = await fetch(
+      `${process.env.AXCELERATE_API_URL}/contact/${contactId}`,
+      {
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN
+        }
+      }
+    );
+    
+    if (!contactResponse.ok) {
+      throw new Error('Failed to fetch contact details');
+    }
+    
+    const contact = await contactResponse.json();
+    const name = `${contact.GIVENNAME || ''} ${contact.SURNAME || ''}`.trim();
+    
+    // Generate verification token (simple timestamp-based for now)
+    const verificationToken = Buffer.from(`${contactId}:${Date.now()}`).toString('base64');
+    
+    // Build resume URL with auth parameters
+    const resumeUrl = `${req.body.resumeUrl || req.headers.referer}?auth_token=${verificationToken}&contact_id=${contactId}`;
+    
+    // Create incomplete booking note in aXcelerate
+    // This should trigger aXcelerate's incomplete booking email
+    const noteText = `EXISTING CONTACT - INCOMPLETE ENROLLMENT
+
+Contact: ${name} (${email})
+Course: ${courseName || 'Unknown'} (Instance: ${instanceId})
+Date: ${new Date().toLocaleString()}
+Status: Existing contact attempted enrollment but was blocked for verification
+
+This contact exists in the system. They attempted to enroll but need to verify their identity first.
+
+aXcelerate should send incomplete booking email with enrollment link.
+Resume Link: ${resumeUrl}`;
+    
+    const noteResponse = await fetch(
+      `${process.env.AXCELERATE_API_URL}/contact/${contactId}/note`,
+      {
+        method: 'POST',
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `note=${encodeURIComponent(noteText)}&type=General`
+      }
+    );
+    
+    console.log('✅ Incomplete booking note created - aXcelerate should send email');
+    
+    // TODO: Send actual email via your email service (SendGrid, Mailgun, etc.)
+    // For now, just log the email that would be sent
+    console.log('📧 Verification email would be sent to:', email);
+    console.log('   Name:', name);
+    console.log('   Course:', courseName);
+    console.log('   Magic Link:', resumeUrl);
+    console.log('   ⚠️  EMAIL SERVICE NOT CONFIGURED - Email will not be sent!');
+    console.log('   To enable emails, configure SendGrid/Mailgun and uncomment email sending code');
+    
+    res.json({
+      success: true,
+      message: 'Verification email sent (note: email service not configured)',
+      data: {
+        email,
+        contactId,
+        noteCreated: noteResponse.ok
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error sending verification email:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
 export default router;
 

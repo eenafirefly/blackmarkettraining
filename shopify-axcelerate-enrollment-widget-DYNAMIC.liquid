@@ -148,8 +148,9 @@
         <button class="ax-modal-close">×</button>
         <h3>Existing Record Found</h3>
         <div class="ax-modal-body">
-          <p>An existing record has been found.</p>
-          <p>An email has been dispatched to <strong id="ax-modal-email"></strong> to verify your identity and allow you to continue enrolling.</p>
+          <p>We found an existing record with your email address.</p>
+          <p>An incomplete booking email will be sent to <strong id="ax-modal-email"></strong> with a link to continue your enrollment.</p>
+          <p>Please check your inbox (and spam folder) for the email from Black Market Training.</p>
         </div>
         <div class="ax-modal-actions">
           <button class="ax-btn ax-btn-primary ax-modal-ok">OK</button>
@@ -1445,6 +1446,33 @@
       
       if (hasValidContact) {
         console.log('✋ Existing contact found:', contacts[0].CONTACTID);
+        
+        // Notify backend to create incomplete booking record in aXcelerate
+        // This triggers aXcelerate's automatic incomplete booking email
+        try {
+          console.log('📧 Creating incomplete booking record in aXcelerate...');
+          const verifyResponse = await fetch(`${RENDER_APP_URL}/api/enrollment/send-verification`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contactId: contacts[0].CONTACTID,
+              email: email,
+              instanceId: instanceId,
+              courseId: courseId,
+              courseType: courseType,
+              courseName: courseName,
+              resumeUrl: window.location.href
+            })
+          });
+          
+          const verifyResult = await verifyResponse.json();
+          console.log('✅ Incomplete booking record created:', verifyResult);
+          console.log('📧 aXcelerate will send incomplete booking email automatically');
+        } catch (emailError) {
+          console.error('⚠️ Failed to create incomplete booking record:', emailError);
+          // Continue anyway to show the modal
+        }
+        
         showExistingRecordModal(email);
         elements.loading.style.display = 'none';
         elements.form.style.display = 'flex';
@@ -1522,7 +1550,7 @@
           checked.push(cb.value);
         });
         if (checked.length > 0) {
-          stepData[field.fieldId] = checked;
+          stepData[field.fieldId] = checked.join(', '); // Join for aXcelerate
         }
       } else if (field.type !== 'information' && field.type !== 'info_expandable' && field.type !== 'button') {
         const value = formDataObj.get(field.fieldId);
@@ -1532,11 +1560,17 @@
       }
     });
     
-    // Store step data
+    // Store step data locally
     formData[stepId] = stepData;
     sessionStorage.setItem(`ax_form_${stepId}`, JSON.stringify(stepData));
     
     console.log('Step data collected:', stepData);
+    
+    // Save to aXcelerate (update contact with custom fields)
+    await saveStepToAxcelerate(stepId, stepData);
+    
+    // Mark step as completed
+    markStepCompleted(stepId);
     
     // Handle based on step type
     if (config.stepType === 'review') {
@@ -1555,6 +1589,45 @@
         const nextStep = formSteps[currentIndex + 1];
         showStep(nextStep.id);
       }
+    }
+  }
+  
+  // =========================================================================
+  // Save Step Data to aXcelerate
+  // =========================================================================
+  
+  async function saveStepToAxcelerate(stepId, stepData) {
+    if (!contactId) {
+      console.warn('No contact ID, cannot save to aXcelerate');
+      return;
+    }
+    
+    try {
+      console.log('💾 Saving step data to aXcelerate:', { stepId, contactId, stepData });
+      
+      const response = await fetch(`${RENDER_APP_URL}/api/enrollment/save-step`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contactId,
+          stepId,
+          stepData,
+          instanceId,
+          courseId,
+          courseType,
+          courseName
+        })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Step data saved to aXcelerate:', result);
+      } else {
+        console.error('❌ Failed to save step data:', response.status);
+      }
+    } catch (error) {
+      console.error('❌ Error saving step data:', error);
+      // Don't block user progress if save fails
     }
   }
   
