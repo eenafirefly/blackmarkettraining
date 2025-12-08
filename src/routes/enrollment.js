@@ -819,41 +819,6 @@ Note: Enrollment will be created when user returns and completes the form.`;
     );
     
     console.log('✅ Tracking note created in aXcelerate');
-    
-    // Also create a note for reference
-    const noteText = `EXISTING CONTACT - INCOMPLETE ENROLLMENT
-
-Contact: ${name} (${email})
-Course: ${courseName || 'Unknown'} (Instance: ${instanceId})
-Date: ${new Date().toLocaleString()}
-Status: Existing contact attempted enrollment - tentative enrollment created
-
-Tentative enrollment created in system.
-aXcelerate will send incomplete booking email.
-Resume Link: ${resumeUrl}`;
-    
-    await fetch(
-      `${process.env.AXCELERATE_API_URL}/contact/${contactId}/note`,
-      {
-        method: 'POST',
-        headers: {
-          'APIToken': process.env.AXCELERATE_API_TOKEN,
-          'WSToken': process.env.AXCELERATE_WS_TOKEN,
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: `note=${encodeURIComponent(noteText)}&type=General`
-      }
-    );
-    
-    console.log('✅ Tentative enrollment and note created');
-    
-    // TODO: Send actual email via your email service (SendGrid, Mailgun, etc.)
-    // For now, just log the email that would be sent
-    console.log('📧 Verification email would be sent to:', email);
-    console.log('   Name:', name);
-    console.log('   Course:', courseName);
-    console.log('   Magic Link:', resumeUrl);
-    console.log('   ⚠️  EMAIL SERVICE NOT CONFIGURED - Email will not be sent!');
     console.log('   To enable emails, configure SendGrid/Mailgun and uncomment email sending code');
     
     res.json({
