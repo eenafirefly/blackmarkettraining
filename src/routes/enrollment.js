@@ -592,9 +592,45 @@ router.post('/save-step', async (req, res) => {
       }
     }
     
+    // Send incomplete enrollment notification using aXcelerate email template
+    // Template ID 111502 = Default incomplete/abandoned enrollment template
+    console.log('📧 Sending incomplete enrollment email using aXcelerate template 111502...');
+    
+    // Build resume URL
+    const resumeUrl = req.headers.referer || req.body.resumeUrl || `${req.protocol}://${req.get('host')}`;
+    
+    const emailData = {
+      contactID: contactId,
+      templateID: 111502, // Default incomplete enrollment template from WordPress config
+      'Online Enrolment Link': resumeUrl // Replace placeholder in template
+    };
+    
+    const emailResponse = await fetch(
+      `${process.env.AXCELERATE_API_URL}/contact/${contactId}/email`,
+      {
+        method: 'POST',
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: Object.keys(emailData)
+          .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(emailData[key])}`)
+          .join('&')
+      }
+    );
+    
+    if (emailResponse.ok) {
+      console.log('✅ Incomplete enrollment email sent via aXcelerate template');
+    } else {
+      const emailError = await emailResponse.text();
+      console.warn('⚠️ Failed to send email via template:', emailError);
+      // Don't fail the request if email fails
+    }
+    
     res.json({
       success: true,
-      message: 'Tentative enrollment created - aXcelerate will send incomplete booking email',
+      message: 'Tentative enrollment created - incomplete enrollment email sent',
       data: {
         contactId,
         stepId,
@@ -650,7 +686,6 @@ router.post('/send-verification', async (req, res) => {
     const resumeUrl = `${req.body.resumeUrl || req.headers.referer}?auth_token=${verificationToken}&contact_id=${contactId}`;
     
     // Create tentative enrollment in aXcelerate
-    // This triggers the incomplete booking email
     console.log('📝 Creating tentative enrollment for existing contact...');
     
     const enrollmentData = {
@@ -676,13 +711,46 @@ router.post('/send-verification', async (req, res) => {
       }
     );
     
+    let learnerId;
     if (enrollResponse.ok) {
       const enrollResult = await enrollResponse.json();
-      console.log('✅ Tentative enrollment created:', enrollResult.LEARNERID);
-      console.log('📧 aXcelerate will now send incomplete booking email automatically');
+      learnerId = enrollResult.LEARNERID;
+      console.log('✅ Tentative enrollment created:', learnerId);
     } else {
       const errorText = await enrollResponse.text();
       console.log('⚠️ Enrollment may already exist (this is OK):', errorText);
+    }
+    
+    // Send verification email using aXcelerate email template (same as WordPress plugin)
+    // Template ID 146004 = Verify Contact Template (for existing contacts)
+    console.log('📧 Sending verification email using aXcelerate template 146004...');
+    
+    const emailData = {
+      contactID: contactId,
+      templateID: 146004, // Verify Contact Template from WordPress config
+      'Online Enrolment Link': resumeUrl // Replace placeholder in template
+    };
+    
+    const emailResponse = await fetch(
+      `${process.env.AXCELERATE_API_URL}/contact/${contactId}/email`,
+      {
+        method: 'POST',
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: Object.keys(emailData)
+          .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(emailData[key])}`)
+          .join('&')
+      }
+    );
+    
+    if (emailResponse.ok) {
+      console.log('✅ Verification email sent via aXcelerate template');
+    } else {
+      const emailError = await emailResponse.text();
+      console.error('⚠️ Failed to send email via template:', emailError);
     }
     
     // Also create a note for reference
