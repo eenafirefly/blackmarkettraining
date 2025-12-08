@@ -553,8 +553,33 @@ router.post('/save-step', async (req, res) => {
       
       if (updateResponse.ok) {
         const result = await updateResponse.json();
-        console.log('✅ Contact updated successfully:', result);
+        console.log('✅ Contact updated successfully');
+        console.log('📋 aXcelerate API Response:', JSON.stringify(result, null, 2));
         console.log(`✅ Saved ${Object.keys(updatePayload).length} fields to aXcelerate`);
+        
+        // Verify fields were actually saved by reading contact back
+        console.log('🔍 Verifying fields were saved...');
+        const verifyResponse = await fetch(
+          `${process.env.AXCELERATE_API_URL}/contact/${contactId}`,
+          {
+            headers: {
+              'APIToken': process.env.AXCELERATE_API_TOKEN,
+              'WSToken': process.env.AXCELERATE_WS_TOKEN
+            }
+          }
+        );
+        
+        if (verifyResponse.ok) {
+          const contact = await verifyResponse.json();
+          console.log('📊 Full contact object keys:', Object.keys(contact));
+          console.log('📊 Checking if our fields were saved:');
+          Object.keys(updatePayload).forEach(key => {
+            // Try different casings
+            const savedValue = contact[key] || contact[key.toUpperCase()] || contact[key.toLowerCase()] || 'NOT FOUND';
+            const match = savedValue === updatePayload[key] ? '✅' : '❌';
+            console.log(`   ${match} ${key}: "${savedValue}" (sent: "${updatePayload[key]}")`);
+          });
+        }
       } else {
         const errorText = await updateResponse.text();
         console.error('❌ Failed to update contact:', updateResponse.status, errorText);
