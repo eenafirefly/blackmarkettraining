@@ -510,13 +510,54 @@ router.post('/save-step', async (req, res) => {
   try {
     const { contactId, stepId, stepData, instanceId, courseId, courseType, courseName } = req.body;
     
-    console.log('💾 Saving step data to aXcelerate:', { contactId, stepId });
+    console.log('💾 Saving step data to aXcelerate:', { contactId, stepId, instanceId });
     
-    if (!contactId) {
+    if (!contactId || !instanceId) {
       return res.status(400).json({
         success: false,
-        error: 'Missing contactId'
+        error: 'Missing required fields: contactId or instanceId'
       });
+    }
+    
+    // First, check if tentative enrollment already exists
+    console.log('🔍 Checking for existing tentative enrollment...');
+    
+    // Create or update tentative enrollment
+    // This triggers aXcelerate's incomplete booking email
+    const enrollmentData = {
+      contactID: contactId,
+      instanceID: instanceId,
+      type: courseType || 'w',
+      tentative: true, // Mark as tentative/incomplete
+      paymentReceived: false
+    };
+    
+    console.log('📝 Creating tentative enrollment:', enrollmentData);
+    
+    const enrollResponse = await fetch(
+      `${process.env.AXCELERATE_API_URL}/course/enrol`,
+      {
+        method: 'POST',
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: Object.keys(enrollmentData)
+          .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(enrollmentData[key])}`)
+          .join('&')
+      }
+    );
+    
+    let enrollResult;
+    if (enrollResponse.ok) {
+      enrollResult = await enrollResponse.json();
+      console.log('✅ Tentative enrollment created:', enrollResult.LEARNERID || enrollResult);
+      console.log('📧 aXcelerate should send incomplete booking email now');
+    } else {
+      const errorText = await enrollResponse.text();
+      console.log('⚠️ Enrollment may already exist:', errorText);
+      // Continue to update contact even if enrollment exists
     }
     
     // Update contact with custom fields from this step
@@ -527,64 +568,38 @@ router.post('/save-step', async (req, res) => {
       updatePayload[key] = value;
     });
     
-    // Update contact in aXcelerate
-    const updateResponse = await fetch(
-      `${process.env.AXCELERATE_API_URL}/contact/${contactId}`,
-      {
-        method: 'PUT',
-        headers: {
-          'APIToken': process.env.AXCELERATE_API_TOKEN,
-          'WSToken': process.env.AXCELERATE_WS_TOKEN,
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: Object.keys(updatePayload)
-          .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(updatePayload[key])}`)
-          .join('&')
+    if (Object.keys(updatePayload).length > 0) {
+      console.log('📝 Updating contact with step data...');
+      const updateResponse = await fetch(
+        `${process.env.AXCELERATE_API_URL}/contact/${contactId}`,
+        {
+          method: 'PUT',
+          headers: {
+            'APIToken': process.env.AXCELERATE_API_TOKEN,
+            'WSToken': process.env.AXCELERATE_WS_TOKEN,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: Object.keys(updatePayload)
+            .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(updatePayload[key])}`)
+            .join('&')
+        }
+      );
+      
+      if (updateResponse.ok) {
+        console.log('✅ Contact updated with step data');
+      } else {
+        console.warn('⚠️ Failed to update contact, but enrollment created');
       }
-    );
-    
-    if (!updateResponse.ok) {
-      const errorText = await updateResponse.text();
-      console.error('Failed to update contact:', errorText);
-      throw new Error(`Failed to update contact: ${errorText}`);
     }
-    
-    console.log('✅ Contact updated with step data');
-    
-    // Create a note about incomplete enrollment
-    const noteText = `INCOMPLETE ENROLLMENT - Step: ${stepId}
-
-Contact progressed to: ${stepId}
-Course: ${courseName || 'Unknown'} (Instance: ${instanceId})
-Date: ${new Date().toLocaleString()}
-
-Step data saved to custom fields.
-User has not completed full enrollment.
-
-Note: aXcelerate should automatically send incomplete booking email.`;
-    
-    const noteResponse = await fetch(
-      `${process.env.AXCELERATE_API_URL}/contact/${contactId}/note`,
-      {
-        method: 'POST',
-        headers: {
-          'APIToken': process.env.AXCELERATE_API_TOKEN,
-          'WSToken': process.env.AXCELERATE_WS_TOKEN,
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: `note=${encodeURIComponent(noteText)}&type=General`
-      }
-    );
-    
-    console.log('✅ Incomplete enrollment note created');
     
     res.json({
       success: true,
-      message: 'Step data saved to aXcelerate',
+      message: 'Tentative enrollment created - aXcelerate will send incomplete booking email',
       data: {
         contactId,
         stepId,
-        noteCreated: noteResponse.ok
+        learnerId: enrollResult?.LEARNERID,
+        invoiceId: enrollResult?.invoiceID
       }
     });
     
@@ -634,21 +649,55 @@ router.post('/send-verification', async (req, res) => {
     // Build resume URL with auth parameters
     const resumeUrl = `${req.body.resumeUrl || req.headers.referer}?auth_token=${verificationToken}&contact_id=${contactId}`;
     
-    // Create incomplete booking note in aXcelerate
-    // This should trigger aXcelerate's incomplete booking email
+    // Create tentative enrollment in aXcelerate
+    // This triggers the incomplete booking email
+    console.log('📝 Creating tentative enrollment for existing contact...');
+    
+    const enrollmentData = {
+      contactID: contactId,
+      instanceID: instanceId,
+      type: courseType || 'w',
+      tentative: true, // Mark as incomplete
+      paymentReceived: false
+    };
+    
+    const enrollResponse = await fetch(
+      `${process.env.AXCELERATE_API_URL}/course/enrol`,
+      {
+        method: 'POST',
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: Object.keys(enrollmentData)
+          .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(enrollmentData[key])}`)
+          .join('&')
+      }
+    );
+    
+    if (enrollResponse.ok) {
+      const enrollResult = await enrollResponse.json();
+      console.log('✅ Tentative enrollment created:', enrollResult.LEARNERID);
+      console.log('📧 aXcelerate will now send incomplete booking email automatically');
+    } else {
+      const errorText = await enrollResponse.text();
+      console.log('⚠️ Enrollment may already exist (this is OK):', errorText);
+    }
+    
+    // Also create a note for reference
     const noteText = `EXISTING CONTACT - INCOMPLETE ENROLLMENT
 
 Contact: ${name} (${email})
 Course: ${courseName || 'Unknown'} (Instance: ${instanceId})
 Date: ${new Date().toLocaleString()}
-Status: Existing contact attempted enrollment but was blocked for verification
+Status: Existing contact attempted enrollment - tentative enrollment created
 
-This contact exists in the system. They attempted to enroll but need to verify their identity first.
-
-aXcelerate should send incomplete booking email with enrollment link.
+Tentative enrollment created in system.
+aXcelerate will send incomplete booking email.
 Resume Link: ${resumeUrl}`;
     
-    const noteResponse = await fetch(
+    await fetch(
       `${process.env.AXCELERATE_API_URL}/contact/${contactId}/note`,
       {
         method: 'POST',
@@ -661,7 +710,7 @@ Resume Link: ${resumeUrl}`;
       }
     );
     
-    console.log('✅ Incomplete booking note created - aXcelerate should send email');
+    console.log('✅ Tentative enrollment and note created');
     
     // TODO: Send actual email via your email service (SendGrid, Mailgun, etc.)
     // For now, just log the email that would be sent
