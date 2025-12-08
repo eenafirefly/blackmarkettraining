@@ -1564,10 +1564,17 @@
     formData[stepId] = stepData;
     sessionStorage.setItem(`ax_form_${stepId}`, JSON.stringify(stepData));
     
-    console.log('Step data collected:', stepData);
+    console.log('📊 Step data collected for step:', stepId);
+    console.log('   Number of fields:', Object.keys(stepData).length);
+    console.log('   Fields:', Object.keys(stepData).join(', '));
+    console.log('   Values:', stepData);
     
     // Save to aXcelerate (update contact with custom fields)
-    await saveStepToAxcelerate(stepId, stepData);
+    if (Object.keys(stepData).length > 0) {
+      await saveStepToAxcelerate(stepId, stepData);
+    } else {
+      console.warn('⚠️ No data collected from step:', stepId);
+    }
     
     // Mark step as completed
     markStepCompleted(stepId);
@@ -1603,7 +1610,11 @@
     }
     
     try {
-      console.log('💾 Saving step data to aXcelerate:', { stepId, contactId, stepData });
+      console.log('💾 Saving step data to aXcelerate:');
+      console.log('   Step:', stepId);
+      console.log('   Contact ID:', contactId);
+      console.log('   Fields to save:', Object.keys(stepData));
+      console.log('   Field values:', stepData);
       
       const response = await fetch(`${RENDER_APP_URL}/api/enrollment/save-step`, {
         method: 'POST',
@@ -1622,9 +1633,11 @@
       
       if (response.ok) {
         const result = await response.json();
-        console.log('✅ Step data saved to aXcelerate:', result);
+        console.log('✅ Step data saved to aXcelerate successfully:', result);
+        console.log(`   Saved ${Object.keys(stepData).length} fields`);
       } else {
-        console.error('❌ Failed to save step data:', response.status);
+        const errorText = await response.text();
+        console.error('❌ Failed to save step data:', response.status, errorText);
       }
     } catch (error) {
       console.error('❌ Error saving step data:', error);

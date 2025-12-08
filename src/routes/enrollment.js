@@ -519,46 +519,9 @@ router.post('/save-step', async (req, res) => {
       });
     }
     
-    // First, check if tentative enrollment already exists
-    console.log('🔍 Checking for existing tentative enrollment...');
-    
-    // Create or update tentative enrollment
-    // This triggers aXcelerate's incomplete booking email
-    const enrollmentData = {
-      contactID: contactId,
-      instanceID: instanceId,
-      type: courseType || 'w',
-      tentative: true, // Mark as tentative/incomplete
-      paymentReceived: false
-    };
-    
-    console.log('📝 Creating tentative enrollment:', enrollmentData);
-    
-    const enrollResponse = await fetch(
-      `${process.env.AXCELERATE_API_URL}/course/enrol`,
-      {
-        method: 'POST',
-        headers: {
-          'APIToken': process.env.AXCELERATE_API_TOKEN,
-          'WSToken': process.env.AXCELERATE_WS_TOKEN,
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: Object.keys(enrollmentData)
-          .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(enrollmentData[key])}`)
-          .join('&')
-      }
-    );
-    
-    let enrollResult;
-    if (enrollResponse.ok) {
-      enrollResult = await enrollResponse.json();
-      console.log('✅ Tentative enrollment created:', enrollResult.LEARNERID || enrollResult);
-      console.log('📧 aXcelerate should send incomplete booking email now');
-    } else {
-      const errorText = await enrollResponse.text();
-      console.log('⚠️ Enrollment may already exist:', errorText);
-      // Continue to update contact even if enrollment exists
-    }
+    // DON'T create enrollment yet - just save progress
+    // Prevents "Booking Confirmation" email from being sent
+    console.log('💾 Saving step progress (no enrollment created yet to avoid Booking Confirmation)');
     
     // Update contact with custom fields from this step
     const updatePayload = {};
@@ -570,6 +533,9 @@ router.post('/save-step', async (req, res) => {
     
     if (Object.keys(updatePayload).length > 0) {
       console.log('📝 Updating contact with step data...');
+      console.log('📊 Fields to save:', Object.keys(updatePayload));
+      console.log('📋 Full payload:', JSON.stringify(updatePayload, null, 2));
+      
       const updateResponse = await fetch(
         `${process.env.AXCELERATE_API_URL}/contact/${contactId}`,
         {
@@ -586,60 +552,145 @@ router.post('/save-step', async (req, res) => {
       );
       
       if (updateResponse.ok) {
-        console.log('✅ Contact updated with step data');
+        const result = await updateResponse.json();
+        console.log('✅ Contact updated successfully:', result);
+        console.log(`✅ Saved ${Object.keys(updatePayload).length} fields to aXcelerate`);
       } else {
-        console.warn('⚠️ Failed to update contact, but enrollment created');
+        const errorText = await updateResponse.text();
+        console.error('❌ Failed to update contact:', updateResponse.status, errorText);
+        console.error('📋 Attempted to save:', updatePayload);
       }
+    } else {
+      console.log('⚠️ No step data to save');
     }
     
-    // Send incomplete enrollment notification using aXcelerate Mailer API
-    // Template ID 111502 = Default incomplete/abandoned enrollment template
-    console.log('📧 Sending incomplete enrollment email using aXcelerate Mailer API (template 111502)...');
-    
+    // Send incomplete enrollment email immediately via SendGrid (Template 111502 equivalent)
     // Build resume URL
     const resumeUrl = req.body.resumeUrl || req.headers.referer || `${req.protocol}://${req.get('host')}`;
     
-    const emailPayload = {
-      learnerID: enrollResult?.LEARNERID || contactId,
-      templateID: 111502, // Default incomplete enrollment template from WordPress config
-      'Online Enrolment Link': resumeUrl // Replace placeholder in template
-    };
-    
-    console.log('📤 Email payload:', emailPayload);
-    
-    const emailResponse = await fetch(
-      `${process.env.AXCELERATE_API_URL}/mailer`,
+    // Get contact details for email
+    const contactResponse = await fetch(
+      `${process.env.AXCELERATE_API_URL}/contact/${contactId}`,
       {
-        method: 'POST',
         headers: {
           'APIToken': process.env.AXCELERATE_API_TOKEN,
-          'WSToken': process.env.AXCELERATE_WS_TOKEN,
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: Object.keys(emailPayload)
-          .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(emailPayload[key])}`)
-          .join('&')
+          'WSToken': process.env.AXCELERATE_WS_TOKEN
+        }
       }
     );
     
-    if (emailResponse.ok) {
-      const result = await emailResponse.json();
-      console.log('✅ Incomplete enrollment email sent via aXcelerate Mailer:', result);
-    } else {
-      const emailError = await emailResponse.text();
-      console.warn('⚠️ Failed to send email via Mailer API:', emailError);
-      console.log('💡 WordPress resumption system will handle sending this email within 2 hours');
-      // Don't fail the request if email fails
+    let contactEmail, contactName;
+    if (contactResponse.ok) {
+      const contact = await contactResponse.json();
+      contactEmail = getContactEmail(contact);
+      contactName = `${contact.GIVENNAME || ''} ${contact.SURNAME || ''}`.trim();
+    }
+    
+    if (process.env.SENDGRID_API_KEY && contactEmail) {
+      try {
+        console.log('📧 Sending incomplete enrollment email via SendGrid to:', contactEmail);
+        
+        const emailHtml = `
+          <p>Hi ${contactName},</p>
+          <p>Your enrollment for <strong>${courseName || 'the course'}</strong> is incomplete.</p>
+          <p>You can continue your enrollment by clicking <a href="${resumeUrl}" style="background: #2196F3; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">here</a>.</p>
+          <p>Or copy this link: ${resumeUrl}</p>
+          <br>
+          <p>Best regards,<br>Black Market Training</p>
+        `;
+        
+        const sendGridResponse = await fetch('https://api.sendgrid.com/v3/mail/send', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            personalizations: [{
+              to: [{ email: contactEmail, name: contactName }],
+              subject: 'Incomplete Online Booking - Black Market Training'
+            }],
+            from: {
+              email: process.env.EMAIL_FROM || 'info@blackmarkettraining.com',
+              name: 'Black Market Training'
+            },
+            content: [{
+              type: 'text/html',
+              value: emailHtml
+            }]
+          })
+        });
+        
+        if (sendGridResponse.ok || sendGridResponse.status === 202) {
+          console.log('✅ Incomplete enrollment email sent via SendGrid (Template 111502 equivalent)');
+        } else {
+          const errorText = await sendGridResponse.text();
+          console.warn('⚠️ SendGrid error:', sendGridResponse.status, errorText);
+        }
+      } catch (emailError) {
+        console.error('❌ Failed to send email via SendGrid:', emailError);
+        // Don't fail the request
+      }
+    } else if (!process.env.SENDGRID_API_KEY) {
+      console.warn('⚠️  SENDGRID_API_KEY not configured - email will not be sent');
+      console.log('💡 Add SENDGRID_API_KEY to Render environment variables');
+    }
+    
+    // Send incomplete enrollment email via SendGrid (Template 111502 equivalent)
+    if (process.env.SENDGRID_API_KEY && contactEmail) {
+      try {
+        console.log('📧 Sending incomplete enrollment email via SendGrid to:', contactEmail);
+        
+        const emailHtml = `
+          <p>Hi ${contactName},</p>
+          <p>Your enrollment for <strong>${courseName || 'the course'}</strong> is incomplete.</p>
+          <p>You can continue your enrollment by clicking <a href="${resumeUrl}" style="background: #2196F3; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">here</a>.</p>
+          <p>Or copy this link: ${resumeUrl}</p>
+          <br>
+          <p>Best regards,<br>Black Market Training</p>
+        `;
+        
+        const sendGridResponse = await fetch('https://api.sendgrid.com/v3/mail/send', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            personalizations: [{
+              to: [{ email: contactEmail, name: contactName }],
+              subject: 'Incomplete Online Booking - Black Market Training'
+            }],
+            from: {
+              email: process.env.EMAIL_FROM || 'info@blackmarkettraining.com',
+              name: 'Black Market Training'
+            },
+            content: [{
+              type: 'text/html',
+              value: emailHtml
+            }]
+          })
+        });
+        
+        if (sendGridResponse.ok || sendGridResponse.status === 202) {
+          console.log('✅ Incomplete enrollment email sent via SendGrid (Template 111502 equivalent)');
+        } else {
+          const errorText = await sendGridResponse.text();
+          console.warn('⚠️ SendGrid error:', sendGridResponse.status, errorText);
+        }
+      } catch (emailError) {
+        console.error('❌ Failed to send email via SendGrid:', emailError);
+      }
+    } else if (!process.env.SENDGRID_API_KEY) {
+      console.warn('⚠️  SENDGRID_API_KEY not configured - email will not be sent');
     }
     
     res.json({
       success: true,
-      message: 'Tentative enrollment created - incomplete enrollment email sent',
+      message: 'Step data saved and incomplete enrollment email sent',
       data: {
         contactId,
-        stepId,
-        learnerId: enrollResult?.LEARNERID,
-        invoiceId: enrollResult?.invoiceID
+        stepId
       }
     });
     
@@ -689,19 +740,73 @@ router.post('/send-verification', async (req, res) => {
     // Build resume URL with auth parameters
     const resumeUrl = `${req.body.resumeUrl || req.headers.referer}?auth_token=${verificationToken}&contact_id=${contactId}`;
     
-    // Create tentative enrollment in aXcelerate
-    console.log('📝 Creating tentative enrollment for existing contact...');
+    // DON'T create enrollment for existing contacts
+    // This prevents "Booking Confirmation" email
+    console.log('⏸️  Skipping enrollment creation for existing contact');
+    console.log('📧 Will send Template 146004 (verification email) immediately via SendGrid');
     
-    const enrollmentData = {
-      contactID: contactId,
-      instanceID: instanceId,
-      type: courseType || 'w',
-      tentative: true, // Mark as incomplete
-      paymentReceived: false
-    };
+    // Send verification email immediately using SendGrid (same as WordPress)
+    if (process.env.SENDGRID_API_KEY) {
+      try {
+        console.log('📧 Sending verification email via SendGrid...');
+        
+        const emailHtml = `
+          <p>Hi ${name},</p>
+          <p>Your email has been detected in our system.</p>
+          <p>You can continue your enrollment by clicking <a href="${resumeUrl}">here</a>.</p>
+          <br>
+          <p>Best regards,<br>Black Market Training</p>
+        `;
+        
+        const sendGridResponse = await fetch('https://api.sendgrid.com/v3/mail/send', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            personalizations: [{
+              to: [{ email: email, name: name }],
+              subject: 'Email Validations/Duplicate Detection - Black Market Training'
+            }],
+            from: {
+              email: process.env.EMAIL_FROM || 'info@blackmarkettraining.com',
+              name: 'Black Market Training'
+            },
+            content: [{
+              type: 'text/html',
+              value: emailHtml
+            }]
+          })
+        });
+        
+        if (sendGridResponse.ok || sendGridResponse.status === 202) {
+          console.log('✅ Verification email sent via SendGrid (Template 146004 equivalent)');
+        } else {
+          const errorText = await sendGridResponse.text();
+          console.error('❌ SendGrid error:', sendGridResponse.status, errorText);
+        }
+      } catch (emailError) {
+        console.error('❌ Failed to send email via SendGrid:', emailError);
+      }
+    } else {
+      console.warn('⚠️  SENDGRID_API_KEY not configured - email will not be sent');
+      console.log('💡 Add SENDGRID_API_KEY to Render environment variables');
+    }
     
-    const enrollResponse = await fetch(
-      `${process.env.AXCELERATE_API_URL}/course/enrol`,
+    // Create note for tracking
+    const noteText = `EXISTING CONTACT - Verification Email Sent
+
+Contact: ${name} (${email})
+Course: ${courseName || 'Unknown'} (Instance: ${instanceId})
+Date: ${new Date().toLocaleString()}
+Status: Verification email sent via SendGrid
+Resume Link: ${resumeUrl}
+
+Note: Enrollment will be created when user returns and completes the form.`;
+    
+    await fetch(
+      `${process.env.AXCELERATE_API_URL}/contact/${contactId}/note`,
       {
         method: 'POST',
         headers: {
@@ -709,57 +814,11 @@ router.post('/send-verification', async (req, res) => {
           'WSToken': process.env.AXCELERATE_WS_TOKEN,
           'Content-Type': 'application/x-www-form-urlencoded'
         },
-        body: Object.keys(enrollmentData)
-          .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(enrollmentData[key])}`)
-          .join('&')
+        body: `note=${encodeURIComponent(noteText)}&type=General`
       }
     );
     
-    let learnerId;
-    if (enrollResponse.ok) {
-      const enrollResult = await enrollResponse.json();
-      learnerId = enrollResult.LEARNERID;
-      console.log('✅ Tentative enrollment created:', learnerId);
-    } else {
-      const errorText = await enrollResponse.text();
-      console.log('⚠️ Enrollment may already exist (this is OK):', errorText);
-    }
-    
-    // Send verification email using aXcelerate Mailer API
-    // Template ID 146004 = Verify Contact Template (for existing contacts)
-    console.log('📧 Sending verification email using aXcelerate Mailer API (template 146004)...');
-    
-    const emailPayload = {
-      learnerID: learnerId || contactId, // Use learner ID if available
-      templateID: 146004, // Verify Contact Template from WordPress config
-      'Online Enrolment Link': resumeUrl // Replace placeholder in template
-    };
-    
-    console.log('📤 Email payload:', emailPayload);
-    
-    const emailResponse = await fetch(
-      `${process.env.AXCELERATE_API_URL}/mailer`,
-      {
-        method: 'POST',
-        headers: {
-          'APIToken': process.env.AXCELERATE_API_TOKEN,
-          'WSToken': process.env.AXCELERATE_WS_TOKEN,
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: Object.keys(emailPayload)
-          .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(emailPayload[key])}`)
-          .join('&')
-      }
-    );
-    
-    if (emailResponse.ok) {
-      const result = await emailResponse.json();
-      console.log('✅ Verification email sent via aXcelerate Mailer:', result);
-    } else {
-      const emailError = await emailResponse.text();
-      console.error('⚠️ Failed to send email via Mailer API:', emailError);
-      console.log('💡 The tentative enrollment was created - aXcelerate may send email automatically based on resumption settings');
-    }
+    console.log('✅ Tracking note created in aXcelerate');
     
     // Also create a note for reference
     const noteText = `EXISTING CONTACT - INCOMPLETE ENROLLMENT
