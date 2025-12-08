@@ -526,14 +526,16 @@ router.post('/save-step', async (req, res) => {
     // Update contact with custom fields from this step
     const updatePayload = {};
     
-    // Add step data to payload
+    // Add step data to payload with CUSTOMFIELD_ prefix
+    // aXcelerate expects: CUSTOMFIELD_FIELDNAME (uppercase)
     Object.entries(stepData).forEach(([key, value]) => {
-      updatePayload[key] = value;
+      const axcelerateFieldName = `CUSTOMFIELD_${key.toUpperCase()}`;
+      updatePayload[axcelerateFieldName] = value;
     });
     
     if (Object.keys(updatePayload).length > 0) {
-      console.log('📝 Updating contact with step data...');
-      console.log('📊 Fields to save:', Object.keys(updatePayload));
+      console.log('📝 Updating contact with step data (with CUSTOMFIELD_ prefix)...');
+      console.log('📊 aXcelerate fields to save:', Object.keys(updatePayload));
       console.log('📋 Full payload:', JSON.stringify(updatePayload, null, 2));
       
       const updateResponse = await fetch(
@@ -571,11 +573,9 @@ router.post('/save-step', async (req, res) => {
         
         if (verifyResponse.ok) {
           const contact = await verifyResponse.json();
-          console.log('📊 Full contact object keys:', Object.keys(contact));
-          console.log('📊 Checking if our fields were saved:');
+          console.log('📊 Checking if custom fields were saved:');
           Object.keys(updatePayload).forEach(key => {
-            // Try different casings
-            const savedValue = contact[key] || contact[key.toUpperCase()] || contact[key.toLowerCase()] || 'NOT FOUND';
+            const savedValue = contact[key] || 'NOT FOUND';
             const match = savedValue === updatePayload[key] ? '✅' : '❌';
             console.log(`   ${match} ${key}: "${savedValue}" (sent: "${updatePayload[key]}")`);
           });
