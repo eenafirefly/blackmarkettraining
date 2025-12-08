@@ -7,7 +7,7 @@
   "fields": [
     {
       "order": 1,
-      "fieldId": "usiYesNo",
+      "fieldId": "obtainusi",
       "name": "Have you obtained your USI?",
       "type": "select",
       "required": true,
@@ -34,7 +34,7 @@
     },
     {
       "order": 3,
-      "fieldId": "previousStudy",
+      "fieldId": "previousstudy",
       "name": "This course requires students to complete pre-reading of key information before attending class and to complete assessment tasks in their own time. Have you undertaken this type of study before?",
       "type": "select",
       "required": true,
@@ -47,7 +47,7 @@
     },
     {
       "order": 4,
-      "fieldId": "studyOutcome",
+      "fieldId": "studyoutcome",
       "name": "Did you achieve a successful outcome?",
       "type": "select",
       "required": true,
@@ -60,7 +60,7 @@
     },
     {
       "order": 5,
-      "fieldId": "dedicateTime",
+      "fieldId": "dedicatetime",
       "name": "Please confirm you are able to dedicate your time to pre-reading and study?",
       "type": "select",
       "required": true,
@@ -86,7 +86,7 @@
     },
     {
       "order": 7,
-      "fieldId": "workLifeStudy",
+      "fieldId": "worklifestudy",
       "name": "To confirm your work/life/study balance will be met, have you discussed commencing this program with your partner, family, employer and others?",
       "type": "select",
       "required": true,
@@ -99,7 +99,7 @@
     },
     {
       "order": 8,
-      "fieldId": "internet",
+      "fieldId": "internetaccess",
       "name": "Do you have access to reliable Internet and email?",
       "type": "select",
       "required": true,
@@ -112,7 +112,7 @@
     },
     {
       "order": 9,
-      "fieldId": "standing",
+      "fieldId": "standingperiods",
       "name": "Are you aware that working in the hospitality industry may require you to stand for long periods of time?",
       "type": "select",
       "required": true,
@@ -125,7 +125,7 @@
     },
     {
       "order": 10,
-      "fieldId": "multiTask",
+      "fieldId": "multitasking",
       "name": "Are you aware that working in espresso coffee service may require you to multi-task and work in a 'time pressure' environment?",
       "type": "select",
       "required": false,
@@ -138,7 +138,7 @@
     },
     {
       "order": 11,
-      "fieldId": "llnDiscussYesNo",
+      "fieldId": "languagenumeracy",
       "name": "Would you like to discuss any language, literacy or numeracy concerns you may have",
       "type": "select",
       "required": true,
@@ -164,7 +164,7 @@
     },
     {
       "order": 13,
-      "fieldId": "spokenEnglish",
+      "fieldId": "speakenglish",
       "name": "How do you rate your spoken English? (1 = Poor, 5 = Excellent)",
       "type": "select",
       "required": true,
@@ -196,7 +196,7 @@
     },
     {
       "order": 15,
-      "fieldId": "medicalYesNo",
+      "fieldId": "medicalissues",
       "name": "Do you have any medical or physical conditions we need to be aware of?",
       "type": "select",
       "required": true,
