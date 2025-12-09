@@ -528,9 +528,11 @@ router.post('/save-step', async (req, res) => {
     
     // Personal detail fields that update the contact record directly (not custom fields)
     const personalDetailFields = [
-      'title', 'givenname', 'surname', 'preferredname', 'middlename',
-      'dateofbirth', 'gender', 'email', 'emailaddress', 'phone', 'mobilephone',
-      'address', 'suburb', 'postcode', 'state', 'country'
+      'title', 'givenname', 'firstname', 'surname', 'lastname', 'preferredname', 'middlename',
+      'dateofbirth', 'dob', 'birthdate', 'age', 'gender', 
+      'email', 'emailaddress', 'phone', 'mobilephone', 'mobile',
+      'address', 'streetaddress', 'suburb', 'city', 'postcode', 'state', 'country',
+      'usi', 'uniquestudentidentifier', 'studentidentifier'
     ];
     
     // Separate fields into personal details and custom fields
@@ -538,9 +540,38 @@ router.post('/save-step', async (req, res) => {
       const keyLower = key.toLowerCase();
       
       if (personalDetailFields.includes(keyLower)) {
-        // Personal detail - send with uppercase field name (GIVENNAME, SURNAME, etc.)
-        updatePayload[key.toUpperCase()] = value;
-        console.log(`   📝 Personal field: ${key} → ${key.toUpperCase()}`);
+        // Map field names to aXcelerate's expected format
+        let axFieldName = key.toUpperCase();
+        
+        // Handle field name variations
+        if (keyLower === 'lastname') axFieldName = 'SURNAME';
+        if (keyLower === 'firstname') axFieldName = 'GIVENNAME';
+        if (keyLower === 'dob' || keyLower === 'birthdate') axFieldName = 'DATEOFBIRTH';
+        if (keyLower === 'uniquestudentidentifier' || keyLower === 'studentidentifier') axFieldName = 'USI';
+        if (keyLower === 'streetaddress') axFieldName = 'ADDRESS';
+        if (keyLower === 'city') axFieldName = 'SUBURB';
+        if (keyLower === 'mobile') axFieldName = 'MOBILEPHONE';
+        
+        // Personal detail - send with mapped field name
+        updatePayload[axFieldName] = value;
+        console.log(`   📝 Personal field: ${key} → ${axFieldName} = "${value}"`);
+        
+        // Calculate age if date of birth is provided
+        if ((keyLower === 'dateofbirth' || keyLower === 'dob') && value) {
+          try {
+            const birthDate = new Date(value);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+              age--;
+            }
+            updatePayload['AGE'] = age;
+            console.log(`   🎂 Calculated age from DOB: ${age} years old`);
+          } catch (error) {
+            console.error('Failed to calculate age from date of birth:', error);
+          }
+        }
       } else {
         // Custom field - send with CUSTOMFIELD_ prefix
         const axcelerateFieldName = `CUSTOMFIELD_${key.toUpperCase()}`;
@@ -625,16 +656,30 @@ router.post('/save-step', async (req, res) => {
       // Check if there's already an incomplete enrollment note from today
       // Ensure notes is an array before calling .some()
       if (Array.isArray(notes) && notes.length > 0) {
+        console.log(`📋 Checking ${notes.length} notes for incomplete email sent today...`);
         const hasIncompleteNoteToday = notes.some(note => {
           const noteDate = note.DATE ? note.DATE.split(' ')[0] : '';
-          const isIncompleteNote = note.NOTE && note.NOTE.includes('Incomplete enrollment');
-          return isIncompleteNote && noteDate === today;
+          const isIncompleteNote = note.NOTE && (
+            note.NOTE.includes('Incomplete enrollment') || 
+            note.NOTE.includes('Email sent to student to resume')
+          );
+          const isToday = noteDate === today;
+          
+          if (isIncompleteNote && isToday) {
+            console.log('   ✋ Found incomplete email note from today:', note.NOTE.substring(0, 50) + '...');
+          }
+          
+          return isIncompleteNote && isToday;
         });
         
         if (hasIncompleteNoteToday) {
           console.log('ℹ️ Incomplete email already sent today - skipping');
           shouldSendEmail = false;
+        } else {
+          console.log('✅ No incomplete email sent today - will send now');
         }
+      } else {
+        console.log('📋 No notes found or notes is not an array');
       }
     }
     
@@ -697,6 +742,34 @@ router.post('/save-step', async (req, res) => {
         
         if (sendGridResponse.ok || sendGridResponse.status === 202) {
           console.log('✅ Incomplete enrollment email sent via SendGrid (Template 111502 equivalent)');
+          
+          // Create note to track that email was sent (prevents duplicates)
+          const noteText = `Incomplete enrollment - Email sent
+
+Contact: ${contactName} (${contactEmail})
+Course: ${courseName || 'Unknown'} (Instance: ${instanceId})
+Resume Link: ${resumeUrl}
+Date: ${new Date().toLocaleString()}
+
+Email sent to student to resume enrollment.`;
+          
+          try {
+            await fetch(
+              `${process.env.AXCELERATE_API_URL}/contact/${contactId}/note`,
+              {
+                method: 'POST',
+                headers: {
+                  'APIToken': process.env.AXCELERATE_API_TOKEN,
+                  'WSToken': process.env.AXCELERATE_WS_TOKEN,
+                  'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `note=${encodeURIComponent(noteText)}&type=General`
+              }
+            );
+            console.log('📝 Created note in aXcelerate to track email sent');
+          } catch (noteError) {
+            console.error('Failed to create note:', noteError);
+          }
         } else {
           const errorText = await sendGridResponse.text();
           console.warn('⚠️ SendGrid error:', sendGridResponse.status, errorText);
