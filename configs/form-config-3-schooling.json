@@ -109,11 +109,12 @@
       "fieldId": "priorEducation",
       "name": "Prior Education",
       "type": "checkbox",
-      "required": false,
+      "required": true,
       "dataField": true,
       "syncToCustomField": false,
       "mapsToContactField": "PRIOREDUCATION",
       "hideInitially": "hidden",
+      "tooltip": "Select any relevant prior education achieved.",
       "options": [
         { "display": "Bachelor Degree or Higher Degree level", "value": "008" },
         { "display": "Advanced Diploma or Associate Degree Level", "value": "410" },
