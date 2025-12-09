@@ -545,19 +545,21 @@ router.post('/save-step', async (req, res) => {
         
         // Handle field name variations
         if (keyLower === 'lastname') axFieldName = 'SURNAME';
-        if (keyLower === 'firstname') axFieldName = 'GIVENNAME';
-        if (keyLower === 'dob' || keyLower === 'birthdate') axFieldName = 'DATEOFBIRTH';
+        if (keyLower === 'firstname' || keyLower === 'givenname') axFieldName = 'GIVENNAME';
+        if (keyLower === 'dateofbirth' || keyLower === 'dob' || keyLower === 'birthdate') axFieldName = 'DATEOFBIRTH';
         if (keyLower === 'uniquestudentidentifier' || keyLower === 'studentidentifier') axFieldName = 'USI';
         if (keyLower === 'streetaddress') axFieldName = 'ADDRESS';
         if (keyLower === 'city') axFieldName = 'SUBURB';
         if (keyLower === 'mobile') axFieldName = 'MOBILEPHONE';
+        if (keyLower === 'preferredname') axFieldName = 'PREFERREDNAME';
+        if (keyLower === 'middlename') axFieldName = 'MIDDLENAME';
         
         // Personal detail - send with mapped field name
         updatePayload[axFieldName] = value;
         console.log(`   📝 Personal field: ${key} → ${axFieldName} = "${value}"`);
         
         // Calculate age if date of birth is provided
-        if ((keyLower === 'dateofbirth' || keyLower === 'dob') && value) {
+        if ((keyLower === 'dateofbirth' || keyLower === 'dob' || keyLower === 'birthdate') && value) {
           try {
             const birthDate = new Date(value);
             const today = new Date();

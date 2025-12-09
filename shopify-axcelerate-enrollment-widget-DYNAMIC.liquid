@@ -426,11 +426,63 @@
     resize: vertical;
   }
   
+  /* Tooltip */
+  .ax-tooltip-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #2196F3;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    margin-left: 6px;
+    cursor: help;
+    position: relative;
+    vertical-align: middle;
+  }
+  
+  .ax-tooltip-icon:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    background: #333;
+    color: white;
+    font-size: 13px;
+    font-weight: normal;
+    line-height: 1.4;
+    border-radius: 4px;
+    white-space: normal;
+    width: max-content;
+    max-width: 300px;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  
+  .ax-tooltip-icon:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 2px;
+    border: 6px solid transparent;
+    border-top-color: #333;
+    z-index: 1000;
+  }
+  
   .ax-help-text {
     font-size: 13px;
     color: #666;
     margin-top: 6px;
     line-height: 1.5;
+    display: none; /* Hidden by default, replaced by tooltip */
   }
   
   .ax-help-text a {
@@ -1068,6 +1120,16 @@
       required.textContent = '*';
       label.appendChild(required);
     }
+    
+    // Add tooltip icon if tooltip/helpText exists
+    if (field.tooltip || field.helpText) {
+      const tooltipIcon = document.createElement('span');
+      tooltipIcon.className = 'ax-tooltip-icon';
+      tooltipIcon.textContent = 'i';
+      tooltipIcon.setAttribute('data-tooltip', field.tooltip || field.helpText);
+      label.appendChild(tooltipIcon);
+    }
+    
     fieldGroup.appendChild(label);
     
     // Create input based on field type
@@ -1206,13 +1268,8 @@
       
       fieldGroup.appendChild(input);
       
-      // Add tooltip/help text
-      if (field.tooltip || field.helpText) {
-        const help = document.createElement('p');
-        help.className = 'ax-help-text';
-        help.innerHTML = field.tooltip || field.helpText;
-        fieldGroup.appendChild(help);
-      }
+      // Tooltip is now shown as icon next to label (see label creation above)
+      // Help text below field is no longer needed
       
       // Handle conditional visibility
       if (field.hideInitially === 'hidden') {
