@@ -2,8 +2,8 @@
   "configId": 3,
   "configName": "Accredited Enrolment Form - Single - No Payment",
   "step": "nationality",
-  "stepName": "Citizenship",
-  "stepHeader": "Language",
+  "stepName": "Nationality",
+  "stepHeader": "Citizenship",
   "stepType": "contact-update",
   "stepOrder": 8,
   "stepId": "contactAndthnas",
@@ -120,6 +120,13 @@
     },
     {
       "order": 4,
+      "fieldId": "languageInfo",
+      "name": "Language",
+      "type": "information",
+      "required": false
+    },
+    {
+      "order": 5,
       "fieldId": "speakOtherLanguage",
       "name": "Do you speak a language other than english at home?",
       "type": "select",
@@ -144,7 +151,7 @@
       }
     },
     {
-      "order": 5,
+      "order": 6,
       "fieldId": "languageSpokenMostOften",
       "name": "Language spoken most often",
       "type": "select",
@@ -187,7 +194,7 @@
       ]
     },
     {
-      "order": 6,
+      "order": 7,
       "fieldId": "englishProficiency",
       "name": "English Proficiency",
       "type": "select",
