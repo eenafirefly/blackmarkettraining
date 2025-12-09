@@ -770,8 +770,11 @@
       fetchFormConfigurations()
     ]);
     
-    // Check if user is returning from OAuth
-    const hasOAuthReturn = checkOAuthReturn();
+    // Try to restore previous session first
+    const hasRestoredProgress = restoreProgress();
+    
+    // If no restored progress, check if user is returning from OAuth
+    const hasOAuthReturn = !hasRestoredProgress && checkOAuthReturn();
     
     // Setup event listeners
     setupEventListeners();
@@ -780,8 +783,8 @@
       elements.loading.style.display = 'none';
       elements.form.style.display = 'flex';
       
-      // Only show login step if OAuth didn't succeed
-      if (!hasOAuthReturn) {
+      // Only show login step if no progress restored and OAuth didn't succeed
+      if (!hasRestoredProgress && !hasOAuthReturn) {
         showStep('login');
       }
     }, 500);
@@ -1756,6 +1759,12 @@
       try {
         const data = JSON.parse(saved);
         populateFormData(stepId, data);
+        
+        // Auto-mark as completed if step has saved data
+        if (stepId !== 'login' && Object.keys(data).length > 0) {
+          console.log(`✅ Auto-marking step "${stepId}" as completed (has ${Object.keys(data).length} saved fields)`);
+          markStepCompleted(stepId);
+        }
       } catch (e) {
         console.error('Error restoring step data:', e);
       }
@@ -1934,10 +1943,28 @@
       });
       
       console.log('✅ Restored progress from', new Date(progress.timestamp).toLocaleString());
+      console.log('📌 Contact ID:', contactId);
+      console.log('📌 Current Step:', progress.currentStep);
+      console.log('📌 Form Data Steps:', Object.keys(formData));
+      
+      // Unlock tabs and mark login as completed if we have contactId
+      if (contactId) {
+        unlockAllTabs();
+        markStepCompleted('login');
+        
+        // Auto-mark completed steps based on saved data
+        Object.keys(formData).forEach(stepId => {
+          if (stepId !== 'login' && formData[stepId] && Object.keys(formData[stepId]).length > 0) {
+            markStepCompleted(stepId);
+          }
+        });
+      }
       
       elements.loading.style.display = 'none';
       elements.form.style.display = 'flex';
-      showStep(progress.currentStep);
+      
+      // Show the last step user was on
+      showStep(progress.currentStep || 'login');
       
       return true;
     } catch (error) {
@@ -2016,19 +2043,9 @@
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
       init();
-      setTimeout(() => {
-        if (!authToken && !contactId) {
-          restoreProgress();
-        }
-      }, 1000);
     });
   } else {
     init();
-    setTimeout(() => {
-      if (!authToken && !contactId) {
-        restoreProgress();
-      }
-    }, 1000);
   }
   
 })();
