@@ -604,6 +604,55 @@ function getContactEmail(contact) {
 }
 
 /**
+ * Get contact by ID (for pre-filling forms)
+ * GET /api/axcelerate/contact/:contactId
+ */
+router.get('/contact/:contactId', async (req, res) => {
+  try {
+    const { contactId } = req.params;
+    
+    if (!contactId) {
+      return res.status(400).json({ 
+        error: 'Missing required parameter: contactId' 
+      });
+    }
+    
+    console.log('Fetching contact details for ID:', contactId);
+    
+    const response = await fetch(
+      `${process.env.AXCELERATE_API_URL}/contact/${contactId}`,
+      {
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN
+        }
+      }
+    );
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('aXcelerate API error:', response.status, errorText);
+      return res.status(response.status).json({ 
+        error: 'Failed to fetch contact from aXcelerate',
+        details: errorText
+      });
+    }
+    
+    const contact = await response.json();
+    console.log('✅ Contact fetched:', contact.CONTACTID || contact.contactId);
+    
+    res.json(contact);
+    
+  } catch (error) {
+    console.error('Error fetching contact:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch contact',
+      message: error.message 
+    });
+  }
+});
+
+/**
  * Search contacts (for existing record check)
  * GET /api/axcelerate/contact/search
  */

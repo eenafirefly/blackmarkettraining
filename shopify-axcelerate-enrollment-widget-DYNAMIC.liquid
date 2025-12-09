@@ -760,7 +760,7 @@
     ]);
     
     // Try to restore previous session first
-    const hasRestoredProgress = restoreProgress();
+    const hasRestoredProgress = await restoreProgress();
     
     // If no restored progress, check if user is returning from OAuth
     const hasOAuthReturn = !hasRestoredProgress && checkOAuthReturn();
@@ -1855,6 +1855,15 @@
       return;
     }
     
+    // Check if all required steps are complete (for Review/Declaration)
+    const requiredSteps = formSteps.filter(s => 
+      s.id !== 'login' && s.id !== 'review' && s.id !== 'declaration'
+    );
+    const allRequiredStepsComplete = requiredSteps.every(s => {
+      const stepData = formData[s.id];
+      return stepData && typeof stepData === 'object' && Object.keys(stepData).length > 0;
+    });
+    
     tabs.forEach((tab, index) => {
       const tabStepId = tab.dataset.step;
       tab.classList.remove('active', 'locked');
@@ -1866,6 +1875,29 @@
         if (contactId) {
           tab.classList.add('completed', 'disabled');
           if (statusIcon) statusIcon.textContent = '✓';
+        }
+      } else if (tabStepId === 'review' || tabStepId === 'declaration') {
+        // Review and Declaration - only enable if all required steps complete
+        if (!allRequiredStepsComplete) {
+          tab.classList.add('disabled', 'locked');
+          if (statusIcon) {
+            statusIcon.textContent = '!';
+            statusIcon.style.display = 'block';
+          }
+        } else if (index === currentIndex) {
+          tab.classList.add('active');
+          tab.classList.remove('disabled', 'locked');
+          if (statusIcon) statusIcon.style.display = 'none';
+        } else {
+          tab.classList.remove('disabled', 'locked');
+          const stepData = formData[tabStepId];
+          const hasData = stepData && typeof stepData === 'object' && Object.keys(stepData).length > 0;
+          if (hasData) {
+            tab.classList.add('completed');
+            if (statusIcon) statusIcon.textContent = '✓';
+          } else {
+            if (statusIcon) statusIcon.textContent = '!';
+          }
         }
       } else if (index === currentIndex) {
         // Current step - active
@@ -1894,6 +1926,8 @@
         }
       }
     });
+    
+    console.log(`📊 All required steps complete: ${allRequiredStepsComplete}`);
   }
   
   function populateFormData(stepId, data) {
@@ -1937,16 +1971,35 @@
   
   async function fetchContactDetailsForPrefill(contactIdToFetch) {
     try {
+      console.log('🔍 Fetching contact details for ID:', contactIdToFetch);
       const response = await fetch(`${RENDER_APP_URL}/api/axcelerate/contact/${contactIdToFetch}`);
-      if (response.ok) {
-        const contact = await response.json();
-        contactDetails.givenName = contact.GIVENNAME || contact.givenname || '';
-        contactDetails.surname = contact.SURNAME || contact.surname || '';
-        contactDetails.email = contact.EMAILADDRESS || contact.emailAddress || contact.email || '';
-        console.log('✅ Fetched contact details:', contactDetails);
+      
+      if (!response.ok) {
+        console.error('Failed to fetch contact:', response.status, response.statusText);
+        return;
       }
+      
+      const contact = await response.json();
+      console.log('📋 Raw contact data from aXcelerate:', contact);
+      
+      // Extract contact details (handle different casings)
+      contactDetails.givenName = contact.GIVENNAME || contact.givenname || contact.givenName || '';
+      contactDetails.surname = contact.SURNAME || contact.surname || '';
+      contactDetails.email = contact.EMAILADDRESS || contact.emailAddress || contact.email || '';
+      
+      console.log('✅ Stored contact details:', contactDetails);
+      
+      // Save to localStorage for persistence
+      const progress = localStorage.getItem('ax_enrollment_progress');
+      if (progress) {
+        const progressData = JSON.parse(progress);
+        progressData.contactDetails = contactDetails;
+        localStorage.setItem('ax_enrollment_progress', JSON.stringify(progressData));
+        console.log('💾 Updated contactDetails in localStorage');
+      }
+      
     } catch (error) {
-      console.error('Failed to fetch contact details:', error);
+      console.error('❌ Error fetching contact details:', error);
     }
   }
   
@@ -2029,7 +2082,7 @@
     }
   }
   
-  function restoreProgress() {
+  async function restoreProgress() {
     try {
       console.log('🔄 restoreProgress() called');
       const saved = localStorage.getItem('ax_enrollment_progress');
@@ -2079,7 +2132,7 @@
         // Fetch contact details if we don't have them
         if (!contactDetails.givenName && !contactDetails.email) {
           console.log('📋 Fetching contact details for pre-fill...');
-          fetchContactDetailsForPrefill(contactId);
+          await fetchContactDetailsForPrefill(contactId);
         }
         
         // Auto-mark completed steps based on saved data
