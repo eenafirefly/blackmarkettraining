@@ -174,6 +174,7 @@
     padding: 0;
     border-radius: 0;
     box-shadow: none;
+    font-family: var(--main-font-stack);
   }
   
   .ax-widget-title {
@@ -182,7 +183,6 @@
     text-align: center;
     margin: 0 0 5px 0;
     padding: 20px 20px 0 20px;
-    color: #333;
   }
   
   .ax-course-title {
@@ -376,6 +376,14 @@
   }
   
   /* Step Content */
+  .ax-step-header{
+    font-size: 24px;
+    text-transform: uppercase;
+    font-weight: 700;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+  }
   .ax-step-content {
     display: none;
   }
@@ -410,11 +418,15 @@
   .ax-input,
   .ax-select {
     width: 100%;
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
     font-family: inherit;
+    border-radius: var(--button-border-radius);
+    padding: .75rem 1rem;
+    font-size: var(--font-size-base);
+    line-height: var(--base-line-height);
+    box-shadow: inset 0 0 0 var(--input-border-width) rgb(var(--color-button-border));
+    box-sizing: border-box;
+    background-color: rgb(var(--color-scheme-secondary-background));
+    color: rgb(var(--color-scheme-secondary-text));
   }
   
   .ax-input:focus,
@@ -514,18 +526,11 @@
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 16px;
-    font-weight: 600;
     transition: all 0.3s;
   }
   
   .ax-btn-primary {
-    background: #2196F3;
     color: white;
-  }
-  
-  .ax-btn-primary:hover {
-    background: #1976D2;
   }
   
   .ax-btn-secondary {
@@ -1008,9 +1013,9 @@
       } else if (config.stepType === 'review') {
         // Review step: Single Save button
         const buttonGroup = document.createElement('div');
-        buttonGroup.className = 'ax-button-group';
+        buttonGroup.className = 'ax-button-group relative z-10 mt-5';
         buttonGroup.innerHTML = `
-          <button type="submit" class="ax-btn ax-btn-primary">Save</button>
+          <button type="submit" class="push-btn inline-block w-100 text-center ax-btn ax-btn-primary"><span class="push-btn__surface w-100">Save</span></button>
         `;
         form.appendChild(buttonGroup);
       } else if (config.stepType === 'enrol') {
@@ -1023,9 +1028,9 @@
         }
         
         const buttonGroup = document.createElement('div');
-        buttonGroup.className = 'ax-button-group';
+        buttonGroup.className = 'ax-button-group relative z-10 mt-5';
         buttonGroup.innerHTML = `
-          <button type="submit" class="ax-btn ax-btn-primary">Submit Enrollment</button>
+         <button type="submit" class="push-btn inline-block w-100 text-center ax-btn ax-btn-primary"><span class="push-btn__surface w-100">Save</span></button>
         `;
         form.appendChild(buttonGroup);
       }
@@ -1246,12 +1251,12 @@
   
   function createNavigationButtons(stepId, config) {
     const buttonGroup = document.createElement('div');
-    buttonGroup.className = 'ax-button-group';
+    buttonGroup.className = 'ax-button-group relative z-10 mt-5';
     
     const saveBtn = document.createElement('button');
     saveBtn.type = 'submit';
-    saveBtn.className = 'ax-btn ax-btn-primary';
-    saveBtn.textContent = 'Save';
+    saveBtn.className = 'push-btn inline-block w-100 text-center ax-btn ax-btn-primary';
+    saveBtn.innerHTML = '<span class="push-btn__surface w-100">Save</span>';
     
     buttonGroup.appendChild(saveBtn);
     
