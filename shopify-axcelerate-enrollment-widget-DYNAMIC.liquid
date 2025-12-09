@@ -2491,7 +2491,8 @@
       
       if (isContactStep && (contactDetails.givenName || contactDetails.email || contactDetails.mobile)) {
         console.log(`👤 Pre-filling contact details for step "${stepId}"`);
-        setTimeout(() => prefillContactDetails(stepId), 300);
+        // Increased timeout to ensure DOM is fully rendered
+        setTimeout(() => prefillContactDetails(stepId), 500);
       }
     }, 100);
     
@@ -2732,7 +2733,8 @@
     if (contactDetails.givenName) {
       const filled = givenNameFields.some(fieldId => {
         const input = document.getElementById(`ax-${fieldId}-${widgetId}`);
-        if (input && !input.value) {
+        // Pre-fill if input exists and is empty or contains only whitespace
+        if (input && (!input.value || input.value.trim() === '')) {
           input.value = contactDetails.givenName;
           console.log(`   ✅ Pre-filled givenName: ${fieldId} = "${contactDetails.givenName}"`);
           filledCount++;
@@ -2749,7 +2751,8 @@
     if (contactDetails.surname) {
       const filled = surnameFields.some(fieldId => {
         const input = document.getElementById(`ax-${fieldId}-${widgetId}`);
-        if (input && !input.value) {
+        // Pre-fill if input exists and is empty or contains only whitespace
+        if (input && (!input.value || input.value.trim() === '')) {
           input.value = contactDetails.surname;
           console.log(`   ✅ Pre-filled surname: ${fieldId} = "${contactDetails.surname}"`);
           filledCount++;
@@ -2769,11 +2772,14 @@
         const elementId = `ax-${fieldId}-${widgetId}`;
         const input = document.getElementById(elementId);
         console.log(`      Checking ${elementId}:`, input ? `Found (value="${input.value}")` : 'Not found');
-        if (input && !input.value) {
+        // Pre-fill if input exists and is empty or contains only whitespace
+        if (input && (!input.value || input.value.trim() === '')) {
           input.value = contactDetails.email;
           console.log(`   ✅ Pre-filled email: ${fieldId} = "${contactDetails.email}"`);
           filledCount++;
           return true;
+        } else if (input && input.value) {
+          console.log(`      ⏭️ Skipping ${elementId} - already has value: "${input.value}"`);
         }
         return false;
       });
@@ -2791,11 +2797,14 @@
         const elementId = `ax-${fieldId}-${widgetId}`;
         const input = document.getElementById(elementId);
         console.log(`      Checking ${elementId}:`, input ? `Found (value="${input.value}")` : 'Not found');
-        if (input && !input.value) {
+        // Pre-fill if input exists and is empty or contains only whitespace
+        if (input && (!input.value || input.value.trim() === '')) {
           input.value = contactDetails.mobile;
           console.log(`   ✅ Pre-filled mobile: ${fieldId} = "${contactDetails.mobile}"`);
           filledCount++;
           return true;
+        } else if (input && input.value) {
+          console.log(`      ⏭️ Skipping ${elementId} - already has value: "${input.value}"`);
         }
         return false;
       });
