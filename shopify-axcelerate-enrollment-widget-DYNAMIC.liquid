@@ -756,6 +756,11 @@
   let formSteps = [];
   let formData = {}; // Stores data from all steps
   let stepConfigs = {}; // Stores fetched configurations
+  let contactDetails = { // Stores logged-in user's details for pre-filling
+    givenName: '',
+    surname: '',
+    email: ''
+  };
   
   // =========================================================================
   // Initialization
@@ -1535,6 +1540,12 @@
         contactId = result.data.contactId;
         console.log('✅ Contact created:', contactId);
         
+        // Store contact details for pre-filling later steps
+        contactDetails.givenName = givenName;
+        contactDetails.surname = familyName;
+        contactDetails.email = email;
+        console.log('📋 Stored contact details:', contactDetails);
+        
         // Unlock all tabs now that user is logged in
         unlockAllTabs();
         
@@ -1762,18 +1773,34 @@
         try {
           const data = JSON.parse(saved);
           console.log(`🔄 Restoring data for step "${stepId}":`, data);
-          populateFormData(stepId, data);
           
-          // Auto-mark as completed if step has saved data
-          if (stepId !== 'login' && Object.keys(data).length > 0) {
-            console.log(`✅ Auto-marking step "${stepId}" as completed (has ${Object.keys(data).length} saved fields)`);
-            markStepCompleted(stepId);
+          // Only mark as completed if step has actual data
+          const hasData = data && typeof data === 'object' && Object.keys(data).length > 0;
+          
+          if (hasData) {
+            populateFormData(stepId, data);
+            
+            // Auto-mark as completed if step has saved data
+            if (stepId !== 'login') {
+              console.log(`✅ Auto-marking step "${stepId}" as completed (has ${Object.keys(data).length} saved fields)`);
+              markStepCompleted(stepId);
+            }
+          } else {
+            console.log(`⏭️ Skipping restore for "${stepId}" - no data or empty`);
           }
         } catch (e) {
           console.error('Error restoring step data:', e);
         }
       } else {
         console.log(`ℹ️ No saved data found for step "${stepId}"`);
+        
+        // Pre-fill contact details for contact details or personal details steps
+        if (stepId === 'contactdetails' || stepId === 'contact-details' || stepId === 'personaldetails' || stepId === 'personal-details') {
+          if (contactDetails.givenName || contactDetails.email) {
+            console.log(`👤 Pre-filling contact details for step "${stepId}"`);
+            prefillContactDetails(stepId);
+          }
+        }
       }
     }, 100);
     
@@ -1919,6 +1946,54 @@
     console.log(`✅ Finished populating form data for step "${stepId}"`);
   }
   
+  function prefillContactDetails(stepId) {
+    console.log(`👤 Pre-filling contact details for "${stepId}":`, contactDetails);
+    
+    // Common field name variations for givenName, surname, and email
+    const givenNameFields = ['givenname', 'givenName', 'firstName', 'firstname', 'fname'];
+    const surnameFields = ['surname', 'lastName', 'lastname', 'lname', 'familyname', 'familyName'];
+    const emailFields = ['email', 'emailaddress', 'emailAddress', 'email1'];
+    
+    // Try to find and populate given name field
+    if (contactDetails.givenName) {
+      givenNameFields.some(fieldId => {
+        const input = document.getElementById(`ax-${fieldId}-${widgetId}`);
+        if (input && !input.value) {
+          input.value = contactDetails.givenName;
+          console.log(`   ✅ Pre-filled givenName: ${fieldId}`);
+          return true;
+        }
+        return false;
+      });
+    }
+    
+    // Try to find and populate surname field
+    if (contactDetails.surname) {
+      surnameFields.some(fieldId => {
+        const input = document.getElementById(`ax-${fieldId}-${widgetId}`);
+        if (input && !input.value) {
+          input.value = contactDetails.surname;
+          console.log(`   ✅ Pre-filled surname: ${fieldId}`);
+          return true;
+        }
+        return false;
+      });
+    }
+    
+    // Try to find and populate email field
+    if (contactDetails.email) {
+      emailFields.some(fieldId => {
+        const input = document.getElementById(`ax-${fieldId}-${widgetId}`);
+        if (input && !input.value) {
+          input.value = contactDetails.email;
+          console.log(`   ✅ Pre-filled email: ${fieldId}`);
+          return true;
+        }
+        return false;
+      });
+    }
+  }
+  
   // =========================================================================
   // Progress Saving & Resume
   // =========================================================================
@@ -1938,11 +2013,13 @@
         courseId,
         courseType,
         formData,
+        contactDetails,
         timestamp: Date.now()
       };
       localStorage.setItem('ax_enrollment_progress', JSON.stringify(progress));
       console.log('📌 Progress saved to localStorage');
       console.log('   Saved formData keys:', Object.keys(progress.formData));
+      console.log('   Saved contactDetails:', progress.contactDetails);
     } else {
       console.log('⚠️ saveProgress() skipped - contactId:', contactId, 'currentStep:', currentStep);
     }
@@ -1978,6 +2055,7 @@
       contactId = progress.contactId;
       authToken = progress.authToken;
       formData = progress.formData || {};
+      contactDetails = progress.contactDetails || { givenName: '', surname: '', email: '' };
       
       // Restore session storage for each step
       Object.entries(formData).forEach(([step, data]) => {
@@ -1995,9 +2073,17 @@
         markStepCompleted('login');
         
         // Auto-mark completed steps based on saved data
+        // Only mark as completed if step has actual field data
         Object.keys(formData).forEach(stepId => {
-          if (stepId !== 'login' && formData[stepId] && Object.keys(formData[stepId]).length > 0) {
-            markStepCompleted(stepId);
+          if (stepId !== 'login') {
+            const stepData = formData[stepId];
+            const hasData = stepData && typeof stepData === 'object' && Object.keys(stepData).length > 0;
+            if (hasData) {
+              console.log(`✅ Auto-marking "${stepId}" as completed (has ${Object.keys(stepData).length} fields)`);
+              markStepCompleted(stepId);
+            } else {
+              console.log(`⏭️ Skipping "${stepId}" - no data or empty`);
+            }
           }
         });
       }

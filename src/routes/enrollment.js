@@ -607,15 +607,18 @@ router.post('/save-step', async (req, res) => {
       const today = new Date().toISOString().split('T')[0];
       
       // Check if there's already an incomplete enrollment note from today
-      const hasIncompleteNoteToday = notes.some(note => {
-        const noteDate = note.DATE ? note.DATE.split(' ')[0] : '';
-        const isIncompleteNote = note.NOTE && note.NOTE.includes('Incomplete enrollment');
-        return isIncompleteNote && noteDate === today;
-      });
-      
-      if (hasIncompleteNoteToday) {
-        console.log('ℹ️ Incomplete email already sent today - skipping');
-        shouldSendEmail = false;
+      // Ensure notes is an array before calling .some()
+      if (Array.isArray(notes) && notes.length > 0) {
+        const hasIncompleteNoteToday = notes.some(note => {
+          const noteDate = note.DATE ? note.DATE.split(' ')[0] : '';
+          const isIncompleteNote = note.NOTE && note.NOTE.includes('Incomplete enrollment');
+          return isIncompleteNote && noteDate === today;
+        });
+        
+        if (hasIncompleteNoteToday) {
+          console.log('ℹ️ Incomplete email already sent today - skipping');
+          shouldSendEmail = false;
+        }
       }
     }
     
