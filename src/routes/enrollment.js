@@ -566,13 +566,21 @@ router.post('/save-step', async (req, res) => {
     const personalDetailFields = [
       'title', 'givenname', 'firstname', 'surname', 'lastname', 'preferredname', 'middlename',
       'dateofbirth', 'dob', 'birthdate', 'gender', 'sex',
-      'email', 'emailaddress', 'phone', 'mobilephone', 'mobile',
-      'address', 'streetaddress', 'suburb', 'city', 'postcode', 'state', 'country',
+      'email', 'emailaddress', 'phone', 'mobilephone', 'mobile', 'homephone', 'workphone', 'fax',
+      'address', 'streetaddress', 'streetnumber', 'streetname', 'suburb', 'city', 'postcode', 'state', 'country',
+      'buildingpropertyname', 'flatunitdetails', 'poboxdetails',
+      'postaladdress', 'postalstreetnumber', 'postalstreetname', 'postalsuburb', 'postalpostcode', 'postalstate', 'postalcountry',
+      'postalbuildingpropertyname', 'postalflatunitdetails', 'postalpoboxdetails',
       'usi', 'uniquestudentidentifier', 'studentidentifier',
-      'countryofbirth', 'birthplace', 'cityofbirth', 'citizenshipstatus', 
-      'languagespoken', 'englishproficiency', 'indigenousstatus', 'employmentstatus',
-      'schoollevel', 'highestschoollevel', 'prioreducationstatus', 'prioreducation',
-      'disabilitytypes',
+      'countryofbirth', 'birthplace', 'cityofbirth', 
+      'citizenshipstatus', 'countryofcitizenship', 'residencystatus',
+      'languagespoken', 'languageidentifier', 'englishproficiency', 'englishassistance', 'atschool',
+      'indigenousstatus', 'aboriginalortorresstraitislanderorigin',
+      'employmentstatus', 'occupationidentifier', 'industryofemployment',
+      'schoollevel', 'highestschoollevel', 'highestcompletedschoollevel', 'yearhighestschoolcompleted',
+      'prioreducationstatus', 'prioreducation',
+      'disabilities', 'disabilitytypes', 'disabilityflag',
+      'surveycontactstatus',
       'emergencycontactname', 'emergencyrelationship', 'emergencycontactnumber'
     ];
     
@@ -585,27 +593,80 @@ router.post('/save-step', async (req, res) => {
         let axFieldName = key.toUpperCase();
         
         // Handle field name variations - map to aXcelerate's expected field names
+        // Name fields
         if (keyLower === 'lastname') axFieldName = 'SURNAME';
         if (keyLower === 'firstname' || keyLower === 'givenname') axFieldName = 'GIVENNAME';
-        if (keyLower === 'dateofbirth' || keyLower === 'birthdate' || keyLower === 'dob') axFieldName = 'DOB';
-        if (keyLower === 'uniquestudentidentifier' || keyLower === 'studentidentifier') axFieldName = 'USI';
-        if (keyLower === 'streetaddress') axFieldName = 'ADDRESS';
-        if (keyLower === 'city') axFieldName = 'SUBURB';
-        if (keyLower === 'mobile' || keyLower === 'mobilephone') axFieldName = 'MOBILE';
         if (keyLower === 'preferredname') axFieldName = 'PREFERREDNAME';
         if (keyLower === 'middlename') axFieldName = 'MIDDLENAME';
+        
+        // Contact fields
+        if (keyLower === 'dateofbirth' || keyLower === 'birthdate' || keyLower === 'dob') axFieldName = 'DOB';
         if (keyLower === 'gender' || keyLower === 'sex') axFieldName = 'SEX';
+        if (keyLower === 'mobile' || keyLower === 'mobilephone') axFieldName = 'MOBILE';
+        if (keyLower === 'homephone') axFieldName = 'PHONE';
+        if (keyLower === 'workphone') axFieldName = 'WORKPHONE';
+        if (keyLower === 'fax') axFieldName = 'FAX';
+        
+        // Address fields - Residential
+        if (keyLower === 'streetaddress' || keyLower === 'address') axFieldName = 'ADDRESS';
+        if (keyLower === 'streetnumber') axFieldName = 'ADDRESS'; // Combine with street name
+        if (keyLower === 'streetname') axFieldName = 'ADDRESS'; // Combine with street number
+        if (keyLower === 'buildingpropertyname') axFieldName = 'BUILDINGPROPERTYNAME';
+        if (keyLower === 'flatunitdetails') axFieldName = 'FLATUNITDETAILS';
+        if (keyLower === 'poboxdetails') axFieldName = 'POBOXDETAILS';
+        if (keyLower === 'city' || keyLower === 'suburb') axFieldName = 'SUBURB';
+        if (keyLower === 'postcode') axFieldName = 'POSTCODE';
+        if (keyLower === 'state') axFieldName = 'STATE';
+        if (keyLower === 'country') axFieldName = 'COUNTRY';
+        
+        // Address fields - Postal
+        if (keyLower === 'postaladdress') axFieldName = 'POSTALADDRESS';
+        if (keyLower === 'postalstreetnumber') axFieldName = 'POSTALADDRESS';
+        if (keyLower === 'postalstreetname') axFieldName = 'POSTALADDRESS';
+        if (keyLower === 'postalbuildingpropertyname') axFieldName = 'POSTALBUILDINGPROPERTYNAME';
+        if (keyLower === 'postalflatunitdetails') axFieldName = 'POSTALFLATUNITDETAILS';
+        if (keyLower === 'postalpoboxdetails') axFieldName = 'POSTALPOBOXDETAILS';
+        if (keyLower === 'postalsuburb') axFieldName = 'POSTALSUBURB';
+        if (keyLower === 'postalpostcode') axFieldName = 'POSTALPOSTCODE';
+        if (keyLower === 'postalstate') axFieldName = 'POSTALSTATE';
+        if (keyLower === 'postalcountry') axFieldName = 'POSTALCOUNTRY';
+        
+        // Learner identifiers
+        if (keyLower === 'uniquestudentidentifier' || keyLower === 'studentidentifier' || keyLower === 'usi') axFieldName = 'USI';
+        
+        // VET Related Details - Nationality/Citizenship
         if (keyLower === 'countryofbirth') axFieldName = 'COUNTRYOFBIRTH';
-        if (keyLower === 'birthplace') axFieldName = 'BIRTHPLACE';
+        if (keyLower === 'birthplace' || keyLower === 'cityofbirth') axFieldName = 'BIRTHPLACE';
         if (keyLower === 'citizenshipstatus') axFieldName = 'CITIZENSHIPSTATUS';
-        if (keyLower === 'languagespoken') axFieldName = 'LANGUAGESPOKEN';
+        if (keyLower === 'countryofcitizenship') axFieldName = 'COUNTRYOFCITIZENSHIP';
+        if (keyLower === 'residencystatus') axFieldName = 'RESIDENCYSTATUS';
+        
+        // VET Related Details - Language
+        if (keyLower === 'languagespoken' || keyLower === 'languageidentifier') axFieldName = 'LANGUAGESPOKEN';
         if (keyLower === 'englishproficiency') axFieldName = 'ENGLISHPROFICIENCY';
-        if (keyLower === 'indigenousstatus') axFieldName = 'INDIGENOUSSTATUS';
+        if (keyLower === 'englishassistance') axFieldName = 'ENGLISHASSISTANCE';
+        if (keyLower === 'atschool') axFieldName = 'ATSCHOOL';
+        
+        // VET Related Details - Indigenous/Employment
+        if (keyLower === 'indigenousstatus' || keyLower === 'aboriginalortorresstraitislanderorigin') axFieldName = 'INDIGENOUSSTATUS';
         if (keyLower === 'employmentstatus') axFieldName = 'EMPLOYMENTSTATUS';
-        if (keyLower === 'highestschoollevel' || keyLower === 'schoollevel') axFieldName = 'HIGHESTSCHOOLLEVEL';
+        if (keyLower === 'occupationidentifier') axFieldName = 'OCCUPATIONIDENTIFIER';
+        if (keyLower === 'industryofemployment') axFieldName = 'INDUSTRYOFEMPLOYMENT';
+        
+        // VET Related Details - Education
+        if (keyLower === 'highestschoollevel' || keyLower === 'schoollevel' || keyLower === 'highestcompletedschoollevel') axFieldName = 'HIGHESTSCHOOLLEVEL';
+        if (keyLower === 'yearhighestschoolcompleted') axFieldName = 'YEARHIGHESTSCHOOLCOMPLETED';
         if (keyLower === 'prioreducationstatus') axFieldName = 'PRIOREDUCATIONSTATUS';
         if (keyLower === 'prioreducation') axFieldName = 'PRIOREDUCATION';
+        
+        // VET Related Details - Disability
+        if (keyLower === 'disabilities' || keyLower === 'disabilityflag') axFieldName = 'DISABILITYFLAG';
         if (keyLower === 'disabilitytypes') axFieldName = 'DISABILITYTYPES';
+        
+        // VET Related Details - Survey
+        if (keyLower === 'surveycontactstatus') axFieldName = 'SURVEYCONTACTSTATUS';
+        
+        // Emergency Contact
         if (keyLower === 'emergencycontactname') axFieldName = 'EMERGENCYCONTACTNAME';
         if (keyLower === 'emergencyrelationship') axFieldName = 'EMERGENCYRELATIONSHIP';
         if (keyLower === 'emergencycontactnumber') axFieldName = 'EMERGENCYCONTACTNUMBER';
