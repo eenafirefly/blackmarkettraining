@@ -2,7 +2,8 @@
   "configId": 3,
   "configName": "Accredited Enrolment Form - Single - No Payment",
   "step": "nationality",
-  "stepName": "Nationality",
+  "stepName": "Citizenship",
+  "stepHeader": "Language",
   "stepType": "contact-update",
   "stepOrder": 8,
   "stepId": "contactAndthnas",
@@ -11,23 +12,82 @@
   "fields": [
     {
       "order": 1,
-      "fieldId": "citizenshipInfo",
-      "name": "Citizenship",
-      "type": "information",
-      "required": false
-    },
-    {
-      "order": 2,
       "fieldId": "countryOfBirth",
       "name": "Country of Birth",
-      "type": "search-select",
+      "type": "select",
       "required": false,
       "dataField": true,
       "syncToCustomField": false,
-      "mapsToContactField": "COUNTRYOFBIRTH"
+      "mapsToContactField": "COUNTRYOFBIRTH",
+      "options": [
+        { "display": "Afghanistan", "value": "AF" },
+        { "display": "Albania", "value": "AL" },
+        { "display": "Algeria", "value": "DZ" },
+        { "display": "Argentina", "value": "AR" },
+        { "display": "Australia", "value": "AU" },
+        { "display": "Austria", "value": "AT" },
+        { "display": "Bangladesh", "value": "BD" },
+        { "display": "Belgium", "value": "BE" },
+        { "display": "Brazil", "value": "BR" },
+        { "display": "Canada", "value": "CA" },
+        { "display": "Chile", "value": "CL" },
+        { "display": "China", "value": "CN" },
+        { "display": "Colombia", "value": "CO" },
+        { "display": "Croatia", "value": "HR" },
+        { "display": "Czech Republic", "value": "CZ" },
+        { "display": "Denmark", "value": "DK" },
+        { "display": "Egypt", "value": "EG" },
+        { "display": "Finland", "value": "FI" },
+        { "display": "France", "value": "FR" },
+        { "display": "Germany", "value": "DE" },
+        { "display": "Greece", "value": "GR" },
+        { "display": "Hong Kong", "value": "HK" },
+        { "display": "Hungary", "value": "HU" },
+        { "display": "India", "value": "IN" },
+        { "display": "Indonesia", "value": "ID" },
+        { "display": "Iran", "value": "IR" },
+        { "display": "Iraq", "value": "IQ" },
+        { "display": "Ireland", "value": "IE" },
+        { "display": "Israel", "value": "IL" },
+        { "display": "Italy", "value": "IT" },
+        { "display": "Japan", "value": "JP" },
+        { "display": "Jordan", "value": "JO" },
+        { "display": "Kenya", "value": "KE" },
+        { "display": "Korea, South", "value": "KR" },
+        { "display": "Lebanon", "value": "LB" },
+        { "display": "Malaysia", "value": "MY" },
+        { "display": "Mexico", "value": "MX" },
+        { "display": "Nepal", "value": "NP" },
+        { "display": "Netherlands", "value": "NL" },
+        { "display": "New Zealand", "value": "NZ" },
+        { "display": "Nigeria", "value": "NG" },
+        { "display": "Norway", "value": "NO" },
+        { "display": "Pakistan", "value": "PK" },
+        { "display": "Philippines", "value": "PH" },
+        { "display": "Poland", "value": "PL" },
+        { "display": "Portugal", "value": "PT" },
+        { "display": "Romania", "value": "RO" },
+        { "display": "Russia", "value": "RU" },
+        { "display": "Saudi Arabia", "value": "SA" },
+        { "display": "Singapore", "value": "SG" },
+        { "display": "South Africa", "value": "ZA" },
+        { "display": "Spain", "value": "ES" },
+        { "display": "Sri Lanka", "value": "LK" },
+        { "display": "Sweden", "value": "SE" },
+        { "display": "Switzerland", "value": "CH" },
+        { "display": "Syria", "value": "SY" },
+        { "display": "Taiwan", "value": "TW" },
+        { "display": "Thailand", "value": "TH" },
+        { "display": "Turkey", "value": "TR" },
+        { "display": "Ukraine", "value": "UA" },
+        { "display": "United Arab Emirates", "value": "AE" },
+        { "display": "United Kingdom", "value": "GB" },
+        { "display": "United States", "value": "US" },
+        { "display": "Vietnam", "value": "VN" }
+      ]
     },
     {
-      "order": 3,
+      "order": 2,
       "fieldId": "cityOfBirth",
       "name": "City of Birth",
       "type": "text",
@@ -36,10 +96,10 @@
       "syncToCustomField": true
     },
     {
-      "order": 4,
+      "order": 3,
       "fieldId": "citizenshipStatus",
       "name": "Citizenship Status",
-      "type": "search-select",
+      "type": "select",
       "required": true,
       "dataField": true,
       "syncToCustomField": false,
@@ -59,24 +119,7 @@
       ]
     },
     {
-      "order": 5,
-      "fieldId": "countryOfCitizenship",
-      "name": "Country of Citizenship",
-      "type": "search-select",
-      "required": false,
-      "dataField": true,
-      "syncToCustomField": false,
-      "mapsToContactField": "COUNTRYOFCITIZENSHIP"
-    },
-    {
-      "order": 6,
-      "fieldId": "languageInfo",
-      "name": "Language",
-      "type": "information",
-      "required": false
-    },
-    {
-      "order": 7,
+      "order": 4,
       "fieldId": "speakOtherLanguage",
       "name": "Do you speak a language other than english at home?",
       "type": "select",
@@ -86,28 +129,80 @@
       "options": [
         { "display": "Yes", "value": "Yes" },
         { "display": "No", "value": "No" }
-      ]
+      ],
+      "events": {
+        "languageSpokenMostOften_show": {
+          "trigger": "change",
+          "action": "show",
+          "condition": "value === 'Yes'"
+        },
+        "languageSpokenMostOften_hide": {
+          "trigger": "change",
+          "action": "hide",
+          "condition": "value === 'No'"
+        }
+      }
     },
     {
-      "order": 8,
+      "order": 5,
       "fieldId": "languageSpokenMostOften",
       "name": "Language spoken most often",
-      "type": "search-select",
+      "type": "select",
       "required": false,
       "dataField": true,
       "syncToCustomField": false,
-      "mapsToContactField": "LANGUAGESPOKEN"
+      "mapsToContactField": "LANGUAGESPOKEN",
+      "hideInitially": "hidden",
+      "tooltip": "If you speak more than one language, please indicate the one that is spoken most often",
+      "options": [
+        { "display": "English", "value": "English" },
+        { "display": "Mandarin", "value": "Mandarin" },
+        { "display": "Spanish", "value": "Spanish" },
+        { "display": "Hindi", "value": "Hindi" },
+        { "display": "Arabic", "value": "Arabic" },
+        { "display": "Bengali", "value": "Bengali" },
+        { "display": "Portuguese", "value": "Portuguese" },
+        { "display": "Russian", "value": "Russian" },
+        { "display": "Japanese", "value": "Japanese" },
+        { "display": "Punjabi", "value": "Punjabi" },
+        { "display": "German", "value": "German" },
+        { "display": "Javanese", "value": "Javanese" },
+        { "display": "Korean", "value": "Korean" },
+        { "display": "French", "value": "French" },
+        { "display": "Telugu", "value": "Telugu" },
+        { "display": "Marathi", "value": "Marathi" },
+        { "display": "Turkish", "value": "Turkish" },
+        { "display": "Tamil", "value": "Tamil" },
+        { "display": "Vietnamese", "value": "Vietnamese" },
+        { "display": "Urdu", "value": "Urdu" },
+        { "display": "Italian", "value": "Italian" },
+        { "display": "Thai", "value": "Thai" },
+        { "display": "Greek", "value": "Greek" },
+        { "display": "Persian", "value": "Persian" },
+        { "display": "Polish", "value": "Polish" },
+        { "display": "Cantonese", "value": "Cantonese" },
+        { "display": "Filipino/Tagalog", "value": "Filipino" },
+        { "display": "Dutch", "value": "Dutch" },
+        { "display": "Other", "value": "Other" }
+      ]
     },
     {
-      "order": 9,
+      "order": 6,
       "fieldId": "englishProficiency",
       "name": "English Proficiency",
       "type": "select",
       "required": false,
       "dataField": true,
       "syncToCustomField": false,
-      "mapsToContactField": "ENGLISHPROFICIENCY"
+      "mapsToContactField": "ENGLISHPROFICIENCY",
+      "tooltip": "How well you speak English.",
+      "options": [
+        { "display": "Not specified", "value": "Not specified" },
+        { "display": "Very Well", "value": "Very Well" },
+        { "display": "Well", "value": "Well" },
+        { "display": "Not Well", "value": "Not Well" },
+        { "display": "Not at all", "value": "Not at all" }
+      ]
     }
   ]
 }
-
