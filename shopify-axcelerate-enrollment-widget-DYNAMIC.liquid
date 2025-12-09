@@ -900,10 +900,25 @@
         }))
     ];
     
-    // Show all steps in sidebar - all locked except login by default
+    // Show all steps in sidebar
     sidebarContainer.innerHTML = allSteps.map((step, index) => {
       const isLogin = index === 0;
-      const isLocked = !isLogin && !contactId; // Lock all except login if not logged in
+      
+      // If already logged in (contactId exists), mark login as completed and disabled
+      if (isLogin && contactId) {
+        return `
+          <div class="ax-sidebar-tab completed disabled" 
+               data-step="${step.id}" 
+               data-step-number="${index + 1}">
+            <span class="ax-tab-number">${index + 1}</span>
+            <span class="ax-tab-label">${step.label}</span>
+            <span class="ax-tab-status">✓</span>
+          </div>
+        `;
+      }
+      
+      // If not logged in, login is active, others are locked
+      const isLocked = !isLogin && !contactId;
       
       return `
         <div class="ax-sidebar-tab ${isLogin ? 'active' : 'locked'}" 
@@ -920,6 +935,13 @@
     sidebarContainer.querySelectorAll('.ax-sidebar-tab').forEach(tab => {
       tab.addEventListener('click', (e) => {
         const stepId = tab.dataset.step;
+        
+        // Prevent clicking on login step after login is complete
+        if (stepId === 'login' && contactId) {
+          console.log('🚫 Login step is locked - already logged in');
+          return;
+        }
+        
         // Only allow navigation if not locked or disabled
         if (!tab.classList.contains('locked') && !tab.classList.contains('disabled')) {
           showStep(stepId);
@@ -1393,8 +1415,15 @@
     
     if (stepIndex >= 0 && stepIndex < tabs.length) {
       const tab = tabs[stepIndex];
-      tab.classList.add('completed');
-      tab.classList.remove('active', 'locked', 'disabled');
+      
+      // Special handling for login step - mark as completed AND disabled
+      if (stepId === 'login') {
+        tab.classList.add('completed', 'disabled');
+        tab.classList.remove('active', 'locked');
+      } else {
+        tab.classList.add('completed');
+        tab.classList.remove('active', 'locked', 'disabled');
+      }
       
       const statusIcon = tab.querySelector('.ax-tab-status');
       if (statusIcon) {
@@ -1798,14 +1827,15 @@
     }
     
     tabs.forEach((tab, index) => {
+      const tabStepId = tab.dataset.step;
       tab.classList.remove('active', 'completed', 'disabled', 'locked');
       
       const statusIcon = tab.querySelector('.ax-tab-status');
       
-      if (index === 0) {
-        // Login step - always completed after login
+      if (index === 0 || tabStepId === 'login') {
+        // Login step - always completed and disabled after login
         if (contactId) {
-          tab.classList.add('completed');
+          tab.classList.add('completed', 'disabled');
           if (statusIcon) statusIcon.textContent = '✓';
         }
       } else if (index < currentIndex) {
