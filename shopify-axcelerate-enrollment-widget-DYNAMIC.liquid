@@ -828,7 +828,7 @@
     const hasRestoredProgress = await restoreProgress();
     
     // If no restored progress, check if user is returning from OAuth
-    const hasOAuthReturn = !hasRestoredProgress && checkOAuthReturn();
+    const hasOAuthReturn = !hasRestoredProgress && await checkOAuthReturn();
     
     // Setup event listeners
     setupEventListeners();
@@ -1460,7 +1460,7 @@
     window.location.href = `${authUrl}?${params}`;
   }
   
-  function checkOAuthReturn() {
+  async function checkOAuthReturn() {
     const urlParams = new URLSearchParams(window.location.search);
     authToken = urlParams.get('auth_token');
     contactId = urlParams.get('contact_id');
@@ -1477,8 +1477,9 @@
     if (authToken && contactId) {
       console.log('✅ OAuth successful! Contact ID:', contactId);
       
-      // Fetch contact details for pre-filling
-      fetchContactDetailsForPrefill(contactId);
+      // Fetch contact details for pre-filling (await to ensure data is loaded)
+      console.log('📋 Fetching contact details after OAuth...');
+      await fetchContactDetailsForPrefill(contactId);
       
       // Unlock all tabs now that user is logged in
       unlockAllTabs();
@@ -1644,7 +1645,9 @@
         contactDetails.givenName = givenName;
         contactDetails.surname = familyName;
         contactDetails.email = email;
-        console.log('📋 Stored contact details:', contactDetails);
+        // Mobile not available from manual form, will be entered by user
+        contactDetails.mobile = '';
+        console.log('📋 Stored contact details from manual form:', contactDetails);
         
         // Unlock all tabs now that user is logged in
         unlockAllTabs();
@@ -1893,14 +1896,22 @@
         }
       } else {
         console.log(`ℹ️ No saved data found for step "${stepId}"`);
-        
-        // Pre-fill contact details for contact or personal details steps
-        const isContactStep = stepId.toLowerCase().includes('contact') || 
-                             stepId.toLowerCase().includes('personal');
-        if (isContactStep && (contactDetails.givenName || contactDetails.email)) {
-          console.log(`👤 Pre-filling contact details for step "${stepId}"`);
-          setTimeout(() => prefillContactDetails(stepId), 200);
-        }
+      }
+      
+      // Always try to pre-fill contact details for contact or personal steps
+      // This ensures email/mobile are filled even if there's partial saved data
+      const isContactStep = stepId.toLowerCase().includes('contact') || 
+                           stepId.toLowerCase().includes('personal');
+      
+      console.log(`🔍 Checking pre-fill for step "${stepId}":`, {
+        isContactStep,
+        hasContactDetails: !!(contactDetails.givenName || contactDetails.email || contactDetails.mobile),
+        contactDetails
+      });
+      
+      if (isContactStep && (contactDetails.givenName || contactDetails.email || contactDetails.mobile)) {
+        console.log(`👤 Pre-filling contact details for step "${stepId}"`);
+        setTimeout(() => prefillContactDetails(stepId), 300);
       }
     }, 100);
     
@@ -2287,9 +2298,11 @@
         markStepCompleted('login');
         
         // Fetch contact details if we don't have them
-        if (!contactDetails.givenName && !contactDetails.email) {
+        if (!contactDetails.givenName && !contactDetails.email && !contactDetails.mobile) {
           console.log('📋 Fetching contact details for pre-fill...');
           await fetchContactDetailsForPrefill(contactId);
+        } else {
+          console.log('📋 Contact details already in memory:', contactDetails);
         }
         
         // Auto-mark completed steps based on saved data
