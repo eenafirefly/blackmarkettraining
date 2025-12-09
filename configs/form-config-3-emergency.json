@@ -16,8 +16,7 @@
       "type": "text",
       "required": false,
       "dataField": true,
-      "syncToCustomField": false,
-      "mapsToContactField": "EMERGENCYCONTACTNAME",
+      "syncToCustomField": true,
       "placeholder": "Emergency contact full name"
     },
     {
@@ -27,8 +26,7 @@
       "type": "text",
       "required": false,
       "dataField": true,
-      "syncToCustomField": false,
-      "mapsToContactField": "EMERGENCYRELATIONSHIP",
+      "syncToCustomField": true,
       "placeholder": "e.g., Mother, Father, Spouse, Friend"
     },
     {
@@ -38,8 +36,7 @@
       "type": "tel",
       "required": false,
       "dataField": true,
-      "syncToCustomField": false,
-      "mapsToContactField": "EMERGENCYCONTACTNUMBER",
+      "syncToCustomField": true,
       "placeholder": "Emergency contact phone number",
       "validation": {
         "pattern": "^[0-9\\s\\+\\-\\(\\)]+$",

@@ -580,8 +580,7 @@ router.post('/save-step', async (req, res) => {
       'schoollevel', 'highestschoollevel', 'highestcompletedschoollevel', 'yearhighestschoolcompleted',
       'prioreducationstatus', 'prioreducation',
       'disabilities', 'disabilitytypes', 'disabilityflag',
-      'surveycontactstatus',
-      'emergencycontactname', 'emergencyrelationship', 'emergencycontactnumber'
+      'surveycontactstatus'
     ];
     
     // Separate fields into personal details and custom fields
@@ -666,11 +665,6 @@ router.post('/save-step', async (req, res) => {
         // VET Related Details - Survey
         if (keyLower === 'surveycontactstatus') axFieldName = 'SURVEYCONTACTSTATUS';
         
-        // Emergency Contact
-        if (keyLower === 'emergencycontactname') axFieldName = 'EMERGENCYCONTACTNAME';
-        if (keyLower === 'emergencyrelationship') axFieldName = 'EMERGENCYRELATIONSHIP';
-        if (keyLower === 'emergencycontactnumber') axFieldName = 'EMERGENCYCONTACTNUMBER';
-        
         // Personal detail - send with mapped field name
         updatePayload[axFieldName] = value;
         console.log(`   📝 Personal field: ${key} → ${axFieldName} = "${value}"`);
@@ -754,8 +748,14 @@ router.post('/save-step', async (req, res) => {
     let lastEmailTime = null;
     
     if (notesResponse.ok) {
-      const notes = await notesResponse.json();
-      console.log('📋 Raw notes response:', JSON.stringify(notes).substring(0, 500));
+      let notesData = await notesResponse.json();
+      console.log('📋 Raw notes response type:', typeof notesData);
+      console.log('📋 Raw notes response:', JSON.stringify(notesData).substring(0, 500));
+      console.log('📋 Is array?', Array.isArray(notesData));
+      
+      // Check if notes are nested in a data property
+      const notes = Array.isArray(notesData) ? notesData : (notesData.data || notesData.notes || notesData);
+      console.log('📋 Processed notes:', Array.isArray(notes) ? `Array with ${notes.length} items` : typeof notes);
       
       const now = new Date();
       const twoHoursInMs = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
