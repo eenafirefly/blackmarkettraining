@@ -1600,6 +1600,8 @@
     console.log('   Number of fields:', Object.keys(stepData).length);
     console.log('   Fields:', Object.keys(stepData).join(', '));
     console.log('   Values:', stepData);
+    console.log('💾 Stored in formData object. Total steps in formData:', Object.keys(formData));
+    console.log('💾 Full formData object:', formData);
     
     // Save to aXcelerate (update contact with custom fields)
     if (Object.keys(stepData).length > 0) {
@@ -1923,6 +1925,11 @@
   
   function saveProgress() {
     if (contactId && currentStep !== 'login') {
+      console.log('💾 saveProgress() called');
+      console.log('   Current Step:', currentStep);
+      console.log('   formData object keys:', Object.keys(formData));
+      console.log('   formData values:', formData);
+      
       const progress = {
         contactId,
         authToken,
@@ -1934,16 +1941,26 @@
         timestamp: Date.now()
       };
       localStorage.setItem('ax_enrollment_progress', JSON.stringify(progress));
-      console.log('📌 Progress saved');
+      console.log('📌 Progress saved to localStorage');
+      console.log('   Saved formData keys:', Object.keys(progress.formData));
+    } else {
+      console.log('⚠️ saveProgress() skipped - contactId:', contactId, 'currentStep:', currentStep);
     }
   }
   
   function restoreProgress() {
     try {
+      console.log('🔄 restoreProgress() called');
       const saved = localStorage.getItem('ax_enrollment_progress');
-      if (!saved) return false;
+      if (!saved) {
+        console.log('   No saved progress in localStorage');
+        return false;
+      }
       
+      console.log('   Found saved progress in localStorage');
       const progress = JSON.parse(saved);
+      console.log('   Raw progress object:', progress);
+      console.log('   Progress formData keys:', Object.keys(progress.formData || {}));
       
       // Check if recent (within 7 days)
       const daysSince = (Date.now() - progress.timestamp) / (1000 * 60 * 60 * 24);
