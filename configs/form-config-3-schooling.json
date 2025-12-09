@@ -12,13 +12,13 @@
   "fields": [
     {
       "order": 1,
-      "fieldId": "highestSchoolLevel",
+      "fieldId": "highestschoollevel",
       "name": "What is your highest completed school level?",
       "type": "select",
       "required": true,
       "dataField": true,
       "syncToCustomField": false,
-      "mapsToContactField": "SCHOOLLEVEL",
+      "mapsToContactField": "HIGHESTSCHOOLLEVEL",
       "tooltip": "If you are currently enrolled in secondary education, the Highest school level completed refers to the highest school level you have actually completed and not the level you are currently undertaking. For example, if you are currently in Year 10 the Highest school level completed is Year 9.",
       "options": [
         { "display": "Did not attend school", "value": "2" },
@@ -38,7 +38,7 @@
     },
     {
       "order": 2,
-      "fieldId": "yearHighestSchoolCompleted",
+      "fieldId": "yearhighestschoolcompleted",
       "name": "Year Highest School Completed",
       "type": "text",
       "required": false,
@@ -50,7 +50,7 @@
     },
     {
       "order": 3,
-      "fieldId": "stillEnrolledSecondary",
+      "fieldId": "stillenrolledsecondary",
       "name": "Are you still enrolled in secondary or senior secondary education?",
       "type": "select",
       "required": false,
@@ -80,7 +80,7 @@
     },
     {
       "order": 5,
-      "fieldId": "priorEducationStatus",
+      "fieldId": "prioreducationstatus",
       "name": "Have you successfully completed any post-secondary education?",
       "type": "select",
       "required": true,
@@ -106,7 +106,7 @@
     },
     {
       "order": 6,
-      "fieldId": "priorEducation",
+      "fieldId": "prioreducation",
       "name": "Prior Education",
       "type": "checkbox",
       "required": true,

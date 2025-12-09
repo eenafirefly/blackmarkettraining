@@ -12,7 +12,7 @@
   "fields": [
     {
       "order": 1,
-      "fieldId": "countryOfBirth",
+      "fieldId": "countryofbirth",
       "name": "Country of Birth",
       "type": "select",
       "required": false,
@@ -88,16 +88,17 @@
     },
     {
       "order": 2,
-      "fieldId": "cityOfBirth",
+      "fieldId": "birthplace",
       "name": "City of Birth",
       "type": "text",
       "required": true,
       "dataField": true,
-      "syncToCustomField": true
+      "syncToCustomField": false,
+      "mapsToContactField": "BIRTHPLACE"
     },
     {
       "order": 3,
-      "fieldId": "citizenshipStatus",
+      "fieldId": "citizenshipstatus",
       "name": "Citizenship Status",
       "type": "select",
       "required": true,
@@ -127,7 +128,7 @@
     },
     {
       "order": 5,
-      "fieldId": "speakOtherLanguage",
+      "fieldId": "speakotherlanguage",
       "name": "Do you speak a language other than english at home?",
       "type": "select",
       "required": true,
@@ -152,7 +153,7 @@
     },
     {
       "order": 6,
-      "fieldId": "languageSpokenMostOften",
+      "fieldId": "languagespoken",
       "name": "Language spoken most often",
       "type": "select",
       "required": false,
@@ -195,7 +196,7 @@
     },
     {
       "order": 7,
-      "fieldId": "englishProficiency",
+      "fieldId": "englishproficiency",
       "name": "English Proficiency",
       "type": "select",
       "required": false,

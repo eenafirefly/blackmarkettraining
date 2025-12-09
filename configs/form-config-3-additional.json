@@ -10,7 +10,7 @@
   "fields": [
     {
       "order": 1,
-      "fieldId": "hasDisability",
+      "fieldId": "hasdisability",
       "name": "Do you consider yourself to have a disability, impairment or long-term condition?",
       "type": "select",
       "required": true,
@@ -35,7 +35,7 @@
     },
     {
       "order": 2,
-      "fieldId": "disabilityTypes",
+      "fieldId": "disabilitytypes",
       "name": "If you indicated the presence of a disability, impairment or long-term condition, please select the area(s) in the following list",
       "type": "checkbox",
       "required": false,
@@ -64,7 +64,7 @@
     },
     {
       "order": 4,
-      "fieldId": "indigenousStatus",
+      "fieldId": "indigenousstatus",
       "name": "Indigenous Status",
       "type": "select",
       "required": false,
@@ -80,7 +80,7 @@
     },
     {
       "order": 5,
-      "fieldId": "employmentStatus",
+      "fieldId": "employmentstatus",
       "name": "Of the following categories, which best describes your current employment status?",
       "type": "select",
       "required": true,
