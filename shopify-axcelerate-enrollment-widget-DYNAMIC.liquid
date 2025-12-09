@@ -1782,7 +1782,8 @@
         console.log(`ℹ️ No saved data found for step "${stepId}"`);
         
         // Pre-fill contact details for contact or personal details steps
-        const isContactStep = stepId.includes('contact') || stepId.includes('personal');
+        const isContactStep = stepId.toLowerCase().includes('contact') || 
+                             stepId.toLowerCase().includes('personal');
         if (isContactStep && (contactDetails.givenName || contactDetails.email)) {
           console.log(`👤 Pre-filling contact details for step "${stepId}"`);
           setTimeout(() => prefillContactDetails(stepId), 200);
@@ -2007,48 +2008,69 @@
     console.log(`👤 Pre-filling contact details for "${stepId}":`, contactDetails);
     
     // Common field name variations for givenName, surname, and email
-    const givenNameFields = ['givenname', 'givenName', 'firstName', 'firstname', 'fname'];
-    const surnameFields = ['surname', 'lastName', 'lastname', 'lname', 'familyname', 'familyName'];
-    const emailFields = ['email', 'emailaddress', 'emailAddress', 'email1'];
+    const givenNameFields = ['givenname', 'givenName', 'firstName', 'firstname', 'fname', 'given_name'];
+    const surnameFields = ['surname', 'lastName', 'lastname', 'lname', 'familyname', 'familyName', 'last_name'];
+    const emailFields = ['email', 'emailaddress', 'emailAddress', 'email1', 'email_address', 'contactemail'];
+    
+    let filledCount = 0;
     
     // Try to find and populate given name field
     if (contactDetails.givenName) {
-      givenNameFields.some(fieldId => {
+      const filled = givenNameFields.some(fieldId => {
         const input = document.getElementById(`ax-${fieldId}-${widgetId}`);
         if (input && !input.value) {
           input.value = contactDetails.givenName;
-          console.log(`   ✅ Pre-filled givenName: ${fieldId}`);
+          console.log(`   ✅ Pre-filled givenName: ${fieldId} = "${contactDetails.givenName}"`);
+          filledCount++;
           return true;
         }
         return false;
       });
+      if (!filled) {
+        console.log(`   ⚠️ Could not find givenName field. Tried:`, givenNameFields.map(f => `ax-${f}-${widgetId}`));
+      }
     }
     
     // Try to find and populate surname field
     if (contactDetails.surname) {
-      surnameFields.some(fieldId => {
+      const filled = surnameFields.some(fieldId => {
         const input = document.getElementById(`ax-${fieldId}-${widgetId}`);
         if (input && !input.value) {
           input.value = contactDetails.surname;
-          console.log(`   ✅ Pre-filled surname: ${fieldId}`);
+          console.log(`   ✅ Pre-filled surname: ${fieldId} = "${contactDetails.surname}"`);
+          filledCount++;
           return true;
         }
         return false;
       });
+      if (!filled) {
+        console.log(`   ⚠️ Could not find surname field. Tried:`, surnameFields.map(f => `ax-${f}-${widgetId}`));
+      }
     }
     
     // Try to find and populate email field
     if (contactDetails.email) {
-      emailFields.some(fieldId => {
+      const filled = emailFields.some(fieldId => {
         const input = document.getElementById(`ax-${fieldId}-${widgetId}`);
         if (input && !input.value) {
           input.value = contactDetails.email;
-          console.log(`   ✅ Pre-filled email: ${fieldId}`);
+          console.log(`   ✅ Pre-filled email: ${fieldId} = "${contactDetails.email}"`);
+          filledCount++;
           return true;
         }
         return false;
       });
+      if (!filled) {
+        console.log(`   ⚠️ Could not find email field. Tried:`, emailFields.map(f => `ax-${f}-${widgetId}`));
+        // List all input fields in the step for debugging
+        const allInputs = widget.querySelectorAll(`#ax-step-${stepId}-${widgetId} input, #ax-step-${stepId}-${widgetId} select`);
+        if (allInputs.length > 0) {
+          console.log(`   📋 Available inputs in step:`, Array.from(allInputs).map(i => i.id || i.name));
+        }
+      }
     }
+    
+    console.log(`✅ Pre-filled ${filledCount} fields for step "${stepId}"`);
   }
   
   // =========================================================================

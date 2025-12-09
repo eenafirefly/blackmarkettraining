@@ -523,14 +523,30 @@ router.post('/save-step', async (req, res) => {
     // Prevents "Booking Confirmation" email from being sent
     console.log('💾 Saving step progress (no enrollment created yet to avoid Booking Confirmation)');
     
-    // Update contact with custom fields from this step
+    // Update contact with step data
     const updatePayload = {};
     
-    // Add step data to payload with CUSTOMFIELD_ prefix
-    // aXcelerate expects: CUSTOMFIELD_FIELDNAME (uppercase)
+    // Personal detail fields that update the contact record directly (not custom fields)
+    const personalDetailFields = [
+      'title', 'givenname', 'surname', 'preferredname', 'middlename',
+      'dateofbirth', 'gender', 'email', 'emailaddress', 'phone', 'mobilephone',
+      'address', 'suburb', 'postcode', 'state', 'country'
+    ];
+    
+    // Separate fields into personal details and custom fields
     Object.entries(stepData).forEach(([key, value]) => {
-      const axcelerateFieldName = `CUSTOMFIELD_${key.toUpperCase()}`;
-      updatePayload[axcelerateFieldName] = value;
+      const keyLower = key.toLowerCase();
+      
+      if (personalDetailFields.includes(keyLower)) {
+        // Personal detail - send with uppercase field name (GIVENNAME, SURNAME, etc.)
+        updatePayload[key.toUpperCase()] = value;
+        console.log(`   📝 Personal field: ${key} → ${key.toUpperCase()}`);
+      } else {
+        // Custom field - send with CUSTOMFIELD_ prefix
+        const axcelerateFieldName = `CUSTOMFIELD_${key.toUpperCase()}`;
+        updatePayload[axcelerateFieldName] = value;
+        console.log(`   📝 Custom field: ${key} → ${axcelerateFieldName}`);
+      }
     });
     
     if (Object.keys(updatePayload).length > 0) {
