@@ -533,9 +533,11 @@ router.post('/save-step', async (req, res) => {
       'email', 'emailaddress', 'phone', 'mobilephone', 'mobile',
       'address', 'streetaddress', 'suburb', 'city', 'postcode', 'state', 'country',
       'usi', 'uniquestudentidentifier', 'studentidentifier',
-      'countryofbirth', 'cityofbirth', 'citizenshipstatus', 
+      'countryofbirth', 'birthplace', 'cityofbirth', 'citizenshipstatus', 
       'languagespoken', 'englishproficiency', 'indigenousstatus', 'employmentstatus',
-      'schoollevel', 'prioreducationstatus', 'prioreducation'
+      'schoollevel', 'highestschoollevel', 'prioreducationstatus', 'prioreducation',
+      'disabilitytypes',
+      'emergencycontactname', 'emergencyrelationship', 'emergencycontactnumber'
     ];
     
     // Separate fields into personal details and custom fields
@@ -558,15 +560,19 @@ router.post('/save-step', async (req, res) => {
         if (keyLower === 'middlename') axFieldName = 'MIDDLENAME';
         if (keyLower === 'gender' || keyLower === 'sex') axFieldName = 'SEX';
         if (keyLower === 'countryofbirth') axFieldName = 'COUNTRYOFBIRTH';
-        if (keyLower === 'cityofbirth') axFieldName = 'BIRTHPLACE';
+        if (keyLower === 'birthplace') axFieldName = 'BIRTHPLACE';
         if (keyLower === 'citizenshipstatus') axFieldName = 'CITIZENSHIPSTATUS';
         if (keyLower === 'languagespoken') axFieldName = 'LANGUAGESPOKEN';
         if (keyLower === 'englishproficiency') axFieldName = 'ENGLISHPROFICIENCY';
         if (keyLower === 'indigenousstatus') axFieldName = 'INDIGENOUSSTATUS';
         if (keyLower === 'employmentstatus') axFieldName = 'EMPLOYMENTSTATUS';
-        if (keyLower === 'schoollevel') axFieldName = 'HIGHESTSCHOOLLEVEL';
+        if (keyLower === 'highestschoollevel' || keyLower === 'schoollevel') axFieldName = 'HIGHESTSCHOOLLEVEL';
         if (keyLower === 'prioreducationstatus') axFieldName = 'PRIOREDUCATIONSTATUS';
         if (keyLower === 'prioreducation') axFieldName = 'PRIOREDUCATION';
+        if (keyLower === 'disabilitytypes') axFieldName = 'DISABILITYTYPES';
+        if (keyLower === 'emergencycontactname') axFieldName = 'EMERGENCYCONTACTNAME';
+        if (keyLower === 'emergencyrelationship') axFieldName = 'EMERGENCYRELATIONSHIP';
+        if (keyLower === 'emergencycontactnumber') axFieldName = 'EMERGENCYCONTACTNUMBER';
         
         // Personal detail - send with mapped field name
         updatePayload[axFieldName] = value;

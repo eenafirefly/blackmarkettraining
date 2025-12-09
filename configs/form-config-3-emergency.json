@@ -11,32 +11,35 @@
   "fields": [
     {
       "order": 1,
-      "fieldId": "emergencyContactName",
+      "fieldId": "emergencycontactname",
       "name": "Contact Name",
       "type": "text",
       "required": false,
       "dataField": true,
-      "syncToCustomField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "EMERGENCYCONTACTNAME",
       "placeholder": "Emergency contact full name"
     },
     {
       "order": 2,
-      "fieldId": "emergencyRelationship",
+      "fieldId": "emergencyrelationship",
       "name": "Relationship",
       "type": "text",
       "required": false,
       "dataField": true,
-      "syncToCustomField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "EMERGENCYRELATIONSHIP",
       "placeholder": "e.g., Mother, Father, Spouse, Friend"
     },
     {
       "order": 3,
-      "fieldId": "emergencyContactNumber",
+      "fieldId": "emergencycontactnumber",
       "name": "Contact Number",
       "type": "tel",
       "required": false,
       "dataField": true,
-      "syncToCustomField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "EMERGENCYCONTACTNUMBER",
       "placeholder": "Emergency contact phone number",
       "validation": {
         "pattern": "^[0-9\\s\\+\\-\\(\\)]+$",
