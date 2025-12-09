@@ -589,6 +589,36 @@ router.post('/save-step', async (req, res) => {
       console.log('⚠️ No step data to save');
     }
     
+    // Check if we've already sent an incomplete email today
+    // Fetch contact notes to see if incomplete note exists
+    const notesResponse = await fetch(
+      `${process.env.AXCELERATE_API_URL}/contact/${contactId}/notes`,
+      {
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN
+        }
+      }
+    );
+    
+    let shouldSendEmail = true;
+    if (notesResponse.ok) {
+      const notes = await notesResponse.json();
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Check if there's already an incomplete enrollment note from today
+      const hasIncompleteNoteToday = notes.some(note => {
+        const noteDate = note.DATE ? note.DATE.split(' ')[0] : '';
+        const isIncompleteNote = note.NOTE && note.NOTE.includes('Incomplete enrollment');
+        return isIncompleteNote && noteDate === today;
+      });
+      
+      if (hasIncompleteNoteToday) {
+        console.log('ℹ️ Incomplete email already sent today - skipping');
+        shouldSendEmail = false;
+      }
+    }
+    
     // Send incomplete enrollment email immediately via SendGrid (Template 111502 equivalent)
     // Build resume URL
     const resumeUrl = req.body.resumeUrl || req.headers.referer || `${req.protocol}://${req.get('host')}`;
@@ -611,7 +641,7 @@ router.post('/save-step', async (req, res) => {
       contactName = `${contact.GIVENNAME || ''} ${contact.SURNAME || ''}`.trim();
     }
     
-    if (process.env.SENDGRID_API_KEY && contactEmail) {
+    if (process.env.SENDGRID_API_KEY && contactEmail && shouldSendEmail) {
       try {
         console.log('📧 Sending incomplete enrollment email via SendGrid to:', contactEmail);
         
@@ -659,55 +689,8 @@ router.post('/save-step', async (req, res) => {
     } else if (!process.env.SENDGRID_API_KEY) {
       console.warn('⚠️  SENDGRID_API_KEY not configured - email will not be sent');
       console.log('💡 Add SENDGRID_API_KEY to Render environment variables');
-    }
-    
-    // Send incomplete enrollment email via SendGrid (Template 111502 equivalent)
-    if (process.env.SENDGRID_API_KEY && contactEmail) {
-      try {
-        console.log('📧 Sending incomplete enrollment email via SendGrid to:', contactEmail);
-        
-        const emailHtml = `
-          <p>Hi ${contactName},</p>
-          <p>Your enrollment for <strong>${courseName || 'the course'}</strong> is incomplete.</p>
-          <p>You can continue your enrollment by clicking <a href="${resumeUrl}" style="background: #2196F3; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">here</a>.</p>
-          <p>Or copy this link: ${resumeUrl}</p>
-          <br>
-          <p>Best regards,<br>Black Market Training</p>
-        `;
-        
-        const sendGridResponse = await fetch('https://api.sendgrid.com/v3/mail/send', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            personalizations: [{
-              to: [{ email: contactEmail, name: contactName }],
-              subject: 'Incomplete Online Booking - Black Market Training'
-            }],
-            from: {
-              email: process.env.EMAIL_FROM || 'info@blackmarkettraining.com',
-              name: 'Black Market Training'
-            },
-            content: [{
-              type: 'text/html',
-              value: emailHtml
-            }]
-          })
-        });
-        
-        if (sendGridResponse.ok || sendGridResponse.status === 202) {
-          console.log('✅ Incomplete enrollment email sent via SendGrid (Template 111502 equivalent)');
-        } else {
-          const errorText = await sendGridResponse.text();
-          console.warn('⚠️ SendGrid error:', sendGridResponse.status, errorText);
-        }
-      } catch (emailError) {
-        console.error('❌ Failed to send email via SendGrid:', emailError);
-      }
-    } else if (!process.env.SENDGRID_API_KEY) {
-      console.warn('⚠️  SENDGRID_API_KEY not configured - email will not be sent');
+    } else if (!shouldSendEmail) {
+      console.log('ℹ️ Email already sent today - skipping duplicate');
     }
     
     res.json({
