@@ -635,7 +635,7 @@ router.post('/save-step', async (req, res) => {
       console.log('⚠️ No step data to save');
     }
     
-    // Check if we've already sent an incomplete email today
+    // Check if we've already sent an incomplete email within the last 2 hours
     // Fetch contact notes to see if incomplete note exists
     const notesResponse = await fetch(
       `${process.env.AXCELERATE_API_URL}/contact/${contactId}/notes`,
@@ -648,37 +648,48 @@ router.post('/save-step', async (req, res) => {
     );
     
     let shouldSendEmail = true;
+    let lastEmailTime = null;
+    
     if (notesResponse.ok) {
       const notes = await notesResponse.json();
-      const today = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const twoHoursInMs = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
       
-      // Check if there's already an incomplete enrollment note from today
+      // Check if there's an incomplete enrollment note within the last 2 hours
       // Ensure notes is an array before calling .some()
       if (Array.isArray(notes) && notes.length > 0) {
-        console.log(`📋 Checking ${notes.length} notes for incomplete email sent today...`);
-        const hasIncompleteNoteToday = notes.some(note => {
-          const noteDate = note.DATE ? note.DATE.split(' ')[0] : '';
+        console.log(`📋 Checking ${notes.length} notes for incomplete email sent within last 2 hours...`);
+        
+        // Find the most recent incomplete email note
+        notes.forEach(note => {
           const isIncompleteNote = note.NOTE && (
             note.NOTE.includes('Incomplete enrollment') || 
             note.NOTE.includes('Email sent to student to resume')
           );
-          const isToday = noteDate === today;
           
-          if (isIncompleteNote && isToday) {
-            console.log('   ✋ Found incomplete email note from today:', note.NOTE.substring(0, 50) + '...');
+          if (isIncompleteNote && note.DATE) {
+            const noteDate = new Date(note.DATE);
+            const timeDiff = now - noteDate;
+            const hoursDiff = timeDiff / (60 * 60 * 1000);
+            
+            console.log(`   📝 Found incomplete note from ${note.DATE} (${hoursDiff.toFixed(1)} hours ago)`);
+            
+            if (timeDiff < twoHoursInMs) {
+              console.log(`   ✋ Email was sent ${hoursDiff.toFixed(1)} hours ago - within 2 hour threshold`);
+              shouldSendEmail = false;
+              lastEmailTime = noteDate;
+            }
           }
-          
-          return isIncompleteNote && isToday;
         });
         
-        if (hasIncompleteNoteToday) {
-          console.log('ℹ️ Incomplete email already sent today - skipping');
-          shouldSendEmail = false;
+        if (!shouldSendEmail && lastEmailTime) {
+          const hoursAgo = ((now - lastEmailTime) / (60 * 60 * 1000)).toFixed(1);
+          console.log(`⏸️ Incomplete email already sent ${hoursAgo} hours ago - skipping to prevent duplicates`);
         } else {
-          console.log('✅ No incomplete email sent today - will send now');
+          console.log('✅ No incomplete email sent within last 2 hours - will send now');
         }
       } else {
-        console.log('📋 No notes found or notes is not an array');
+        console.log('📋 No notes found or notes is not an array - will send email');
       }
     }
     
