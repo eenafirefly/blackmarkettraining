@@ -2,8 +2,44 @@
 // Enhanced enrollment API with multi-step forms and custom fields
 
 import express from 'express';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 
 const router = express.Router();
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(process.cwd(), 'uploads', req.body.contactId || 'temp');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB max file size
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|pdf/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only .jpg, .jpeg, .png and .pdf files are allowed!'));
+    }
+  }
+});
 
 /**
  * Create enrollment with custom fields
@@ -1006,6 +1042,142 @@ Note: Enrollment will be created when user returns and completes the form.`;
     
   } catch (error) {
     console.error('Error sending verification email:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+/**
+ * Upload documents
+ * POST /api/enrollment/upload-documents
+ * 
+ * Handles file uploads for enrollment documents (Photo ID, Proof of Residency, etc.)
+ */
+router.post('/upload-documents', upload.array('files', 10), async (req, res) => {
+  try {
+    const { contactId, fieldId, stepId } = req.body;
+    
+    if (!contactId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Contact ID is required'
+      });
+    }
+    
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No files uploaded'
+      });
+    }
+    
+    console.log(`📤 Uploading ${req.files.length} files for contact ${contactId}, field ${fieldId}`);
+    
+    const uploadedFiles = req.files.map(file => ({
+      id: file.filename,
+      name: file.originalname,
+      fileName: file.originalname,
+      path: file.path,
+      size: file.size,
+      uploadedAt: new Date().toISOString()
+    }));
+    
+    // TODO: Upload files to aXcelerate portfolio/checklist system
+    // For now, store file metadata in a custom field or note
+    
+    // Create a note about uploaded documents
+    const fileNames = uploadedFiles.map(f => f.name).join(', ');
+    const noteText = `Document Upload - ${fieldId}
+
+Files: ${fileNames}
+Upload Date: ${new Date().toLocaleString()}
+Field: ${fieldId}
+Step: ${stepId}
+
+Files stored locally and will be submitted with final enrollment.`;
+    
+    await fetch(
+      `${process.env.AXCELERATE_API_URL}/contact/${contactId}/note`,
+      {
+        method: 'POST',
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `note=${encodeURIComponent(noteText)}&type=General`
+      }
+    );
+    
+    console.log(`✅ ${uploadedFiles.length} files uploaded successfully`);
+    
+    res.json({
+      success: true,
+      message: 'Files uploaded successfully',
+      files: uploadedFiles
+    });
+    
+  } catch (error) {
+    console.error('❌ File upload error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+/**
+ * Delete document
+ * DELETE /api/enrollment/delete-document
+ * 
+ * Deletes a previously uploaded document
+ */
+router.delete('/delete-document', async (req, res) => {
+  try {
+    const { contactId, fieldId, fileId } = req.body;
+    
+    if (!contactId || !fileId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Contact ID and file ID are required'
+      });
+    }
+    
+    console.log(`🗑 Deleting file ${fileId} for contact ${contactId}`);
+    
+    // Delete physical file
+    const filePath = path.join(process.cwd(), 'uploads', contactId, fileId);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log(`✅ File deleted: ${filePath}`);
+    }
+    
+    // TODO: Remove from aXcelerate portfolio if already uploaded there
+    
+    // Get remaining files
+    const uploadDir = path.join(process.cwd(), 'uploads', contactId);
+    let remainingFiles = [];
+    
+    if (fs.existsSync(uploadDir)) {
+      const files = fs.readdirSync(uploadDir);
+      remainingFiles = files.map(file => ({
+        id: file,
+        name: file,
+        fileName: file,
+        path: path.join(uploadDir, file)
+      }));
+    }
+    
+    res.json({
+      success: true,
+      message: 'File deleted successfully',
+      files: remainingFiles
+    });
+    
+  } catch (error) {
+    console.error('❌ File delete error:', error);
     res.status(500).json({
       success: false,
       message: error.message
