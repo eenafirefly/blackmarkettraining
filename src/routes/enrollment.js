@@ -755,6 +755,8 @@ router.post('/save-step', async (req, res) => {
     
     if (notesResponse.ok) {
       const notes = await notesResponse.json();
+      console.log('📋 Raw notes response:', JSON.stringify(notes).substring(0, 500));
+      
       const now = new Date();
       const twoHoursInMs = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
       
@@ -762,20 +764,27 @@ router.post('/save-step', async (req, res) => {
       // Ensure notes is an array before calling .some()
       if (Array.isArray(notes) && notes.length > 0) {
         console.log(`📋 Checking ${notes.length} notes for incomplete email sent within last 2 hours...`);
+        console.log(`   Current time: ${now.toISOString()}`);
         
         // Find the most recent incomplete email note
-        notes.forEach(note => {
+        notes.forEach((note, index) => {
           const isIncompleteNote = note.NOTE && (
             note.NOTE.includes('Incomplete enrollment') || 
             note.NOTE.includes('Email sent to student to resume')
           );
+          
+          console.log(`   Note ${index}: isIncompleteNote=${isIncompleteNote}, DATE=${note.DATE}, NOTE preview=${note.NOTE ? note.NOTE.substring(0, 50) : 'null'}`);
           
           if (isIncompleteNote && note.DATE) {
             const noteDate = new Date(note.DATE);
             const timeDiff = now - noteDate;
             const hoursDiff = timeDiff / (60 * 60 * 1000);
             
-            console.log(`   📝 Found incomplete note from ${note.DATE} (${hoursDiff.toFixed(1)} hours ago)`);
+            console.log(`   📝 Found incomplete note from ${note.DATE}`);
+            console.log(`      Parsed date: ${noteDate.toISOString()}`);
+            console.log(`      Time diff: ${timeDiff}ms (${hoursDiff.toFixed(1)} hours ago)`);
+            console.log(`      2hr threshold: ${twoHoursInMs}ms`);
+            console.log(`      Within 2hrs? ${timeDiff < twoHoursInMs}`);
             
             if (timeDiff < twoHoursInMs) {
               console.log(`   ✋ Email was sent ${hoursDiff.toFixed(1)} hours ago - within 2 hour threshold`);
@@ -794,6 +803,8 @@ router.post('/save-step', async (req, res) => {
       } else {
         console.log('📋 No notes found or notes is not an array - will send email');
       }
+    } else {
+      console.log('❌ Failed to fetch notes:', notesResponse.status);
     }
     
     // Send incomplete enrollment email immediately via SendGrid (Template 111502 equivalent)
@@ -867,7 +878,8 @@ Date: ${new Date().toLocaleString()}
 Email sent to student to resume enrollment.`;
           
           try {
-            await fetch(
+            console.log('📝 Creating note in aXcelerate to track email sent...');
+            const noteResponse = await fetch(
               `${process.env.AXCELERATE_API_URL}/contact/${contactId}/note`,
               {
                 method: 'POST',
@@ -879,9 +891,16 @@ Email sent to student to resume enrollment.`;
                 body: `note=${encodeURIComponent(noteText)}&type=General`
               }
             );
-            console.log('📝 Created note in aXcelerate to track email sent');
+            
+            if (noteResponse.ok) {
+              const noteResult = await noteResponse.json();
+              console.log('✅ Note created successfully in aXcelerate:', noteResult);
+            } else {
+              const noteError = await noteResponse.text();
+              console.error(`❌ Failed to create note (${noteResponse.status}):`, noteError);
+            }
           } catch (noteError) {
-            console.error('Failed to create note:', noteError);
+            console.error('❌ Exception while creating note:', noteError);
           }
         } else {
           const errorText = await sendGridResponse.text();
