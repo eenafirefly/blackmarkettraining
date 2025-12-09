@@ -2142,6 +2142,10 @@
       
       const contact = await response.json();
       console.log('📋 Raw contact data from aXcelerate:', contact);
+      console.log('   EMAILADDRESS:', contact.EMAILADDRESS);
+      console.log('   EMAIL:', contact.EMAIL);
+      console.log('   MOBILE:', contact.MOBILE);
+      console.log('   MOBILEPHONE:', contact.MOBILEPHONE);
       
       // Extract contact details (handle different casings)
       contactDetails.givenName = contact.GIVENNAME || contact.givenname || contact.givenName || '';
@@ -2150,6 +2154,10 @@
       contactDetails.mobile = contact.MOBILE || contact.MOBILEPHONE || contact.mobile || contact.mobilePhone || '';
       
       console.log('✅ Stored contact details:', contactDetails);
+      console.log('   givenName:', contactDetails.givenName);
+      console.log('   surname:', contactDetails.surname);
+      console.log('   email:', contactDetails.email);
+      console.log('   mobile:', contactDetails.mobile);
       
       // Save to localStorage for persistence
       const progress = localStorage.getItem('ax_enrollment_progress');
@@ -2212,8 +2220,11 @@
     
     // Try to find and populate email field
     if (contactDetails.email) {
+      console.log(`   🔍 Trying to pre-fill email: "${contactDetails.email}"`);
       const filled = emailFields.some(fieldId => {
-        const input = document.getElementById(`ax-${fieldId}-${widgetId}`);
+        const elementId = `ax-${fieldId}-${widgetId}`;
+        const input = document.getElementById(elementId);
+        console.log(`      Checking ${elementId}:`, input ? `Found (value="${input.value}")` : 'Not found');
         if (input && !input.value) {
           input.value = contactDetails.email;
           console.log(`   ✅ Pre-filled email: ${fieldId} = "${contactDetails.email}"`);
@@ -2223,14 +2234,19 @@
         return false;
       });
       if (!filled) {
-        console.log(`   ⚠️ Could not find email field. Tried:`, emailFields.map(f => `ax-${f}-${widgetId}`));
+        console.log(`   ⚠️ Could not find empty email field. Tried:`, emailFields.map(f => `ax-${f}-${widgetId}`));
       }
+    } else {
+      console.log(`   ⚠️ No email in contactDetails to pre-fill`);
     }
     
     // Try to find and populate mobile field
     if (contactDetails.mobile) {
+      console.log(`   🔍 Trying to pre-fill mobile: "${contactDetails.mobile}"`);
       const filled = mobileFields.some(fieldId => {
-        const input = document.getElementById(`ax-${fieldId}-${widgetId}`);
+        const elementId = `ax-${fieldId}-${widgetId}`;
+        const input = document.getElementById(elementId);
+        console.log(`      Checking ${elementId}:`, input ? `Found (value="${input.value}")` : 'Not found');
         if (input && !input.value) {
           input.value = contactDetails.mobile;
           console.log(`   ✅ Pre-filled mobile: ${fieldId} = "${contactDetails.mobile}"`);
@@ -2240,8 +2256,10 @@
         return false;
       });
       if (!filled) {
-        console.log(`   ⚠️ Could not find mobile field. Tried:`, mobileFields.map(f => `ax-${f}-${widgetId}`));
+        console.log(`   ⚠️ Could not find empty mobile field. Tried:`, mobileFields.map(f => `ax-${f}-${widgetId}`));
       }
+    } else {
+      console.log(`   ⚠️ No mobile in contactDetails to pre-fill`);
     }
     
     // Debug: List all available inputs if nothing was filled

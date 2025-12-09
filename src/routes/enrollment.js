@@ -529,10 +529,13 @@ router.post('/save-step', async (req, res) => {
     // Personal detail fields that update the contact record directly (not custom fields)
     const personalDetailFields = [
       'title', 'givenname', 'firstname', 'surname', 'lastname', 'preferredname', 'middlename',
-      'dateofbirth', 'dob', 'birthdate', 'age', 'gender', 
+      'dateofbirth', 'dob', 'birthdate', 'gender', 'sex',
       'email', 'emailaddress', 'phone', 'mobilephone', 'mobile',
       'address', 'streetaddress', 'suburb', 'city', 'postcode', 'state', 'country',
-      'usi', 'uniquestudentidentifier', 'studentidentifier'
+      'usi', 'uniquestudentidentifier', 'studentidentifier',
+      'countryofbirth', 'cityofbirth', 'citizenshipstatus', 
+      'languagespoken', 'englishproficiency', 'indigenousstatus', 'employmentstatus',
+      'schoollevel', 'prioreducationstatus', 'prioreducation'
     ];
     
     // Separate fields into personal details and custom fields
@@ -543,38 +546,31 @@ router.post('/save-step', async (req, res) => {
         // Map field names to aXcelerate's expected format
         let axFieldName = key.toUpperCase();
         
-        // Handle field name variations
+        // Handle field name variations - map to aXcelerate's expected field names
         if (keyLower === 'lastname') axFieldName = 'SURNAME';
         if (keyLower === 'firstname' || keyLower === 'givenname') axFieldName = 'GIVENNAME';
-        if (keyLower === 'dateofbirth' || keyLower === 'birthdate') axFieldName = 'DOB';
-        if (keyLower === 'dob') axFieldName = 'DOB';
+        if (keyLower === 'dateofbirth' || keyLower === 'birthdate' || keyLower === 'dob') axFieldName = 'DOB';
         if (keyLower === 'uniquestudentidentifier' || keyLower === 'studentidentifier') axFieldName = 'USI';
         if (keyLower === 'streetaddress') axFieldName = 'ADDRESS';
         if (keyLower === 'city') axFieldName = 'SUBURB';
         if (keyLower === 'mobile' || keyLower === 'mobilephone') axFieldName = 'MOBILE';
         if (keyLower === 'preferredname') axFieldName = 'PREFERREDNAME';
         if (keyLower === 'middlename') axFieldName = 'MIDDLENAME';
+        if (keyLower === 'gender' || keyLower === 'sex') axFieldName = 'SEX';
+        if (keyLower === 'countryofbirth') axFieldName = 'COUNTRYOFBIRTH';
+        if (keyLower === 'cityofbirth') axFieldName = 'BIRTHPLACE';
+        if (keyLower === 'citizenshipstatus') axFieldName = 'CITIZENSHIPSTATUS';
+        if (keyLower === 'languagespoken') axFieldName = 'LANGUAGESPOKEN';
+        if (keyLower === 'englishproficiency') axFieldName = 'ENGLISHPROFICIENCY';
+        if (keyLower === 'indigenousstatus') axFieldName = 'INDIGENOUSSTATUS';
+        if (keyLower === 'employmentstatus') axFieldName = 'EMPLOYMENTSTATUS';
+        if (keyLower === 'schoollevel') axFieldName = 'HIGHESTSCHOOLLEVEL';
+        if (keyLower === 'prioreducationstatus') axFieldName = 'PRIOREDUCATIONSTATUS';
+        if (keyLower === 'prioreducation') axFieldName = 'PRIOREDUCATION';
         
         // Personal detail - send with mapped field name
         updatePayload[axFieldName] = value;
         console.log(`   📝 Personal field: ${key} → ${axFieldName} = "${value}"`);
-        
-        // Calculate age if date of birth is provided
-        if ((keyLower === 'dateofbirth' || keyLower === 'dob' || keyLower === 'birthdate') && value) {
-          try {
-            const birthDate = new Date(value);
-            const today = new Date();
-            let age = today.getFullYear() - birthDate.getFullYear();
-            const monthDiff = today.getMonth() - birthDate.getMonth();
-            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-              age--;
-            }
-            updatePayload['AGE'] = age;
-            console.log(`   🎂 Calculated age from DOB: ${age} years old`);
-          } catch (error) {
-            console.error('Failed to calculate age from date of birth:', error);
-          }
-        }
       } else {
         // Custom field - send with CUSTOMFIELD_ prefix
         const axcelerateFieldName = `CUSTOMFIELD_${key.toUpperCase()}`;
