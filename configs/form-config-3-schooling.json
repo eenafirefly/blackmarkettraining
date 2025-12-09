@@ -92,12 +92,12 @@
         { "display": "No", "value": "false" }
       ],
       "events": {
-        "priorEducation_show": {
+        "prioreducation_show": {
           "trigger": "change",
           "action": "show",
           "condition": "value === 'true'"
         },
-        "priorEducation_hide": {
+        "prioreducation_hide": {
           "trigger": "change",
           "action": "hide",
           "condition": "value === 'false'"

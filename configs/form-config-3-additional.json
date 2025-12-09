@@ -21,12 +21,12 @@
         { "display": "Yes", "value": "true" }
       ],
       "events": {
-        "disabilityTypes_show": {
+        "disabilitytypes_show": {
           "trigger": "change",
           "action": "show",
           "condition": "value === 'true'"
         },
-        "disabilityTypes_hide": {
+        "disabilitytypes_hide": {
           "trigger": "change",
           "action": "hide",
           "condition": "value === 'false'"

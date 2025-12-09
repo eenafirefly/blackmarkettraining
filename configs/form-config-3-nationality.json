@@ -139,12 +139,12 @@
         { "display": "No", "value": "No" }
       ],
       "events": {
-        "languageSpokenMostOften_show": {
+        "languagespoken_show": {
           "trigger": "change",
           "action": "show",
           "condition": "value === 'Yes'"
         },
-        "languageSpokenMostOften_hide": {
+        "languagespoken_hide": {
           "trigger": "change",
           "action": "hide",
           "condition": "value === 'No'"
