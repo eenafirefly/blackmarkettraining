@@ -23,15 +23,15 @@
 {% assign form_config_id = config_id | default: '3' %}
 
 <div id="ax-enrol-widget-{{ widget_id }}" 
-     class="ax-enrollment-widget"
+     class="card ax-enrollment-widget"
      data-course-id="{{ course_id }}"
      data-course-type="{{ course_type }}"
      data-instance-id="{{ instance_id }}"
      data-config-id="{{ form_config_id }}">
   
-  <div class="ax-widget-container">
-    <h2 class="ax-widget-title">ENROLLING IN</h2>
-    <h3 id="ax-course-title-{{ widget_id }}" class="ax-course-title" style="display: none;"></h3>
+  <div class="card__surface ax-widget-container">
+    <div class="subheading ax-widget-title">ENROLLING IN</div>
+    <h2 id="ax-course-title-{{ widget_id }}" class="heading-standard ax-course-title" style="display: none;"></h2>
     
     <!-- Loading State -->
     <div id="ax-loading-{{ widget_id }}" class="ax-loading-state">
@@ -170,28 +170,23 @@
   }
   
   .ax-widget-container {
-    background: #fff;
-    padding: 0;
-    border-radius: 0;
-    box-shadow: none;
+       max-width: none;
     font-family: var(--main-font-stack);
   }
   
   .ax-widget-title {
-    font-size: 24px;
-    font-weight: 700;
     text-align: center;
-    margin: 0 0 5px 0;
+    margin: 0;
     padding: 20px 20px 0 20px;
+    text-transform:uppercase;
   }
   
   .ax-course-title {
-    font-size: 16px;
-    font-weight: 400;
+        font-weight: 700;
     text-align: center;
     margin: 0 0 20px 0;
     padding: 0 20px;
-    color: #666;
+    text-transform: uppercase;
     line-height: 1.4;
   }
   
@@ -287,8 +282,7 @@
   }
   
   .ax-sidebar-tab.active {
-    background: #fff;
-    border-left-color: #2196F3;
+    background: #000;
   }
   
   .ax-sidebar-tab.completed {
@@ -320,20 +314,15 @@
   }
   
   .ax-sidebar-tab.active .ax-tab-number {
-    background: #2196F3;
-    color: white;
+      background: #fff;
+    color: #000;
   }
   
   .ax-sidebar-tab.completed .ax-tab-number {
     background: #4CAF50;
     color: white;
   }
-  
-  .ax-sidebar-tab.completed .ax-tab-number::before {
-    content: '✓';
-    font-size: 16px;
-    line-height: 1;
-  }
+ 
   
   .ax-sidebar-tab.locked .ax-tab-number,
   .ax-sidebar-tab.disabled .ax-tab-number {
@@ -359,22 +348,18 @@
   }
   
   .ax-tab-label {
-    font-size: 13px;
+    font-size: 16px;
     font-weight: 400;
-    color: #555;
+        text-transform: uppercase;
     line-height: 1.3;
     flex: 1;
   }
   
-  .ax-sidebar-tab.active .ax-tab-label {
-    color: #2196F3;
-    font-weight: 500;
+ 
+ 
+  .ax-sidebar-tab.active .ax-tab-label{
+    color: #fff;
   }
-  
-  .ax-sidebar-tab.completed .ax-tab-label {
-    color: #333;
-  }
-  
   /* Step Content */
   .ax-step-header{
     font-size: 24px;
@@ -521,13 +506,7 @@
   }
   
   /* Buttons */
-  .ax-btn {
-    padding: 12px 24px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.3s;
-  }
+ 
   
   .ax-btn-primary {
     color: white;
@@ -1385,6 +1364,9 @@
     if (authToken && contactId) {
       console.log('✅ OAuth successful! Contact ID:', contactId);
       
+      // Fetch contact details for pre-filling
+      fetchContactDetailsForPrefill(contactId);
+      
       // Unlock all tabs now that user is logged in
       unlockAllTabs();
       
@@ -1799,12 +1781,11 @@
       } else {
         console.log(`ℹ️ No saved data found for step "${stepId}"`);
         
-        // Pre-fill contact details for contact details or personal details steps
-        if (stepId === 'contactdetails' || stepId === 'contact-details' || stepId === 'personaldetails' || stepId === 'personal-details') {
-          if (contactDetails.givenName || contactDetails.email) {
-            console.log(`👤 Pre-filling contact details for step "${stepId}"`);
-            prefillContactDetails(stepId);
-          }
+        // Pre-fill contact details for contact or personal details steps
+        const isContactStep = stepId.includes('contact') || stepId.includes('personal');
+        if (isContactStep && (contactDetails.givenName || contactDetails.email)) {
+          console.log(`👤 Pre-filling contact details for step "${stepId}"`);
+          setTimeout(() => prefillContactDetails(stepId), 200);
         }
       }
     }, 100);
@@ -1876,7 +1857,7 @@
     
     tabs.forEach((tab, index) => {
       const tabStepId = tab.dataset.step;
-      tab.classList.remove('active', 'completed', 'disabled', 'locked');
+      tab.classList.remove('active', 'locked');
       
       const statusIcon = tab.querySelector('.ax-tab-status');
       
@@ -1886,27 +1867,30 @@
           tab.classList.add('completed', 'disabled');
           if (statusIcon) statusIcon.textContent = '✓';
         }
-      } else if (index < currentIndex) {
-        // Previous steps - completed and clickable
-        tab.classList.add('completed');
-        if (statusIcon) statusIcon.textContent = '✓';
       } else if (index === currentIndex) {
-        // Current step - active and clickable
+        // Current step - active
         tab.classList.add('active');
         if (statusIcon) statusIcon.style.display = 'none';
-      } else if (index === currentIndex + 1) {
-        // Next step - enabled (can click to proceed)
-        // Remove locked class, keep exclamation mark
-        if (statusIcon) {
-          statusIcon.textContent = '!';
-          statusIcon.style.display = 'block';
-        }
       } else {
-        // Future steps - disabled
-        tab.classList.add('disabled');
-        if (statusIcon) {
-          statusIcon.textContent = '!';
-          statusIcon.style.display = 'block';
+        // All other steps - check if they have data to show completed status
+        const stepData = formData[tabStepId];
+        const hasData = stepData && typeof stepData === 'object' && Object.keys(stepData).length > 0;
+        
+        if (hasData) {
+          // Step has data - show as completed with checkmark
+          tab.classList.add('completed');
+          tab.classList.remove('disabled');
+          if (statusIcon) {
+            statusIcon.textContent = '✓';
+            statusIcon.style.display = 'block';
+          }
+        } else {
+          // Step has no data - show exclamation mark, keep clickable
+          tab.classList.remove('completed', 'disabled');
+          if (statusIcon) {
+            statusIcon.textContent = '!';
+            statusIcon.style.display = 'block';
+          }
         }
       }
     });
@@ -1949,6 +1933,21 @@
     });
     
     console.log(`✅ Finished populating form data for step "${stepId}"`);
+  }
+  
+  async function fetchContactDetailsForPrefill(contactIdToFetch) {
+    try {
+      const response = await fetch(`${RENDER_APP_URL}/api/axcelerate/contact/${contactIdToFetch}`);
+      if (response.ok) {
+        const contact = await response.json();
+        contactDetails.givenName = contact.GIVENNAME || contact.givenname || '';
+        contactDetails.surname = contact.SURNAME || contact.surname || '';
+        contactDetails.email = contact.EMAILADDRESS || contact.emailAddress || contact.email || '';
+        console.log('✅ Fetched contact details:', contactDetails);
+      }
+    } catch (error) {
+      console.error('Failed to fetch contact details:', error);
+    }
   }
   
   function prefillContactDetails(stepId) {
@@ -2076,6 +2075,12 @@
       if (contactId) {
         unlockAllTabs();
         markStepCompleted('login');
+        
+        // Fetch contact details if we don't have them
+        if (!contactDetails.givenName && !contactDetails.email) {
+          console.log('📋 Fetching contact details for pre-fill...');
+          fetchContactDetailsForPrefill(contactId);
+        }
         
         // Auto-mark completed steps based on saved data
         // Only mark as completed if step has actual field data
