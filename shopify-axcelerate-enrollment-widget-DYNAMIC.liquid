@@ -2088,39 +2088,64 @@
     const config = stepConfigs[stepId];
     if (!config || !config.fields) return true;
     
-    const requiredFields = config.fields.filter(f => f.required && f.type !== 'information' && f.type !== 'button');
+    const requiredFields = config.fields.filter(f => f.required && f.type !== 'information' && f.type !== 'button' && f.type !== 'information-header');
     if (requiredFields.length === 0) return true; // No required fields
     
     console.log(`🔍 Validating ${requiredFields.length} required fields for step "${stepId}"`);
     
+    // Get saved data for this step
+    const stepData = formData[stepId] || {};
+    const savedData = sessionStorage.getItem(`ax_form_${stepId}`);
+    const parsedSavedData = savedData ? JSON.parse(savedData) : {};
+    
+    // Merge both data sources
+    const allStepData = { ...parsedSavedData, ...stepData };
+    
+    console.log(`   📊 Saved data for ${stepId}:`, allStepData);
+    
     let allFilled = true;
     
     for (const field of requiredFields) {
+      // Skip validation for hidden fields
+      if (field.hideInitially === 'hidden') {
+        const fieldGroup = document.getElementById(`ax-field-group-${field.fieldId}-${widgetId}`);
+        if (fieldGroup && fieldGroup.classList.contains('ax-hidden')) {
+          console.log(`   ⏭️ Skipping hidden field "${field.name}" (${field.fieldId})`);
+          continue;
+        }
+      }
+      
+      const savedValue = allStepData[field.fieldId];
+      
       if (field.type === 'checkbox' || field.type === 'radio') {
-        // Check if at least one checkbox/radio is checked
-        const checked = document.querySelectorAll(`input[name="${field.fieldId}"]:checked`);
-        if (checked.length === 0) {
-          console.log(`   ❌ Required field "${field.name}" (${field.fieldId}) is not checked`);
+        // Check if value exists in saved data
+        if (!savedValue || (typeof savedValue === 'string' && savedValue.trim() === '')) {
+          console.log(`   ❌ Required field "${field.name}" (${field.fieldId}) has no saved value`);
           allFilled = false;
+        } else {
+          console.log(`   ✅ Required field "${field.name}" (${field.fieldId}) = "${savedValue}"`);
         }
       } else if (field.type === 'file-upload') {
-        // Check if file is uploaded (check for file list or saved data)
-        const fileInput = document.getElementById(`ax-${field.fieldId}-${widgetId}`);
-        const hasFiles = fileInput && fileInput.files && fileInput.files.length > 0;
-        const hasSavedFiles = formData[stepId] && formData[stepId][field.fieldId];
-        if (!hasFiles && !hasSavedFiles) {
+        // Check if file data exists in saved data
+        const hasFiles = savedValue && (Array.isArray(savedValue) ? savedValue.length > 0 : true);
+        if (!hasFiles) {
           console.log(`   ❌ Required file "${field.name}" (${field.fieldId}) is not uploaded`);
           allFilled = false;
+        } else {
+          console.log(`   ✅ Required file "${field.name}" (${field.fieldId}) uploaded`);
         }
       } else {
-        // Check text/select/email/etc fields
-        const input = document.getElementById(`ax-${field.fieldId}-${widgetId}`);
-        if (!input || !input.value || input.value.trim() === '') {
-          console.log(`   ❌ Required field "${field.name}" (${field.fieldId}) is empty`);
+        // Check text/select/email/etc fields in saved data
+        if (!savedValue || (typeof savedValue === 'string' && savedValue.trim() === '')) {
+          console.log(`   ❌ Required field "${field.name}" (${field.fieldId}) is empty in saved data`);
           allFilled = false;
+        } else {
+          console.log(`   ✅ Required field "${field.name}" (${field.fieldId}) = "${savedValue}"`);
         }
       }
     }
+    
+    console.log(`   📋 Validation result for ${stepId}: ${allFilled ? '✅ PASS' : '❌ FAIL'}`);
     
     return allFilled;
   }
