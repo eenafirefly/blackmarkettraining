@@ -807,7 +807,8 @@
   let contactDetails = { // Stores logged-in user's details for pre-filling
     givenName: '',
     surname: '',
-    email: ''
+    email: '',
+    mobile: ''
   };
   
   // =========================================================================
@@ -2098,7 +2099,8 @@
       // Extract contact details (handle different casings)
       contactDetails.givenName = contact.GIVENNAME || contact.givenname || contact.givenName || '';
       contactDetails.surname = contact.SURNAME || contact.surname || '';
-      contactDetails.email = contact.EMAILADDRESS || contact.emailAddress || contact.email || '';
+      contactDetails.email = contact.EMAILADDRESS || contact.emailAddress || contact.EMAIL || contact.email || '';
+      contactDetails.mobile = contact.MOBILE || contact.MOBILEPHONE || contact.mobile || contact.mobilePhone || '';
       
       console.log('✅ Stored contact details:', contactDetails);
       
@@ -2119,10 +2121,11 @@
   function prefillContactDetails(stepId) {
     console.log(`👤 Pre-filling contact details for "${stepId}":`, contactDetails);
     
-    // Common field name variations for givenName, surname, and email
+    // Common field name variations for givenName, surname, email, and mobile
     const givenNameFields = ['givenname', 'givenName', 'firstName', 'firstname', 'fname', 'given_name'];
     const surnameFields = ['surname', 'lastName', 'lastname', 'lname', 'familyname', 'familyName', 'last_name'];
     const emailFields = ['email', 'emailaddress', 'emailAddress', 'email1', 'email_address', 'contactemail'];
+    const mobileFields = ['mobile', 'mobilephone', 'mobilePhone', 'phone', 'cellphone'];
     
     let filledCount = 0;
     
@@ -2174,11 +2177,31 @@
       });
       if (!filled) {
         console.log(`   ⚠️ Could not find email field. Tried:`, emailFields.map(f => `ax-${f}-${widgetId}`));
-        // List all input fields in the step for debugging
-        const allInputs = widget.querySelectorAll(`#ax-step-${stepId}-${widgetId} input, #ax-step-${stepId}-${widgetId} select`);
-        if (allInputs.length > 0) {
-          console.log(`   📋 Available inputs in step:`, Array.from(allInputs).map(i => i.id || i.name));
+      }
+    }
+    
+    // Try to find and populate mobile field
+    if (contactDetails.mobile) {
+      const filled = mobileFields.some(fieldId => {
+        const input = document.getElementById(`ax-${fieldId}-${widgetId}`);
+        if (input && !input.value) {
+          input.value = contactDetails.mobile;
+          console.log(`   ✅ Pre-filled mobile: ${fieldId} = "${contactDetails.mobile}"`);
+          filledCount++;
+          return true;
         }
+        return false;
+      });
+      if (!filled) {
+        console.log(`   ⚠️ Could not find mobile field. Tried:`, mobileFields.map(f => `ax-${f}-${widgetId}`));
+      }
+    }
+    
+    // Debug: List all available inputs if nothing was filled
+    if (filledCount === 0) {
+      const allInputs = widget.querySelectorAll(`#ax-step-${stepId}-${widgetId} input, #ax-step-${stepId}-${widgetId} select`);
+      if (allInputs.length > 0) {
+        console.log(`   📋 Available inputs in step:`, Array.from(allInputs).map(i => i.id || i.name));
       }
     }
     
@@ -2246,7 +2269,7 @@
       contactId = progress.contactId;
       authToken = progress.authToken;
       formData = progress.formData || {};
-      contactDetails = progress.contactDetails || { givenName: '', surname: '', email: '' };
+      contactDetails = progress.contactDetails || { givenName: '', surname: '', email: '', mobile: '' };
       
       // Restore session storage for each step
       Object.entries(formData).forEach(([step, data]) => {

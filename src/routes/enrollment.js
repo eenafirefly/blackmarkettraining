@@ -546,11 +546,12 @@ router.post('/save-step', async (req, res) => {
         // Handle field name variations
         if (keyLower === 'lastname') axFieldName = 'SURNAME';
         if (keyLower === 'firstname' || keyLower === 'givenname') axFieldName = 'GIVENNAME';
-        if (keyLower === 'dateofbirth' || keyLower === 'dob' || keyLower === 'birthdate') axFieldName = 'DATEOFBIRTH';
+        if (keyLower === 'dateofbirth' || keyLower === 'birthdate') axFieldName = 'DOB';
+        if (keyLower === 'dob') axFieldName = 'DOB';
         if (keyLower === 'uniquestudentidentifier' || keyLower === 'studentidentifier') axFieldName = 'USI';
         if (keyLower === 'streetaddress') axFieldName = 'ADDRESS';
         if (keyLower === 'city') axFieldName = 'SUBURB';
-        if (keyLower === 'mobile') axFieldName = 'MOBILEPHONE';
+        if (keyLower === 'mobile' || keyLower === 'mobilephone') axFieldName = 'MOBILE';
         if (keyLower === 'preferredname') axFieldName = 'PREFERREDNAME';
         if (keyLower === 'middlename') axFieldName = 'MIDDLENAME';
         
