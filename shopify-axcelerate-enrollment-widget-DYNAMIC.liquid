@@ -1753,22 +1753,27 @@
     // Update sidebar tabs
     updateSidebarTabs(stepId);
     
-    // Restore saved data for this step if available
-    const saved = sessionStorage.getItem(`ax_form_${stepId}`);
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
-        populateFormData(stepId, data);
-        
-        // Auto-mark as completed if step has saved data
-        if (stepId !== 'login' && Object.keys(data).length > 0) {
-          console.log(`✅ Auto-marking step "${stepId}" as completed (has ${Object.keys(data).length} saved fields)`);
-          markStepCompleted(stepId);
+    // Restore saved data for this step if available (with delay for DOM update)
+    setTimeout(() => {
+      const saved = sessionStorage.getItem(`ax_form_${stepId}`);
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          console.log(`🔄 Restoring data for step "${stepId}":`, data);
+          populateFormData(stepId, data);
+          
+          // Auto-mark as completed if step has saved data
+          if (stepId !== 'login' && Object.keys(data).length > 0) {
+            console.log(`✅ Auto-marking step "${stepId}" as completed (has ${Object.keys(data).length} saved fields)`);
+            markStepCompleted(stepId);
+          }
+        } catch (e) {
+          console.error('Error restoring step data:', e);
         }
-      } catch (e) {
-        console.error('Error restoring step data:', e);
+      } else {
+        console.log(`ℹ️ No saved data found for step "${stepId}"`);
       }
-    }
+    }, 100);
     
     // Save progress
     saveProgress();
@@ -1874,22 +1879,42 @@
   }
   
   function populateFormData(stepId, data) {
-    console.log('Populating form data for step:', stepId, data);
+    console.log(`📝 Populating form data for step "${stepId}":`, data);
+    console.log(`   Widget ID: ${widgetId}`);
+    console.log(`   Fields to populate: ${Object.keys(data).length}`);
     
     Object.entries(data).forEach(([fieldId, value]) => {
-      const input = document.getElementById(`ax-${fieldId}-${widgetId}`);
+      const inputId = `ax-${fieldId}-${widgetId}`;
+      const input = document.getElementById(inputId);
+      
+      console.log(`   - Field "${fieldId}": looking for #${inputId}`);
+      
       if (input) {
         if (Array.isArray(value)) {
           // Checkbox group
+          console.log(`     ✅ Found (checkbox group), setting values:`, value);
           value.forEach(v => {
             const checkbox = widget.querySelector(`input[name="${fieldId}"][value="${v}"]`);
             if (checkbox) checkbox.checked = true;
           });
         } else {
+          console.log(`     ✅ Found (${input.tagName}), setting value: "${value}"`);
           input.value = value;
+          
+          // Trigger change event for conditional logic
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      } else {
+        console.warn(`     ❌ NOT FOUND: #${inputId}`);
+        // List all input IDs in the step to help debug
+        const allInputs = widget.querySelectorAll(`#ax-step-${stepId}-${widgetId} input, #ax-step-${stepId}-${widgetId} select, #ax-step-${stepId}-${widgetId} textarea`);
+        if (allInputs.length > 0) {
+          console.warn(`     Available inputs in step:`, Array.from(allInputs).map(i => i.id || i.name));
         }
       }
     });
+    
+    console.log(`✅ Finished populating form data for step "${stepId}"`);
   }
   
   // =========================================================================
