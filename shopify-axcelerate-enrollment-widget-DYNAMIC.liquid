@@ -1004,13 +1004,8 @@
   
   console.log('Widget initialized:', { widgetId, courseId, courseType, instanceId, configId });
   
-  // Course data for enrollment summary
-  let courseData = {
-    courseName: widget.dataset.courseName || 'Course',
-    startDate: widget.dataset.startDate || '',
-    location: widget.dataset.location || '',
-    fee: widget.dataset.fee || ''
-  };
+  // Course data for enrollment summary (will be fetched dynamically)
+  let courseData = null;
   
   const elements = {
     loading: document.getElementById('ax-loading-' + widgetId),
@@ -1154,7 +1149,7 @@
       buildSidebarTabs();
       
       // Render dynamic steps
-      renderDynamicSteps();
+      await renderDynamicSteps();
       
       console.log('✅ All form configurations loaded');
       
@@ -1242,14 +1237,14 @@
   // Dynamic Step Rendering
   // =========================================================================
   
-  function renderDynamicSteps() {
+  async function renderDynamicSteps() {
     const container = elements.dynamicSteps;
     if (!container) return;
     
     container.innerHTML = '';
     
     // Render each step from configuration
-    Object.entries(stepConfigs).forEach(([stepId, config]) => {
+    for (const [stepId, config] of Object.entries(stepConfigs)) {
       if (!config || !config.fields) return;
       
       const stepDiv = document.createElement('div');
@@ -1272,7 +1267,7 @@
       
       // Handle enrollment-summary stepType
       if (config.stepType === 'enrollment-summary') {
-        const summaryDiv = createEnrollmentSummary(config);
+        const summaryDiv = await createEnrollmentSummary(config);
         form.appendChild(summaryDiv);
       } else {
         // Render fields
@@ -1329,7 +1324,7 @@
       
       // Setup form submit handler
       form.addEventListener('submit', (e) => handleStepSubmit(e, stepId, config));
-    });
+    }
     
     console.log('✅ Dynamic steps rendered:', Object.keys(stepConfigs).length);
   }
@@ -1637,21 +1632,73 @@
   // Enrollment Summary Creation
   // =========================================================================
   
-  function createEnrollmentSummary(config) {
+  async function fetchCourseInstanceData() {
+    if (!instanceId) {
+      console.warn('⚠️ No instanceId available for course data fetch');
+      return null;
+    }
+    
+    try {
+      console.log('📚 Fetching course instance data for:', instanceId);
+      
+      const response = await fetch(`${RENDER_APP_URL}/api/axcelerate/instance/${instanceId}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch course instance');
+      }
+      
+      const data = await response.json();
+      console.log('✅ Course instance data fetched:', data);
+      
+      return {
+        courseName: data.courseName || data.name || 'Course',
+        startDate: data.startDate || data.start || '',
+        location: data.location || data.venue || '',
+        fee: data.fee || data.price || '',
+        endDate: data.endDate || data.end || ''
+      };
+    } catch (error) {
+      console.error('❌ Failed to fetch course instance data:', error);
+      return null;
+    }
+  }
+  
+  async function createEnrollmentSummary(config) {
     const summaryContainer = document.createElement('div');
     summaryContainer.className = 'ax-enrollment-summary';
+    
+    // Show loading state
+    summaryContainer.innerHTML = '<div class="ax-loading">Loading enrollment details...</div>';
+    
+    // Fetch course data if not already loaded
+    if (!courseData) {
+      courseData = await fetchCourseInstanceData();
+    }
     
     // Get course and contact information
     const courseName = courseData?.courseName || 'Course';
     const studentName = contactDetails.givenName && contactDetails.surname 
       ? `${contactDetails.givenName} ${contactDetails.surname}`
       : 'Student';
-    const instanceDate = courseData?.startDate || new Date().toLocaleDateString('en-AU', { 
-      day: 'numeric', 
-      month: 'long', 
-      year: 'numeric' 
-    });
-    const location = courseData?.location || 'TBD';
+    
+    // Format date nicely
+    let instanceDate = '';
+    if (courseData?.startDate) {
+      try {
+        const date = new Date(courseData.startDate);
+        instanceDate = date.toLocaleDateString('en-AU', { 
+          day: 'numeric', 
+          month: 'long', 
+          year: 'numeric' 
+        });
+      } catch (e) {
+        instanceDate = courseData.startDate;
+      }
+    } else {
+      instanceDate = 'To be confirmed';
+    }
+    
+    const location = courseData?.location || 'To be confirmed';
     const fee = courseData?.fee || '$0.00';
     
     // Course Outline Section

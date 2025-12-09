@@ -991,4 +991,58 @@ router.get('/form-config/:configId/:step?', async (req, res) => {
   }
 });
 
+/**
+ * Get course instance details
+ * GET /api/axcelerate/instance/:instanceId
+ * 
+ * Fetches course instance information from aXcelerate for enrollment summary
+ */
+router.get('/instance/:instanceId', async (req, res) => {
+  try {
+    const { instanceId } = req.params;
+    
+    console.log('📚 Fetching course instance details:', instanceId);
+    
+    // Fetch instance details from aXcelerate
+    const response = await fetch(
+      `${process.env.AXCELERATE_API_URL}/course/instance/${instanceId}`,
+      {
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN
+        }
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error(`aXcelerate API returned ${response.status}`);
+    }
+    
+    const instance = await response.json();
+    console.log('✅ Course instance fetched:', instance);
+    
+    // Format the response
+    const formattedData = {
+      courseName: instance.COURSENAME || instance.courseName || instance.name || 'Course',
+      startDate: instance.STARTDATE || instance.startDate || instance.start || '',
+      endDate: instance.ENDDATE || instance.endDate || instance.end || '',
+      location: instance.LOCATION || instance.location || instance.venue || instance.VENUENAME || '',
+      fee: instance.FEE || instance.fee || instance.price || instance.COURSEFEE || '',
+      status: instance.STATUS || instance.status || '',
+      courseCode: instance.COURSECODE || instance.courseCode || ''
+    };
+    
+    res.json(formattedData);
+    
+  } catch (error) {
+    console.error('❌ Failed to fetch course instance:', error);
+    
+    res.status(500).json({
+      success: false,
+      error: 'Failed to load course instance',
+      message: error.message
+    });
+  }
+});
+
 export default router;
