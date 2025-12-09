@@ -850,6 +850,63 @@ router.post('/send-verification', async (req, res) => {
     // Build resume URL with auth parameters
     const resumeUrl = `${req.body.resumeUrl || req.headers.referer}?auth_token=${verificationToken}&contact_id=${contactId}`;
     
+    // Check if we've already sent a verification email within the last 2 hours
+    const notesResponse = await fetch(
+      `${process.env.AXCELERATE_API_URL}/contact/${contactId}/notes`,
+      {
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN
+        }
+      }
+    );
+    
+    let shouldSendEmail = true;
+    let lastEmailTime = null;
+    
+    if (notesResponse.ok) {
+      const notes = await notesResponse.json();
+      const now = new Date();
+      const twoHoursInMs = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+      
+      if (Array.isArray(notes) && notes.length > 0) {
+        console.log(`📋 Checking ${notes.length} notes for verification email sent within last 2 hours...`);
+        
+        notes.forEach(note => {
+          const isVerificationNote = note.NOTE && (
+            note.NOTE.includes('EXISTING CONTACT - Verification Email Sent') ||
+            note.NOTE.includes('Verification email sent via SendGrid')
+          );
+          
+          if (isVerificationNote && note.DATE) {
+            const noteDate = new Date(note.DATE);
+            const timeDiff = now - noteDate;
+            const hoursDiff = timeDiff / (60 * 60 * 1000);
+            
+            console.log(`   📝 Found verification note from ${note.DATE} (${hoursDiff.toFixed(1)} hours ago)`);
+            
+            if (timeDiff < twoHoursInMs) {
+              console.log(`   ✋ Verification email was sent ${hoursDiff.toFixed(1)} hours ago - within 2 hour threshold`);
+              shouldSendEmail = false;
+              lastEmailTime = noteDate;
+            }
+          }
+        });
+        
+        if (!shouldSendEmail && lastEmailTime) {
+          const hoursAgo = ((now - lastEmailTime) / (60 * 60 * 1000)).toFixed(1);
+          console.log(`⏸️ Verification email already sent ${hoursAgo} hours ago - skipping to prevent duplicates`);
+          return res.json({ 
+            success: true, 
+            message: `Verification email was already sent ${hoursAgo} hours ago. Please check your inbox.`,
+            alreadySent: true
+          });
+        } else {
+          console.log('✅ No verification email sent within last 2 hours - will send now');
+        }
+      }
+    }
+    
     // DON'T create enrollment for existing contacts
     // This prevents "Booking Confirmation" email
     console.log('⏸️  Skipping enrollment creation for existing contact');
