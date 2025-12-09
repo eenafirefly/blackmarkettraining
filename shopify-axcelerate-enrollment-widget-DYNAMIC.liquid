@@ -434,7 +434,7 @@
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: #2196F3;
+    background: #000;
     color: white;
     font-size: 12px;
     font-weight: bold;
@@ -509,6 +509,18 @@
   .ax-info-field.expandable {
     cursor: pointer;
     border: 1px solid #ddd;
+  }
+  
+  /* Postal Address Header - style like section header */
+  #ax-field-group-postalAddressInfo-default .ax-info-field {
+    background: transparent;
+    padding: 20px 0 10px 0;
+    font-size: 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+    border-bottom: 1px solid #e0e0e0;
+    margin-top: 30px;
+    margin-bottom: 20px;
   }
   
   /* Radio Buttons */
@@ -1103,9 +1115,18 @@
     if (field.type === 'button') {
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = 'ax-btn ax-btn-secondary';
-      button.textContent = field.name;
+      button.className = 'push-btn inline-block w-100 text-center ax-btn ax-btn-primary';
+      button.innerHTML = `<span class="push-btn__surface w-100">${field.name}</span>`;
       button.dataset.action = field.buttonAction;
+      
+      // Handle copy action for address fields
+      if (field.buttonAction === 'postal_copy') {
+        button.addEventListener('click', () => {
+          console.log('📋 Copying residential address to postal fields...');
+          copyResidentialToPostal(stepId);
+        });
+      }
+      
       fieldGroup.appendChild(button);
       return fieldGroup;
     }
@@ -1378,6 +1399,40 @@
       }
     } else {
       console.warn(`⚠️ Field group not found: ax-field-group-${targetFieldId}-${widgetId}`);
+    }
+  }
+  
+  function copyResidentialToPostal(stepId) {
+    // Mapping of residential fields to postal fields
+    const fieldMappings = {
+      'buildingPropertyName': 'postalBuildingPropertyName',
+      'flatUnitDetails': 'postalFlatUnitDetails',
+      'streetNumber': 'postalStreetNumber',
+      'streetName': 'postalStreetName',
+      'suburb': 'postalSuburb',
+      'postcode': 'postalPostcode',
+      'state': 'postalState',
+      'country': 'postalCountry'
+    };
+    
+    let copiedCount = 0;
+    
+    Object.entries(fieldMappings).forEach(([resField, postalField]) => {
+      const resInput = document.getElementById(`ax-${resField}-${widgetId}`);
+      const postalInput = document.getElementById(`ax-${postalField}-${widgetId}`);
+      
+      if (resInput && postalInput && resInput.value) {
+        postalInput.value = resInput.value;
+        copiedCount++;
+        console.log(`   ✅ Copied ${resField} → ${postalField}: "${resInput.value}"`);
+      }
+    });
+    
+    console.log(`✅ Copied ${copiedCount} fields from residential to postal address`);
+    
+    // Show a brief success message
+    if (copiedCount > 0) {
+      alert(`✓ Residential address copied to postal address (${copiedCount} fields)`);
     }
   }
   
