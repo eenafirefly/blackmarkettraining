@@ -3,6 +3,7 @@
   "configName": "Accredited Enrolment Form - Single - No Payment",
   "step": "schooling",
   "stepName": "Schooling",
+  "stepHeader": "Secondary Education",
   "stepType": "contact-update",
   "stepOrder": 9,
   "stepId": "EducationsHistory",
@@ -11,13 +12,6 @@
   "fields": [
     {
       "order": 1,
-      "fieldId": "secondaryEducationInfo",
-      "name": "Secondary Education",
-      "type": "information",
-      "required": false
-    },
-    {
-      "order": 2,
       "fieldId": "highestSchoolLevel",
       "name": "What is your highest completed school level?",
       "type": "select",
@@ -43,7 +37,7 @@
       }
     },
     {
-      "order": 3,
+      "order": 2,
       "fieldId": "yearHighestSchoolCompleted",
       "name": "Year Highest School Completed",
       "type": "text",
@@ -55,7 +49,7 @@
       "placeholder": "e.g., 2020"
     },
     {
-      "order": 4,
+      "order": 3,
       "fieldId": "stillEnrolledSecondary",
       "name": "Are you still enrolled in secondary or senior secondary education?",
       "type": "select",
@@ -78,14 +72,14 @@
       }
     },
     {
-      "order": 5,
+      "order": 4,
       "fieldId": "tertiaryEducationDetails",
       "name": "Previous qualifications achieved",
       "type": "information",
       "required": false
     },
     {
-      "order": 6,
+      "order": 5,
       "fieldId": "priorEducationStatus",
       "name": "Have you successfully completed any post-secondary education?",
       "type": "select",
@@ -96,19 +90,40 @@
       "options": [
         { "display": "Yes", "value": "true" },
         { "display": "No", "value": "false" }
-      ]
+      ],
+      "events": {
+        "priorEducation_show": {
+          "trigger": "change",
+          "action": "show",
+          "condition": "value === 'true'"
+        },
+        "priorEducation_hide": {
+          "trigger": "change",
+          "action": "hide",
+          "condition": "value === 'false'"
+        }
+      }
     },
     {
-      "order": 7,
+      "order": 6,
       "fieldId": "priorEducation",
       "name": "Prior Education",
-      "type": "modified-checkbox",
-      "required": true,
+      "type": "checkbox",
+      "required": false,
       "dataField": true,
       "syncToCustomField": false,
       "mapsToContactField": "PRIOREDUCATION",
-      "fieldType": "modified-checkbox"
+      "hideInitially": "hidden",
+      "options": [
+        { "display": "Bachelor Degree or Higher Degree level", "value": "008" },
+        { "display": "Advanced Diploma or Associate Degree Level", "value": "410" },
+        { "display": "Diploma Level", "value": "420" },
+        { "display": "Certificate IV", "value": "511" },
+        { "display": "Certificate III", "value": "514" },
+        { "display": "Certificate II", "value": "521" },
+        { "display": "Certificate I", "value": "524" },
+        { "display": "Other education (including certificates or overseas qualifications not listed above)", "value": "990" }
+      ]
     }
   ]
 }
-
