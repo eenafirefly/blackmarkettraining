@@ -392,7 +392,7 @@
     display: block;
     margin-bottom: 8px;
     font-weight: 500;
-    color: #333;
+       max-width: 600px;
   }
   
   .ax-required {
@@ -597,7 +597,7 @@
     display: flex;
     align-items: center;
     cursor: pointer;
-    padding: 8px;
+   margin: 0;
   }
   
   .ax-checkbox {
@@ -879,17 +879,9 @@
   
   .ax-upload-btn {
     margin-top: 10px;
-    background: #5892c7;
     color: white;
     border: none;
-    padding: 12px 20px;
-    border-radius: 4px;
     cursor: pointer;
-    font-size: 16px;
-  }
-  
-  .ax-upload-btn:hover {
-    background: #4a7aaa;
   }
   
   .ax-form-group .ax-help-text {
@@ -2092,6 +2084,47 @@
     });
   }
   
+  function validateStepRequiredFields(stepId) {
+    const config = stepConfigs[stepId];
+    if (!config || !config.fields) return true;
+    
+    const requiredFields = config.fields.filter(f => f.required && f.type !== 'information' && f.type !== 'button');
+    if (requiredFields.length === 0) return true; // No required fields
+    
+    console.log(`🔍 Validating ${requiredFields.length} required fields for step "${stepId}"`);
+    
+    let allFilled = true;
+    
+    for (const field of requiredFields) {
+      if (field.type === 'checkbox' || field.type === 'radio') {
+        // Check if at least one checkbox/radio is checked
+        const checked = document.querySelectorAll(`input[name="${field.fieldId}"]:checked`);
+        if (checked.length === 0) {
+          console.log(`   ❌ Required field "${field.name}" (${field.fieldId}) is not checked`);
+          allFilled = false;
+        }
+      } else if (field.type === 'file-upload') {
+        // Check if file is uploaded (check for file list or saved data)
+        const fileInput = document.getElementById(`ax-${field.fieldId}-${widgetId}`);
+        const hasFiles = fileInput && fileInput.files && fileInput.files.length > 0;
+        const hasSavedFiles = formData[stepId] && formData[stepId][field.fieldId];
+        if (!hasFiles && !hasSavedFiles) {
+          console.log(`   ❌ Required file "${field.name}" (${field.fieldId}) is not uploaded`);
+          allFilled = false;
+        }
+      } else {
+        // Check text/select/email/etc fields
+        const input = document.getElementById(`ax-${field.fieldId}-${widgetId}`);
+        if (!input || !input.value || input.value.trim() === '') {
+          console.log(`   ❌ Required field "${field.name}" (${field.fieldId}) is empty`);
+          allFilled = false;
+        }
+      }
+    }
+    
+    return allFilled;
+  }
+  
   function markStepCompleted(stepId) {
     const tabs = widget.querySelectorAll('.ax-sidebar-tab');
     const stepIndex = formSteps.findIndex(s => s.id === stepId);
@@ -2099,22 +2132,45 @@
     if (stepIndex >= 0 && stepIndex < tabs.length) {
       const tab = tabs[stepIndex];
       
-      // Special handling for login step - mark as completed AND disabled
+      // Special handling for login step - always mark as completed AND disabled
       if (stepId === 'login') {
         tab.classList.add('completed', 'disabled');
         tab.classList.remove('active', 'locked');
-      } else {
+        const statusIcon = tab.querySelector('.ax-tab-status');
+        if (statusIcon) {
+          statusIcon.textContent = '✓';
+          statusIcon.style.display = 'block';
+        }
+        console.log(`✅ Marked step ${stepId} as completed (login step)`);
+        return;
+      }
+      
+      // For other steps, validate required fields before marking as completed
+      const allRequiredFieldsFilled = validateStepRequiredFields(stepId);
+      
+      if (allRequiredFieldsFilled) {
         tab.classList.add('completed');
         tab.classList.remove('active', 'locked', 'disabled');
+        
+        const statusIcon = tab.querySelector('.ax-tab-status');
+        if (statusIcon) {
+          statusIcon.textContent = '✓';
+          statusIcon.style.display = 'block';
+        }
+        
+        console.log(`✅ Marked step ${stepId} as completed`);
+      } else {
+        // Remove completed status if required fields are not filled
+        tab.classList.remove('completed');
+        
+        const statusIcon = tab.querySelector('.ax-tab-status');
+        if (statusIcon) {
+          statusIcon.textContent = '!';
+          statusIcon.style.display = 'block';
+        }
+        
+        console.log(`⚠️ Step ${stepId} has empty required fields - removed completed status`);
       }
-      
-      const statusIcon = tab.querySelector('.ax-tab-status');
-      if (statusIcon) {
-        statusIcon.textContent = '✓';
-        statusIcon.style.display = 'block';
-      }
-      
-      console.log(`✅ Marked step ${stepId} as completed`);
     }
   }
   
@@ -2598,10 +2654,13 @@
           tab.classList.remove('disabled', 'locked');
           const stepData = formData[tabStepId];
           const hasData = stepData && typeof stepData === 'object' && Object.keys(stepData).length > 0;
-          if (hasData) {
+          const allRequiredFilled = validateStepRequiredFields(tabStepId);
+          
+          if (hasData && allRequiredFilled) {
             tab.classList.add('completed');
             if (statusIcon) statusIcon.textContent = '✓';
           } else {
+            tab.classList.remove('completed');
             if (statusIcon) statusIcon.textContent = '!';
           }
         }
@@ -2610,12 +2669,13 @@
         tab.classList.add('active');
         if (statusIcon) statusIcon.style.display = 'none';
       } else {
-        // All other steps - check if they have data to show completed status
+        // All other steps - check if they have data and all required fields filled
         const stepData = formData[tabStepId];
         const hasData = stepData && typeof stepData === 'object' && Object.keys(stepData).length > 0;
+        const allRequiredFilled = validateStepRequiredFields(tabStepId);
         
-        if (hasData) {
-          // Step has data - show as completed with checkmark
+        if (hasData && allRequiredFilled) {
+          // Step has data AND all required fields filled - show as completed with checkmark
           tab.classList.add('completed');
           tab.classList.remove('disabled');
           if (statusIcon) {
@@ -2623,7 +2683,7 @@
             statusIcon.style.display = 'block';
           }
         } else {
-          // Step has no data - show exclamation mark, keep clickable
+          // Step has no data OR missing required fields - show exclamation mark, keep clickable
           tab.classList.remove('completed', 'disabled');
           if (statusIcon) {
             statusIcon.textContent = '!';
