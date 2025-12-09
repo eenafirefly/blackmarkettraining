@@ -898,6 +898,76 @@
     font-style: italic;
     margin-top: -10px;
   }
+  
+  /* Enrollment Summary Styles */
+  .ax-enrollment-summary {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 30px;
+    margin: 20px 0;
+  }
+  
+  .ax-summary-section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  
+  .ax-summary-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+  
+  .ax-summary-section-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 20px 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #5892c7;
+  }
+  
+  .ax-summary-subtitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 15px 0;
+  }
+  
+  .ax-summary-row {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 20px;
+    padding: 12px 0;
+    align-items: start;
+  }
+  
+  .ax-summary-label {
+    font-weight: 600;
+    color: #666;
+    font-size: 14px;
+  }
+  
+  .ax-summary-value {
+    color: #333;
+    font-size: 14px;
+    background: #f5f5f5;
+    padding: 10px 15px;
+    border-radius: 4px;
+  }
+  
+  @media (max-width: 768px) {
+    .ax-summary-row {
+      grid-template-columns: 1fr;
+      gap: 5px;
+    }
+    
+    .ax-enrollment-summary {
+      padding: 20px;
+    }
+  }
 </style>
 
 <script>
@@ -933,6 +1003,14 @@
   }
   
   console.log('Widget initialized:', { widgetId, courseId, courseType, instanceId, configId });
+  
+  // Course data for enrollment summary
+  let courseData = {
+    courseName: widget.dataset.courseName || 'Course',
+    startDate: widget.dataset.startDate || '',
+    location: widget.dataset.location || '',
+    fee: widget.dataset.fee || ''
+  };
   
   const elements = {
     loading: document.getElementById('ax-loading-' + widgetId),
@@ -1192,17 +1270,34 @@
         form.appendChild(header);
       }
       
-      // Render fields
-      config.fields.forEach(field => {
-        const fieldElement = createFormField(field, stepId);
-        if (fieldElement) {
-          form.appendChild(fieldElement);
-        }
-      });
+      // Handle enrollment-summary stepType
+      if (config.stepType === 'enrollment-summary') {
+        const summaryDiv = createEnrollmentSummary(config);
+        form.appendChild(summaryDiv);
+      } else {
+        // Render fields
+        config.fields.forEach(field => {
+          const fieldElement = createFormField(field, stepId);
+          if (fieldElement) {
+            form.appendChild(fieldElement);
+          }
+        });
+      }
       
       // Add navigation buttons (except for review and declaration)
-      if (config.stepType !== 'review' && config.stepType !== 'enrol') {
+      if (config.stepType !== 'review' && config.stepType !== 'enrol' && config.stepType !== 'enrollment-summary') {
         const buttonGroup = createNavigationButtons(stepId, config);
+        form.appendChild(buttonGroup);
+      } else if (config.stepType === 'enrollment-summary') {
+        // Enrollment Summary: Continue Enrolment button
+        const buttonGroup = document.createElement('div');
+        buttonGroup.className = 'ax-button-group relative z-10 mt-5';
+        const buttonText = config.buttonText || 'Continue Enrolment';
+        buttonGroup.innerHTML = `
+          <button type="submit" class="push-btn inline-block w-100 text-center ax-btn ax-btn-primary">
+            <span class="push-btn__surface w-100">${buttonText} →</span>
+          </button>
+        `;
         form.appendChild(buttonGroup);
       } else if (config.stepType === 'review') {
         // Review step: Single Save button
@@ -1536,6 +1631,75 @@
     }
     
     return fieldGroup;
+  }
+  
+  // =========================================================================
+  // Enrollment Summary Creation
+  // =========================================================================
+  
+  function createEnrollmentSummary(config) {
+    const summaryContainer = document.createElement('div');
+    summaryContainer.className = 'ax-enrollment-summary';
+    
+    // Get course and contact information
+    const courseName = courseData?.courseName || 'Course';
+    const studentName = contactDetails.givenName && contactDetails.surname 
+      ? `${contactDetails.givenName} ${contactDetails.surname}`
+      : 'Student';
+    const instanceDate = courseData?.startDate || new Date().toLocaleDateString('en-AU', { 
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric' 
+    });
+    const location = courseData?.location || 'TBD';
+    const fee = courseData?.fee || '$0.00';
+    
+    // Course Outline Section
+    const courseOutlineSection = document.createElement('div');
+    courseOutlineSection.className = 'ax-summary-section';
+    courseOutlineSection.innerHTML = `
+      <h3 class="ax-summary-section-title">Course Outline</h3>
+    `;
+    
+    // Enrollment Details Section
+    const enrollmentSection = document.createElement('div');
+    enrollmentSection.className = 'ax-summary-section';
+    enrollmentSection.innerHTML = `
+      <h4 class="ax-summary-subtitle">Enrolment Details</h4>
+      <div class="ax-summary-row">
+        <div class="ax-summary-label">Course Instance:</div>
+        <div class="ax-summary-value">${courseName}</div>
+      </div>
+      <div class="ax-summary-row">
+        <div class="ax-summary-label">Student:</div>
+        <div class="ax-summary-value">${studentName}</div>
+      </div>
+      <div class="ax-summary-row">
+        <div class="ax-summary-label">Date(s):</div>
+        <div class="ax-summary-value">${instanceDate}</div>
+      </div>
+      <div class="ax-summary-row">
+        <div class="ax-summary-label">Location:</div>
+        <div class="ax-summary-value">${location}</div>
+      </div>
+    `;
+    
+    // Course Fees Section
+    const feesSection = document.createElement('div');
+    feesSection.className = 'ax-summary-section';
+    feesSection.innerHTML = `
+      <h4 class="ax-summary-subtitle">Course Fees</h4>
+      <div class="ax-summary-row">
+        <div class="ax-summary-label">Fee:</div>
+        <div class="ax-summary-value">${fee}</div>
+      </div>
+    `;
+    
+    summaryContainer.appendChild(courseOutlineSection);
+    summaryContainer.appendChild(enrollmentSection);
+    summaryContainer.appendChild(feesSection);
+    
+    return summaryContainer;
   }
   
   function createNavigationButtons(stepId, config) {
@@ -2091,7 +2255,13 @@
     markStepCompleted(stepId);
     
     // Handle based on step type
-    if (config.stepType === 'review') {
+    if (config.stepType === 'enrollment-summary') {
+      // Enrollment summary - move to declaration
+      const nextStep = formSteps.find(s => s.id === 'declaration');
+      if (nextStep) {
+        showStep(nextStep.id);
+      }
+    } else if (config.stepType === 'review') {
       // Review step - move to declaration
       const nextStep = formSteps.find(s => s.id === 'declaration');
       if (nextStep) {

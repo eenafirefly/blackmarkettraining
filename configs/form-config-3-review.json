@@ -3,26 +3,36 @@
   "configName": "Accredited Enrolment Form - Single - No Payment",
   "step": "review",
   "stepName": "Review Details",
-  "stepType": "review",
+  "stepType": "enrollment-summary",
   "stepOrder": 13,
   "stepId": "review",
-  "description": "Review and confirm all your details before final submission",
+  "contactType": "Student",
+  "buttonText": "Continue Enrolment",
+  "description": "Review your enrollment details before proceeding",
   "fields": [],
-  "displaySections": [
-    "background",
-    "subjectmatter",
-    "personal",
-    "contact",
-    "address",
-    "emergency",
-    "nationality",
-    "schooling",
-    "additional",
-    "studyreason",
-    "documents"
-  ],
-  "allowEdit": true,
-  "editBehavior": "navigate_back",
-  "note": "This is a review step that displays all previously entered data for confirmation. No input fields - just displays summaries from all previous steps."
+  "displaySections": {
+    "courseOutline": {
+      "title": "Course Outline",
+      "visible": true
+    },
+    "enrollmentDetails": {
+      "title": "Enrolment Details",
+      "visible": true,
+      "fields": [
+        "courseInstance",
+        "student",
+        "dates",
+        "location"
+      ]
+    },
+    "courseFees": {
+      "title": "Course Fees",
+      "visible": true,
+      "fields": [
+        "fee"
+      ]
+    }
+  },
+  "note": "Displays course enrollment summary with course details, student info, dates, location, and fees"
 }
 
