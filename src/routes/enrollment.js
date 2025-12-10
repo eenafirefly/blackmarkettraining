@@ -628,8 +628,8 @@ router.post('/save-step', async (req, res) => {
         // Contact fields
         if (keyLower === 'dateofbirth' || keyLower === 'birthdate' || keyLower === 'dob') axFieldName = 'DOB';
         if (keyLower === 'gender' || keyLower === 'sex') axFieldName = 'SEX';
-        if (keyLower === 'email' || keyLower === 'emailaddress') axFieldName = 'EMAIL';
-        if (keyLower === 'alternativeemail' || keyLower === 'alternativeemailaddress') axFieldName = 'ALTERNATIVEEMAIL';
+        if (keyLower === 'email' || keyLower === 'emailaddress') axFieldName = 'EMAILADDRESS';
+        if (keyLower === 'alternativeemail' || keyLower === 'alternativeemailaddress') axFieldName = 'ALTERNATIVEEMAILADDRESS';
         if (keyLower === 'mobile' || keyLower === 'mobilephone') axFieldName = 'MOBILE';
         if (keyLower === 'homephone') axFieldName = 'PHONE';
         if (keyLower === 'workphone') axFieldName = 'WORKPHONE';
