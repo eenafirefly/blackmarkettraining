@@ -776,9 +776,9 @@ router.post('/save-step', async (req, res) => {
     }
     
     // Check if we've already sent an incomplete email within the last 2 hours
-    // Fetch contact notes to see if incomplete note exists
-    const notesResponse = await fetch(
-      `${process.env.AXCELERATE_API_URL}/contact/${contactId}/notes`,
+    // Use custom field to track last email sent time (since notes endpoint returns 405 on POST)
+    const contactCheckResponse = await fetch(
+      `${process.env.AXCELERATE_API_URL}/contact/${contactId}`,
       {
         headers: {
           'APIToken': process.env.AXCELERATE_API_TOKEN,
@@ -790,64 +790,43 @@ router.post('/save-step', async (req, res) => {
     let shouldSendEmail = true;
     let lastEmailTime = null;
     
-    if (notesResponse.ok) {
-      let notesData = await notesResponse.json();
-      console.log('📋 Raw notes response type:', typeof notesData);
-      console.log('📋 Raw notes response:', JSON.stringify(notesData).substring(0, 500));
-      console.log('📋 Is array?', Array.isArray(notesData));
+    if (contactCheckResponse.ok) {
+      const contactData = await contactCheckResponse.json();
+      const lastEmailSentField = contactData.CUSTOMFIELD_LASTINCOMPLETEEMAILSENT;
       
-      // Check if notes are nested in a data property
-      const notes = Array.isArray(notesData) ? notesData : (notesData.data || notesData.notes || notesData);
-      console.log('📋 Processed notes:', Array.isArray(notes) ? `Array with ${notes.length} items` : typeof notes);
+      console.log('📋 Checking last incomplete email sent time from contact custom field...');
+      console.log('   CUSTOMFIELD_LASTINCOMPLETEEMAILSENT:', lastEmailSentField);
       
-      const now = new Date();
-      const twoHoursInMs = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
-      
-      // Check if there's an incomplete enrollment note within the last 2 hours
-      // Ensure notes is an array before calling .some()
-      if (Array.isArray(notes) && notes.length > 0) {
-        console.log(`📋 Checking ${notes.length} notes for incomplete email sent within last 2 hours...`);
-        console.log(`   Current time: ${now.toISOString()}`);
+      if (lastEmailSentField) {
+        const lastEmailDate = new Date(lastEmailSentField);
+        const now = new Date();
+        const twoHoursInMs = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+        const timeDiff = now - lastEmailDate;
+        const hoursDiff = timeDiff / (60 * 60 * 1000);
         
-        // Find the most recent incomplete email note
-        notes.forEach((note, index) => {
-          const isIncompleteNote = note.NOTE && (
-            note.NOTE.includes('Incomplete enrollment') || 
-            note.NOTE.includes('Email sent to student to resume')
-          );
-          
-          console.log(`   Note ${index}: isIncompleteNote=${isIncompleteNote}, DATE=${note.DATE}, NOTE preview=${note.NOTE ? note.NOTE.substring(0, 50) : 'null'}`);
-          
-          if (isIncompleteNote && note.DATE) {
-            const noteDate = new Date(note.DATE);
-            const timeDiff = now - noteDate;
-            const hoursDiff = timeDiff / (60 * 60 * 1000);
-            
-            console.log(`   📝 Found incomplete note from ${note.DATE}`);
-            console.log(`      Parsed date: ${noteDate.toISOString()}`);
-            console.log(`      Time diff: ${timeDiff}ms (${hoursDiff.toFixed(1)} hours ago)`);
-            console.log(`      2hr threshold: ${twoHoursInMs}ms`);
-            console.log(`      Within 2hrs? ${timeDiff < twoHoursInMs}`);
-            
-            if (timeDiff < twoHoursInMs) {
-              console.log(`   ✋ Email was sent ${hoursDiff.toFixed(1)} hours ago - within 2 hour threshold`);
-              shouldSendEmail = false;
-              lastEmailTime = noteDate;
-            }
-          }
-        });
+        console.log(`   📝 Last incomplete email sent: ${lastEmailSentField}`);
+        console.log(`      Parsed date: ${lastEmailDate.toISOString()}`);
+        console.log(`      Time diff: ${timeDiff}ms (${hoursDiff.toFixed(1)} hours ago)`);
+        console.log(`      2hr threshold: ${twoHoursInMs}ms`);
+        console.log(`      Within 2hrs? ${timeDiff < twoHoursInMs}`);
         
-        if (!shouldSendEmail && lastEmailTime) {
-          const hoursAgo = ((now - lastEmailTime) / (60 * 60 * 1000)).toFixed(1);
-          console.log(`⏸️ Incomplete email already sent ${hoursAgo} hours ago - skipping to prevent duplicates`);
+        if (timeDiff < twoHoursInMs) {
+          console.log(`   ✋ Email was sent ${hoursDiff.toFixed(1)} hours ago - within 2 hour threshold`);
+          shouldSendEmail = false;
+          lastEmailTime = lastEmailDate;
         } else {
-          console.log('✅ No incomplete email sent within last 2 hours - will send now');
+          console.log(`   ✅ Email was sent ${hoursDiff.toFixed(1)} hours ago - outside 2 hour threshold, will send new email`);
         }
       } else {
-        console.log('📋 No notes found or notes is not an array - will send email');
+        console.log('   ℹ️ No previous incomplete email timestamp found - will send email');
+      }
+      
+      if (!shouldSendEmail && lastEmailTime) {
+        const hoursAgo = ((now - lastEmailTime) / (60 * 60 * 1000)).toFixed(1);
+        console.log(`⏸️ Incomplete email already sent ${hoursAgo} hours ago - skipping to prevent duplicates`);
       }
     } else {
-      console.log('❌ Failed to fetch notes:', notesResponse.status);
+      console.log('❌ Failed to fetch contact for email check:', contactCheckResponse.status);
     }
     
     // Send incomplete enrollment email immediately via SendGrid (Template 111502 equivalent)
@@ -910,24 +889,13 @@ router.post('/save-step', async (req, res) => {
         if (sendGridResponse.ok || sendGridResponse.status === 202) {
           console.log('✅ Incomplete enrollment email sent via SendGrid (Template 111502 equivalent)');
           
-          // Create note to track that email was sent (prevents duplicates)
-          const noteText = `Incomplete enrollment - Email sent
-
-Contact: ${contactName} (${contactEmail})
-Course: ${courseName || 'Unknown'} (Instance: ${instanceId})
-Resume Link: ${resumeUrl}
-Date: ${new Date().toLocaleString()}
-
-Email sent to student to resume enrollment.`;
-          
-          // Note: aXcelerate note creation disabled temporarily due to API endpoint issues
-          // The email tracking is now handled by checking recent notes instead
-          // TODO: Re-enable when correct aXcelerate note API endpoint is confirmed
-          /*
+          // Update custom field to track when email was sent (prevents duplicates)
           try {
-            console.log('📝 Creating note in aXcelerate to track email sent...');
-            const noteResponse = await fetch(
-              `${process.env.AXCELERATE_API_URL}/contact/${contactId}/note`,
+            console.log('📝 Updating CUSTOMFIELD_LASTINCOMPLETEEMAILSENT timestamp...');
+            const timestamp = new Date().toISOString();
+            
+            const trackingUpdateResponse = await fetch(
+              `${process.env.AXCELERATE_API_URL}/contact/${contactId}`,
               {
                 method: 'POST',
                 headers: {
@@ -935,21 +903,19 @@ Email sent to student to resume enrollment.`;
                   'WSToken': process.env.AXCELERATE_WS_TOKEN,
                   'Content-Type': 'application/x-www-form-urlencoded'
                 },
-                body: `note=${encodeURIComponent(noteText)}&type=General`
+                body: `CUSTOMFIELD_LASTINCOMPLETEEMAILSENT=${encodeURIComponent(timestamp)}`
               }
             );
             
-            if (noteResponse.ok) {
-              const noteResult = await noteResponse.json();
-              console.log('✅ Note created successfully in aXcelerate:', noteResult);
+            if (trackingUpdateResponse.ok) {
+              console.log(`✅ Email timestamp updated: ${timestamp}`);
             } else {
-              console.warn(`⚠️ Could not create note (${noteResponse.status}) - continuing anyway`);
+              const errorText = await trackingUpdateResponse.text();
+              console.warn(`⚠️ Could not update email timestamp (${trackingUpdateResponse.status}):`, errorText);
             }
-          } catch (noteError) {
-            console.warn('⚠️ Exception while creating note - continuing anyway:', noteError.message);
+          } catch (trackingError) {
+            console.warn('⚠️ Exception while updating email timestamp:', trackingError.message);
           }
-          */
-          console.log('ℹ️ Note creation skipped - email tracking via existing notes only');
         } else {
           const errorText = await sendGridResponse.text();
           console.warn('⚠️ SendGrid error:', sendGridResponse.status, errorText);
