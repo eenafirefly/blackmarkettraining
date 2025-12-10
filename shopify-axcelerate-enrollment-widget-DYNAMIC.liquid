@@ -3040,6 +3040,10 @@
           console.log(`✅ Populated ${stepId} with ${fieldCount} fields:`, Object.keys(stepData));
           console.log(`   Step data:`, stepData);
           
+          // Actually populate the DOM fields (this was missing!)
+          console.log(`   📝 Now populating DOM fields for step "${stepId}"...`);
+          populateFormData(stepId, stepData);
+          
           // Mark step as completed if it has data
           markStepCompleted(stepId);
         }
