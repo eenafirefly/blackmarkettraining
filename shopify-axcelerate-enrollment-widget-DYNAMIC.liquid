@@ -2801,6 +2801,13 @@
         // Input with this ID not found - might be a radio or checkbox group
         console.log(`     🔍 Input #${inputIdLower} (or #${inputIdCamel}) not found, checking for radio/checkbox group...`);
         
+        // Special debug for email/alternativeemail
+        if (fieldId === 'email' || fieldId === 'alternativeemail') {
+          console.log(`     🔍 Email field debug - looking for:`, [inputIdLower, inputIdCamel]);
+          const allEmailInputs = widget.querySelectorAll('input[type="email"]');
+          console.log(`     🔍 All email inputs found:`, Array.from(allEmailInputs).map(i => ({ id: i.id, name: i.name, value: i.value })));
+        }
+        
         // Try to find radio buttons by name
         const radios = widget.querySelectorAll(`input[name="${fieldId}"][type="radio"]`);
         if (radios.length > 0) {

@@ -753,7 +753,8 @@ router.post('/save-step', async (req, res) => {
         
         if (verifyResponse.ok) {
           const contact = await verifyResponse.json();
-          console.log('📊 Checking if custom fields were saved:');
+          console.log('📊 aXcelerate contact ALL field names:', Object.keys(contact).filter(k => k.includes('ADDRESS') || k.includes('CITY') || k.includes('BUILDING') || k.includes('FLAT') || k.includes('UNIT') || k.includes('COUNTRY') || k.includes('LANGUAGE') || k.includes('CITIZENSHIP') || k.includes('BIRTH') || k.includes('ENGLISH')));
+          console.log('📊 Checking if fields were saved:');
           Object.keys(updatePayload).forEach(key => {
             const savedValue = contact[key] || 'NOT FOUND';
             const match = savedValue === updatePayload[key] ? '✅' : '❌';
