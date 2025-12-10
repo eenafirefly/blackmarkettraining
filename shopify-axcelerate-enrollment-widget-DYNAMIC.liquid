@@ -2761,6 +2761,23 @@
             const checkbox = widget.querySelector(`input[name="${fieldId}"][value="${v}"]`);
             if (checkbox) checkbox.checked = true;
           });
+        } else if (input.type === 'radio') {
+          // Radio button - need to find the specific radio with this value
+          console.log(`     ✅ Found radio button, looking for value: "${value}"`);
+          const radio = widget.querySelector(`input[name="${fieldId}"][value="${value}"]`);
+          if (radio) {
+            radio.checked = true;
+            console.log(`     ✅ Checked radio: ${fieldId} = "${value}"`);
+            // Trigger change event for conditional logic
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
+          } else {
+            console.warn(`     ⚠️ Radio button with value "${value}" not found for ${fieldId}`);
+            // Try to find all available radio values
+            const allRadios = widget.querySelectorAll(`input[name="${fieldId}"]`);
+            if (allRadios.length > 0) {
+              console.warn(`     Available radio values:`, Array.from(allRadios).map(r => r.value));
+            }
+          }
         } else {
           console.log(`     ✅ Found (${input.tagName}), setting value: "${value}"`);
           input.value = value;
@@ -2769,11 +2786,28 @@
           input.dispatchEvent(new Event('change', { bubbles: true }));
         }
       } else {
-        console.warn(`     ❌ NOT FOUND: #${inputId}`);
-        // List all input IDs in the step to help debug
-        const allInputs = widget.querySelectorAll(`#ax-step-${stepId}-${widgetId} input, #ax-step-${stepId}-${widgetId} select, #ax-step-${stepId}-${widgetId} textarea`);
-        if (allInputs.length > 0) {
-          console.warn(`     Available inputs in step:`, Array.from(allInputs).map(i => i.id || i.name));
+        // Input with this ID not found - might be a radio or checkbox group
+        console.log(`     🔍 Input #${inputId} not found, checking for radio/checkbox group...`);
+        
+        // Try to find radio buttons by name
+        const radios = widget.querySelectorAll(`input[name="${fieldId}"][type="radio"]`);
+        if (radios.length > 0) {
+          console.log(`     ✅ Found ${radios.length} radio buttons for "${fieldId}"`);
+          const radio = Array.from(radios).find(r => r.value === String(value));
+          if (radio) {
+            radio.checked = true;
+            console.log(`     ✅ Checked radio: ${fieldId} = "${value}"`);
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
+          } else {
+            console.warn(`     ⚠️ No radio with value "${value}" found. Available:`, Array.from(radios).map(r => r.value));
+          }
+        } else {
+          console.warn(`     ❌ NOT FOUND: #${inputId} or radio group`);
+          // List all input IDs in the step to help debug
+          const allInputs = widget.querySelectorAll(`#ax-step-${stepId}-${widgetId} input, #ax-step-${stepId}-${widgetId} select, #ax-step-${stepId}-${widgetId} textarea`);
+          if (allInputs.length > 0) {
+            console.warn(`     Available inputs in step:`, Array.from(allInputs).map(i => i.id || i.name));
+          }
         }
       }
     });
