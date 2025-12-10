@@ -633,9 +633,9 @@ router.post('/save-step', async (req, res) => {
       'postaladdress', 'postalstreetnumber', 'postalstreetname', 'postalsuburb', 'postalpostcode', 'postalstate', 'postalcountry',
       'postalbuildingpropertyname', 'postalflatunitdetails', 'postalpoboxdetails', 'postalpobox',
       'usi', 'uniquestudentidentifier', 'studentidentifier',
-      'birthplace', 'cityofbirth',
+      'countryofbirth', 'birthplace', 'cityofbirth',
       'citizenshipstatus', 'countryofcitizenship', 'residencystatus',
-      'englishassistance', 'atschool',
+      'languagespoken', 'languageidentifier', 'englishproficiency', 'englishassistance', 'atschool',
       'indigenousstatus', 'aboriginalortorresstraitislanderorigin',
       'employmentstatus', 'occupationidentifier', 'industryofemployment',
       'schoollevel', 'highestschoollevel', 'highestcompletedschoollevel', 'yearhighestschoolcompleted',
@@ -710,7 +710,10 @@ router.post('/save-step', async (req, res) => {
         if (keyLower === 'uniquestudentidentifier' || keyLower === 'studentidentifier' || keyLower === 'usi') axFieldName = 'USI';
         
         // VET Related Details - Nationality/Citizenship
-        // countryofbirth, languagespoken, englishproficiency are now custom fields (handled below)
+        if (keyLower === 'countryofbirth') {
+          axFieldName = 'COUNTRYOFBIRTHNAME';
+          value = getCountryName(value); // Convert country code to full name
+        }
         if (keyLower === 'birthplace' || keyLower === 'cityofbirth') axFieldName = 'CITYOFBIRTH';
         if (keyLower === 'citizenshipstatus') axFieldName = 'CITIZENSTATUSID'; // This uses numeric IDs (1-8)
         if (keyLower === 'countryofcitizenship') {
@@ -720,7 +723,8 @@ router.post('/save-step', async (req, res) => {
         if (keyLower === 'residencystatus') axFieldName = 'RESIDENCYSTATUSID';
         
         // VET Related Details - Language
-        // speakotherlanguage, languagespoken, englishproficiency are now custom fields (handled below)
+        if (keyLower === 'languagespoken' || keyLower === 'languageidentifier') axFieldName = 'MAINLANGUAGENAME';
+        if (keyLower === 'englishproficiency') axFieldName = 'ENGLISHPROFICIENCYNAME';
         if (keyLower === 'englishassistance') axFieldName = 'ENGLISHASSISTANCEFLAG';
         if (keyLower === 'atschool') axFieldName = 'ATSCHOOLFLAG';
         
@@ -753,12 +757,6 @@ router.post('/save-step', async (req, res) => {
       } else {
         // Custom field - send with CUSTOMFIELD_ prefix
         const axcelerateFieldName = `CUSTOMFIELD_${key.toUpperCase()}`;
-        
-        // Convert country codes to full names for custom country fields
-        if (keyLower === 'countryofbirth' || keyLower === 'countryofcitizenship') {
-          value = getCountryName(value);
-        }
-        
         updatePayload[axcelerateFieldName] = value;
         console.log(`   📝 Custom field: ${key} → ${axcelerateFieldName} = "${value}"`);
       }
