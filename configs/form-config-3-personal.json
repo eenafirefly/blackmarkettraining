@@ -13,6 +13,8 @@
       "type": "select",
       "required": true,
       "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "TITLE",
       "options": [
         { "display": "Mr", "value": "Mr" },
         { "display": "Mrs", "value": "Mrs" },
@@ -23,7 +25,7 @@
     },
     {
       "order": 2,
-      "fieldId": "givenName",
+      "fieldId": "givenname",
       "name": "Given Name",
       "type": "text",
       "required": true,
@@ -33,24 +35,27 @@
     },
     {
       "order": 3,
-      "fieldId": "preferredName",
+      "fieldId": "preferredname",
       "name": "Preferred Name",
       "type": "text",
       "required": false,
-      "dataField": true
+      "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "PREFERREDNAME"
     },
     {
       "order": 4,
-      "fieldId": "middleName",
+      "fieldId": "middlename",
       "name": "Middle Name",
       "type": "text",
       "required": false,
       "dataField": true,
+      "syncToCustomField": false,
       "mapsToContactField": "MIDDLENAME"
     },
     {
       "order": 5,
-      "fieldId": "lastName",
+      "fieldId": "lastname",
       "name": "Last Name",
       "type": "text",
       "required": true,
@@ -60,7 +65,7 @@
     },
     {
       "order": 6,
-      "fieldId": "dateOfBirth",
+      "fieldId": "dateofbirth",
       "name": "Date Of Birth",
       "type": "date",
       "required": true,
