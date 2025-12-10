@@ -142,9 +142,8 @@
         <button class="ax-modal-close">×</button>
         <h3>Existing Record Found</h3>
         <div class="ax-modal-body">
-          <p>We found an existing record with your email address.</p>
-          <p>An incomplete booking email will be sent to <strong id="ax-modal-email"></strong> with a link to continue your enrollment.</p>
-          <p>Please check your inbox (and spam folder) for the email from Black Market Training.</p>
+          <p>An existing record has been found.</p>
+          <p>An email has been dispatched to <strong id="ax-modal-email"></strong> to verify your identity and allow you to continue enrolling.</p>
         </div>
         <div class="ax-modal-actions">
           <button class="ax-btn ax-btn-primary ax-modal-ok">OK</button>
@@ -2238,10 +2237,13 @@
       });
       
       const result = await createResponse.json();
-      console.log('Create contact result:', result);
+      console.log('📋 Create contact result:', result);
+      console.log('   Has existingContact flag:', !!result.existingContact);
+      console.log('   Has success flag:', !!result.success);
+      console.log('   Full response:', JSON.stringify(result, null, 2));
       
       // Check if this is an existing contact
-      if (result.existingContact) {
+      if (result.existingContact === true) {
         console.log('✋ Existing contact detected by backend:', result.contactId);
         
         // Send incomplete booking email
