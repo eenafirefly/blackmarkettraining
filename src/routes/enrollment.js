@@ -591,7 +591,9 @@ router.post('/save-step', async (req, res) => {
     const personalDetailFields = [
       'title', 'givenname', 'firstname', 'surname', 'lastname', 'preferredname', 'middlename',
       'dateofbirth', 'dob', 'birthdate', 'gender', 'sex',
-      'email', 'emailaddress', 'phone', 'mobilephone', 'mobile', 'homephone', 'workphone', 'fax',
+      'email', 'emailaddress', 'alternativeemail', 'alternativeemailaddress',
+      'phone', 'mobilephone', 'mobile', 'homephone', 'workphone', 'fax',
+      'organisation', 'organization', 'position', 'jobtitle',
       'address', 'streetaddress', 'streetnumber', 'streetname', 'suburb', 'city', 'postcode', 'state', 'country',
       'buildingpropertyname', 'flatunitdetails', 'poboxdetails',
       'postaladdress', 'postalstreetnumber', 'postalstreetname', 'postalsuburb', 'postalpostcode', 'postalstate', 'postalcountry',
@@ -626,10 +628,14 @@ router.post('/save-step', async (req, res) => {
         // Contact fields
         if (keyLower === 'dateofbirth' || keyLower === 'birthdate' || keyLower === 'dob') axFieldName = 'DOB';
         if (keyLower === 'gender' || keyLower === 'sex') axFieldName = 'SEX';
+        if (keyLower === 'email' || keyLower === 'emailaddress') axFieldName = 'EMAIL';
+        if (keyLower === 'alternativeemail' || keyLower === 'alternativeemailaddress') axFieldName = 'ALTERNATIVEEMAIL';
         if (keyLower === 'mobile' || keyLower === 'mobilephone') axFieldName = 'MOBILE';
         if (keyLower === 'homephone') axFieldName = 'PHONE';
         if (keyLower === 'workphone') axFieldName = 'WORKPHONE';
         if (keyLower === 'fax') axFieldName = 'FAX';
+        if (keyLower === 'organisation' || keyLower === 'organization') axFieldName = 'ORGANISATION';
+        if (keyLower === 'position' || keyLower === 'jobtitle') axFieldName = 'POSITION';
         
         // Address fields - Residential
         if (keyLower === 'streetaddress' || keyLower === 'address') axFieldName = 'ADDRESS';

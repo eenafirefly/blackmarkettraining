@@ -2937,7 +2937,12 @@
         preferredname: contact.PREFERREDNAME || contact.preferredname || '',
         middlename: contact.MIDDLENAME || contact.middlename || '',
         email: contact.EMAILADDRESS || contact.EMAIL || contact.email || '',
+        alternativeemail: contact.ALTERNATIVEEMAIL || contact.alternativeemail || '',
+        organisation: contact.ORGANISATION || contact.organisation || '',
+        position: contact.POSITION || contact.position || '',
         mobile: contact.MOBILE || contact.MOBILEPHONE || contact.mobile || '',
+        homephone: contact.PHONE || contact.homephone || '',
+        workphone: contact.WORKPHONE || contact.workphone || '',
         dob: contact.DOB || contact.dateofbirth || '',
         dateofbirth: contact.DOB || contact.dateofbirth || '',
         usi: contact.USI || contact.usi || '',
@@ -2970,7 +2975,7 @@
       // Organize by step (map fields to their respective steps)
       const stepFieldMap = {
         'personal': ['givenname', 'surname', 'lastname', 'dob', 'dateofbirth', 'gender', 'sex', 'usi', 'title', 'middlename', 'preferredname'],
-        'contact': ['email', 'mobile', 'phone', 'mobilephone'],
+        'contact': ['email', 'alternativeemail', 'organisation', 'position', 'mobile', 'homephone', 'workphone', 'phone', 'mobilephone'],
         'address': ['address', 'streetaddress', 'suburb', 'postcode', 'state', 'country', 'buildingpropertyname', 'flatunitdetails', 'streetnumber', 'streetname', 'postaladdress', 'postalsuburb', 'postalpostcode', 'postalstate', 'postalcountry'],
         'background': [
           'obtainusi', 'previousstudy', 'studyoutcome', 'dedicatetime', 'deadlines', 'worklifestudy',
