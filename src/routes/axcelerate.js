@@ -1035,6 +1035,8 @@ router.get('/instance/:instanceId', async (req, res) => {
     const { instanceId } = req.params;
     
     console.log('📚 Fetching course instance details:', instanceId);
+    console.log('   API URL:', process.env.AXCELERATE_API_URL);
+    console.log('   Full URL:', `${process.env.AXCELERATE_API_URL}/course/instance/${instanceId}`);
     
     // Fetch instance details from aXcelerate
     const response = await fetch(
@@ -1047,8 +1049,12 @@ router.get('/instance/:instanceId', async (req, res) => {
       }
     );
     
+    console.log('📥 aXcelerate response status:', response.status);
+    
     if (!response.ok) {
-      throw new Error(`aXcelerate API returned ${response.status}`);
+      const errorText = await response.text();
+      console.error('❌ aXcelerate error:', errorText);
+      throw new Error(`aXcelerate API returned ${response.status}: ${errorText}`);
     }
     
     const instance = await response.json();
@@ -1065,10 +1071,12 @@ router.get('/instance/:instanceId', async (req, res) => {
       courseCode: instance.COURSECODE || instance.courseCode || ''
     };
     
+    console.log('📤 Sending formatted data:', formattedData);
     res.json(formattedData);
     
   } catch (error) {
     console.error('❌ Failed to fetch course instance:', error);
+    console.error('   Error stack:', error.stack);
     
     res.status(500).json({
       success: false,

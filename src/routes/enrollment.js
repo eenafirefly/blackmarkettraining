@@ -995,7 +995,14 @@ router.post('/send-verification', async (req, res) => {
     const verificationToken = Buffer.from(`${contactId}:${Date.now()}`).toString('base64');
     
     // Build resume URL with auth parameters
-    const resumeUrl = `${req.body.resumeUrl || req.headers.referer}?auth_token=${verificationToken}&contact_id=${contactId}`;
+    const baseUrl = req.body.resumeUrl || req.headers.referer || '';
+    const separator = baseUrl.includes('?') ? '&' : '?'; // Use & if URL already has parameters
+    const resumeUrl = `${baseUrl}${separator}auth_token=${verificationToken}&contact_id=${contactId}`;
+    
+    console.log('📧 Building resume URL:');
+    console.log('   Base URL:', baseUrl);
+    console.log('   Separator:', separator);
+    console.log('   Final URL:', resumeUrl);
     
     // Check if we've already sent a verification email within the last 2 hours
     const notesResponse = await fetch(
