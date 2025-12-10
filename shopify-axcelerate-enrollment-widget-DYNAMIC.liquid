@@ -2075,6 +2075,10 @@
       // Mark login step as completed
       markStepCompleted('login');
       
+      // Fetch ALL saved data from aXcelerate (contact + custom fields)
+      console.log('📊 Fetching all saved form data from aXcelerate...');
+      await fetchSavedFormData(contactId);
+      
       // Get the first dynamic step (background)
       const firstStep = formSteps.find(s => s.id !== 'login');
       if (firstStep) {
@@ -2088,7 +2092,8 @@
         }, 1000);
       }
       
-      setTimeout(() => cleanUrl(), 100);
+      // Don't clean URL immediately - let data load first
+      setTimeout(() => cleanUrl(), 3000); // Increased to 3 seconds
       return true;
     }
     
@@ -2816,6 +2821,122 @@
       
     } catch (error) {
       console.error('❌ Error fetching contact details:', error);
+    }
+  }
+  
+  async function fetchSavedFormData(contactIdToFetch) {
+    try {
+      console.log('📊 Fetching ALL saved form data for contact:', contactIdToFetch);
+      const response = await fetch(`${RENDER_APP_URL}/api/axcelerate/contact/${contactIdToFetch}`);
+      
+      if (!response.ok) {
+        console.error('Failed to fetch saved data:', response.status);
+        return;
+      }
+      
+      const contact = await response.json();
+      console.log('📋 Full contact data from aXcelerate:', contact);
+      
+      // Extract custom fields (CUSTOMFIELD_ prefix)
+      const customFields = {};
+      Object.keys(contact).forEach(key => {
+        if (key.startsWith('CUSTOMFIELD_')) {
+          const fieldName = key.replace('CUSTOMFIELD_', '').toLowerCase();
+          customFields[fieldName] = contact[key];
+        }
+      });
+      
+      console.log('📝 Extracted custom fields:', customFields);
+      console.log('   Total custom fields found:', Object.keys(customFields).length);
+      
+      // Also extract standard fields that might be in forms
+      const standardFields = {
+        givenname: contact.GIVENNAME || contact.givenname || '',
+        surname: contact.SURNAME || contact.surname || '',
+        lastname: contact.SURNAME || contact.surname || '',
+        email: contact.EMAILADDRESS || contact.EMAIL || contact.email || '',
+        mobile: contact.MOBILE || contact.MOBILEPHONE || contact.mobile || '',
+        dob: contact.DOB || contact.dateofbirth || '',
+        dateofbirth: contact.DOB || contact.dateofbirth || '',
+        usi: contact.USI || contact.usi || '',
+        gender: contact.SEX || contact.gender || '',
+        sex: contact.SEX || contact.gender || '',
+        address: contact.ADDRESS || contact.address || '',
+        streetaddress: contact.ADDRESS || contact.address || '',
+        suburb: contact.SUBURB || contact.suburb || '',
+        postcode: contact.POSTCODE || contact.postcode || '',
+        state: contact.STATE || contact.state || '',
+        country: contact.COUNTRY || contact.country || '',
+        countryofbirth: contact.COUNTRYOFBIRTH || '',
+        birthplace: contact.BIRTHPLACE || '',
+        citizenshipstatus: contact.CITIZENSHIPSTATUS || '',
+        languagespoken: contact.LANGUAGESPOKEN || '',
+        englishproficiency: contact.ENGLISHPROFICIENCY || '',
+        indigenousstatus: contact.INDIGENOUSSTATUS || '',
+        employmentstatus: contact.EMPLOYMENTSTATUS || '',
+        highestschoollevel: contact.HIGHESTSCHOOLLEVEL || '',
+        prioreducation: contact.PRIOREDUCATION || '',
+        disabilitytypes: contact.DISABILITYTYPES || ''
+      };
+      
+      console.log('📝 Extracted standard fields:', standardFields);
+      
+      // Combine both
+      const allFields = { ...standardFields, ...customFields };
+      console.log('📦 Combined all fields:', Object.keys(allFields).length, 'fields');
+      
+      // Organize by step (map fields to their respective steps)
+      const stepFieldMap = {
+        'personal': ['givenname', 'surname', 'lastname', 'dob', 'dateofbirth', 'gender', 'sex', 'usi', 'title', 'middlename', 'preferredname'],
+        'contact': ['email', 'mobile', 'phone', 'mobilephone'],
+        'address': ['address', 'streetaddress', 'suburb', 'postcode', 'state', 'country', 'buildingpropertyname', 'flatunitdetails', 'streetnumber', 'streetname'],
+        'nationality': ['countryofbirth', 'birthplace', 'citizenshipstatus', 'languagespoken', 'englishproficiency', 'indigenousstatus', 'speakotherlanguage'],
+        'schooling': ['highestschoollevel', 'prioreducation', 'prioreducationstatus', 'yearhighestschoolcompleted'],
+        'additional': ['employmentstatus', 'disabilitytypes', 'hasdisability', 'occupationidentifier'],
+        'emergency': ['emergencycontactname', 'emergencyrelationship', 'emergencycontactnumber']
+      };
+      
+      // Populate formData for each step
+      Object.entries(stepFieldMap).forEach(([stepId, fieldNames]) => {
+        const stepData = {};
+        let fieldCount = 0;
+        
+        fieldNames.forEach(fieldName => {
+          if (allFields[fieldName] && allFields[fieldName] !== '') {
+            stepData[fieldName] = allFields[fieldName];
+            fieldCount++;
+          }
+        });
+        
+        if (fieldCount > 0) {
+          formData[stepId] = stepData;
+          sessionStorage.setItem(`ax_form_${stepId}`, JSON.stringify(stepData));
+          console.log(`✅ Populated ${stepId} with ${fieldCount} fields:`, Object.keys(stepData));
+          
+          // Mark step as completed if it has data
+          markStepCompleted(stepId);
+        }
+      });
+      
+      // Also check for any custom fields not in our map
+      Object.keys(customFields).forEach(fieldName => {
+        let foundInStep = false;
+        Object.values(stepFieldMap).forEach(fieldNames => {
+          if (fieldNames.includes(fieldName)) {
+            foundInStep = true;
+          }
+        });
+        
+        if (!foundInStep) {
+          console.log(`⚠️ Custom field not mapped to any step: ${fieldName} = ${customFields[fieldName]}`);
+        }
+      });
+      
+      console.log('✅ Finished loading saved form data from aXcelerate');
+      console.log('📦 Total steps populated:', Object.keys(formData).length);
+      
+    } catch (error) {
+      console.error('❌ Error fetching saved form data:', error);
     }
   }
   
