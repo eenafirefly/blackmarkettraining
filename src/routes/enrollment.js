@@ -607,7 +607,7 @@ router.post('/save-step', async (req, res) => {
       'employmentstatus', 'occupationidentifier', 'industryofemployment',
       'schoollevel', 'highestschoollevel', 'highestcompletedschoollevel', 'yearhighestschoolcompleted',
       'prioreducationstatus', 'prioreducation',
-      'disabilities', 'disabilitytypes', 'disabilityflag',
+      'disabilities', 'disabilitytypes', 'disabilityflag', 'hasdisability',
       'surveycontactstatus'
     ];
     
@@ -683,9 +683,9 @@ router.post('/save-step', async (req, res) => {
         if (keyLower === 'englishassistance') axFieldName = 'ENGLISHASSISTANCEFLAG';
         if (keyLower === 'atschool') axFieldName = 'ATSCHOOLFLAG';
         
-        // VET Related Details - Indigenous/Employment
-        if (keyLower === 'indigenousstatus' || keyLower === 'aboriginalortorresstraitislanderorigin') axFieldName = 'INDIGENOUSSTATUS';
-        if (keyLower === 'employmentstatus') axFieldName = 'EMPLOYMENTSTATUS';
+        // VET Related Details - Indigenous/Employment (use NAME fields for text values)
+        if (keyLower === 'indigenousstatus' || keyLower === 'aboriginalortorresstraitislanderorigin') axFieldName = 'INDIGENOUSSTATUSNAME';
+        if (keyLower === 'employmentstatus') axFieldName = 'EMPLOYMENTSTATUSNAME';
         if (keyLower === 'occupationidentifier') axFieldName = 'OCCUPATIONIDENTIFIER';
         if (keyLower === 'industryofemployment') axFieldName = 'INDUSTRYOFEMPLOYMENT';
         
@@ -700,7 +700,7 @@ router.post('/save-step', async (req, res) => {
         // These will be automatically handled as custom fields below
         
         // VET Related Details - Disability
-        if (keyLower === 'disabilities' || keyLower === 'disabilityflag') axFieldName = 'DISABILITYFLAG';
+        if (keyLower === 'disabilities' || keyLower === 'disabilityflag' || keyLower === 'hasdisability') axFieldName = 'DISABILITYFLAG';
         if (keyLower === 'disabilitytypes') axFieldName = 'DISABILITYTYPES';
         
         // VET Related Details - Survey

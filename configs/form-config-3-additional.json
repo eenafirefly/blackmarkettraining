@@ -10,26 +10,28 @@
   "fields": [
     {
       "order": 1,
-      "fieldId": "hasdisability",
-      "name": "Do you consider yourself to have a disability, impairment or long-term condition?",
-      "type": "select",
+      "fieldId": "disabilityflag",
+      "name": "Disabilities",
+      "type": "radio",
       "required": true,
       "dataField": true,
-      "syncToCustomField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "DISABILITYFLAG",
       "options": [
-        { "display": "No", "value": "false" },
-        { "display": "Yes", "value": "true" }
+        { "display": "Yes", "value": "Y" },
+        { "display": "No", "value": "N" },
+        { "display": "Not Specified", "value": "@" }
       ],
       "events": {
         "disabilitytypes_show": {
           "trigger": "change",
           "action": "show",
-          "condition": "value === 'true'"
+          "condition": "value === 'Y'"
         },
         "disabilitytypes_hide": {
           "trigger": "change",
           "action": "hide",
-          "condition": "value === 'false'"
+          "condition": "value === 'N' || value === '@'"
         }
       }
     },
@@ -65,12 +67,12 @@
     {
       "order": 4,
       "fieldId": "indigenousstatus",
-      "name": "Indigenous Status",
+      "name": "Aboriginal or Torres Strait Islander Origin",
       "type": "select",
       "required": false,
       "dataField": true,
       "syncToCustomField": false,
-      "mapsToContactField": "INDIGENOUSSTATUS",
+      "mapsToContactField": "INDIGENOUSSTATUSNAME",
       "options": [
         { "display": "No", "value": "4" },
         { "display": "Aboriginal", "value": "1" },
@@ -81,12 +83,12 @@
     {
       "order": 5,
       "fieldId": "employmentstatus",
-      "name": "Of the following categories, which best describes your current employment status?",
+      "name": "Employment Status",
       "type": "select",
       "required": true,
       "dataField": true,
       "syncToCustomField": false,
-      "mapsToContactField": "EMPLOYMENTSTATUS",
+      "mapsToContactField": "EMPLOYMENTSTATUSNAME",
       "tooltip": "For casual, seasonal, contract and shift work, use the current number of hours worked per week to determine whether full time (35 hours or more per week) or part-time employed (less than 35 hours per week).",
       "options": [
         { "display": "Full-time employee", "value": "1" },
