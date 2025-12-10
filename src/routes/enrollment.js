@@ -643,29 +643,29 @@ router.post('/save-step', async (req, res) => {
         if (keyLower === 'emergencycontactrelation' || keyLower === 'emergencyrelationship') axFieldName = 'EMERGENCYCONTACTRELATION';
         if (keyLower === 'emergencycontactphone' || keyLower === 'emergencycontactnumber') axFieldName = 'EMERGENCYCONTACTPHONE';
         
-        // Address fields - Residential
-        if (keyLower === 'streetaddress' || keyLower === 'address') axFieldName = 'ADDRESS';
-        if (keyLower === 'streetnumber') axFieldName = 'ADDRESS'; // Combine with street name
-        if (keyLower === 'streetname') axFieldName = 'ADDRESS'; // Combine with street number
+        // Address fields - Residential (aXcelerate uses ADDRESS1/ADDRESS2, not ADDRESS)
+        if (keyLower === 'streetaddress' || keyLower === 'address') axFieldName = 'ADDRESS1';
+        if (keyLower === 'streetnumber') axFieldName = 'ADDRESS1'; // Street number goes to ADDRESS1
+        if (keyLower === 'streetname') axFieldName = 'ADDRESS2'; // Street name goes to ADDRESS2
         if (keyLower === 'buildingpropertyname') axFieldName = 'BUILDINGPROPERTYNAME';
         if (keyLower === 'flatunitdetails') axFieldName = 'FLATUNITDETAILS';
         if (keyLower === 'poboxdetails') axFieldName = 'POBOXDETAILS';
-        if (keyLower === 'city' || keyLower === 'suburb') axFieldName = 'SUBURB';
+        if (keyLower === 'city' || keyLower === 'suburb') axFieldName = 'CITY'; // aXcelerate uses CITY, not SUBURB
         if (keyLower === 'postcode') axFieldName = 'POSTCODE';
         if (keyLower === 'state') axFieldName = 'STATE';
         if (keyLower === 'country') axFieldName = 'COUNTRY';
         
-        // Address fields - Postal
-        if (keyLower === 'postaladdress') axFieldName = 'POSTALADDRESS';
-        if (keyLower === 'postalstreetnumber') axFieldName = 'POSTALADDRESS';
-        if (keyLower === 'postalstreetname') axFieldName = 'POSTALADDRESS';
+        // Address fields - Postal (aXcelerate uses SADDRESS1/SADDRESS2, SCITY, etc.)
+        if (keyLower === 'postaladdress') axFieldName = 'SADDRESS1';
+        if (keyLower === 'postalstreetnumber') axFieldName = 'SADDRESS1';
+        if (keyLower === 'postalstreetname') axFieldName = 'SADDRESS2';
         if (keyLower === 'postalbuildingpropertyname') axFieldName = 'POSTALBUILDINGPROPERTYNAME';
         if (keyLower === 'postalflatunitdetails') axFieldName = 'POSTALFLATUNITDETAILS';
         if (keyLower === 'postalpoboxdetails' || keyLower === 'postalpobox') axFieldName = 'POSTALPOBOXDETAILS';
-        if (keyLower === 'postalsuburb') axFieldName = 'POSTALSUBURB';
-        if (keyLower === 'postalpostcode') axFieldName = 'POSTALPOSTCODE';
-        if (keyLower === 'postalstate') axFieldName = 'POSTALSTATE';
-        if (keyLower === 'postalcountry') axFieldName = 'POSTALCOUNTRY';
+        if (keyLower === 'postalsuburb') axFieldName = 'SCITY'; // aXcelerate uses SCITY for postal
+        if (keyLower === 'postalpostcode') axFieldName = 'SPOSTCODE';
+        if (keyLower === 'postalstate') axFieldName = 'SSTATE';
+        if (keyLower === 'postalcountry') axFieldName = 'SCOUNTRY';
         
         // Learner identifiers
         if (keyLower === 'uniquestudentidentifier' || keyLower === 'studentidentifier' || keyLower === 'usi') axFieldName = 'USI';
