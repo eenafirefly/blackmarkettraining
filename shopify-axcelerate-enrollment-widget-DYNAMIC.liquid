@@ -2904,6 +2904,16 @@
           if (fieldValue !== null && fieldValue !== undefined && fieldValue !== '') {
             customFields[fieldName] = fieldValue;
             console.log(`   📝 Custom field: ${fieldName} = "${fieldValue}" (from ${key})`);
+            
+            // IMPORTANT: Also create camelCase version for fields that have camelCase in config
+            // This handles mismatch between aXcelerate (lowercase) and config (camelCase)
+            // e.g., "computerskills" from aXcelerate -> "computerSkills" for HTML element
+            if (fieldName === 'computerskills') {
+              customFields['computerSkills'] = fieldValue;
+              console.log(`   ✨ Also stored as camelCase: computerSkills = "${fieldValue}"`);
+            }
+            // Add more camelCase mappings as needed
+            // Format: if (fieldName === 'lowercase') { customFields['camelCase'] = fieldValue; }
           }
         }
       });
@@ -2962,13 +2972,13 @@
         'background': [
           'obtainusi', 'previousstudy', 'studyoutcome', 'dedicatetime', 'deadlines', 'worklifestudy',
           'internetaccess', 'standingperiods', 'multitasking', 'languagenumeracy', 'speakenglish',
-          'computerskills', 'medicalissues', 'previousexperience', 'fourcommunication', 'threecontamination',
+          'computerskills', 'computerSkills', 'medicalissues', 'previousexperience', 'fourcommunication', 'threecontamination',
           'fivemilk', 'milktypes', 'nonverbalcommunication', 'hospitalityexperience'
         ],
         'subjectmatter': [
           'obtainusi', 'previousstudy', 'studyoutcome', 'dedicatetime', 'deadlines', 'worklifestudy',
           'internetaccess', 'standingperiods', 'multitasking', 'languagenumeracy', 'speakenglish',
-          'computerskills', 'medicalissues', 'previousexperience', 'fourcommunication', 'threecontamination',
+          'computerskills', 'computerSkills', 'medicalissues', 'previousexperience', 'fourcommunication', 'threecontamination',
           'fivemilk', 'milktypes', 'nonverbalcommunication', 'hospitalityexperience'
         ],
         'nationality': ['countryofbirth', 'birthplace', 'citizenshipstatus', 'languagespoken', 'englishproficiency', 'indigenousstatus', 'speakotherlanguage', 'languagespokenmostoften'],
@@ -3312,10 +3322,11 @@
   function cleanUrl() {
     if (window.history && window.history.replaceState) {
       const url = new URL(window.location.href);
-      url.searchParams.delete('auth_token');
-      url.searchParams.delete('contact_id');
+      // IMPORTANT: Keep auth_token and contact_id (they make the resume link work!)
+      // Only remove error parameters
       url.searchParams.delete('auth_error');
       window.history.replaceState({}, document.title, url.toString());
+      console.log('🧹 Cleaned URL (kept auth_token and contact_id for resume link)');
     }
   }
   
