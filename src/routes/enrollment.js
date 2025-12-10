@@ -655,7 +655,7 @@ router.post('/save-step', async (req, res) => {
         if (keyLower === 'postalstreetname') axFieldName = 'POSTALADDRESS';
         if (keyLower === 'postalbuildingpropertyname') axFieldName = 'POSTALBUILDINGPROPERTYNAME';
         if (keyLower === 'postalflatunitdetails') axFieldName = 'POSTALFLATUNITDETAILS';
-        if (keyLower === 'postalpoboxdetails') axFieldName = 'POSTALPOBOXDETAILS';
+        if (keyLower === 'postalpoboxdetails' || keyLower === 'postalpobox') axFieldName = 'POSTALPOBOXDETAILS';
         if (keyLower === 'postalsuburb') axFieldName = 'POSTALSUBURB';
         if (keyLower === 'postalpostcode') axFieldName = 'POSTALPOSTCODE';
         if (keyLower === 'postalstate') axFieldName = 'POSTALSTATE';

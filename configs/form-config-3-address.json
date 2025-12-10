@@ -16,11 +16,13 @@
     },
     {
       "order": 3,
-      "fieldId": "buildingPropertyName",
+      "fieldId": "buildingpropertyname",
       "name": "Building/property name",
       "type": "text",
       "required": false,
       "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "BUILDINGPROPERTYNAME",
       "tooltip": "Building/property name is the official place name or common usage name for an address site, including the name of a building, Aboriginal community, homestead, building complex, agricultural property, park or unbounded address site.",
       "events": {
         "postal_copy": { "action": "clone", "trigger": "click" },
@@ -29,11 +31,13 @@
     },
     {
       "order": 4,
-      "fieldId": "flatUnitDetails",
+      "fieldId": "flatunitdetails",
       "name": "Flat/Unit details",
       "type": "text",
       "required": false,
       "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "FLATUNITDETAILS",
       "events": {
         "postal_copy": { "action": "clone", "trigger": "click" },
         "postal_toggle": { "action": "toggle", "trigger": "change" }
@@ -41,11 +45,13 @@
     },
     {
       "order": 5,
-      "fieldId": "streetNumber",
+      "fieldId": "streetnumber",
       "name": "Street or lot number",
       "type": "text",
       "required": true,
       "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "ADDRESS",
       "events": {
         "postal_copy": { "action": "clone", "trigger": "click" },
         "postal_toggle": { "action": "toggle", "trigger": "change" }
@@ -53,11 +59,13 @@
     },
     {
       "order": 6,
-      "fieldId": "streetName",
+      "fieldId": "streetname",
       "name": "Street Name",
       "type": "text",
       "required": true,
       "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "ADDRESS",
       "events": {
         "postal_copy": { "action": "clone", "trigger": "click" },
         "postal_toggle": { "action": "toggle", "trigger": "change" }
@@ -213,66 +221,80 @@
     },
     {
       "order": 13,
-      "fieldId": "postalBuildingPropertyName",
+      "fieldId": "postalbuildingpropertyname",
       "name": "Building/property name",
       "type": "text",
       "required": false,
       "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "POSTALBUILDINGPROPERTYNAME",
       "addressType": "postal",
       "tooltip": "Building/property name is the official place name or common usage name for an address site, including the name of a building, Aboriginal community, homestead, building complex, agricultural property, park or unbounded address site."
     },
     {
       "order": 14,
-      "fieldId": "postalFlatUnitDetails",
+      "fieldId": "postalflatunitdetails",
       "name": "Flat/Unit details",
       "type": "text",
       "required": false,
       "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "POSTALFLATUNITDETAILS",
       "addressType": "postal"
     },
     {
       "order": 15,
-      "fieldId": "postalStreetNumber",
+      "fieldId": "postalstreetnumber",
       "name": "Street or lot number",
       "type": "text",
       "required": false,
       "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "POSTALADDRESS",
       "addressType": "postal"
     },
     {
       "order": 16,
-      "fieldId": "postalStreetName",
+      "fieldId": "postalstreetname",
       "name": "Street Name",
       "type": "text",
       "required": false,
       "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "POSTALADDRESS",
       "addressType": "postal"
     },
     {
       "order": 17,
-      "fieldId": "postalPOBox",
+      "fieldId": "postalpobox",
       "name": "Postal delivery information (PO box)",
       "type": "text",
       "required": false,
       "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "POSTALPOBOXDETAILS",
       "addressType": "postal"
     },
     {
       "order": 18,
-      "fieldId": "postalSuburb",
+      "fieldId": "postalsuburb",
       "name": "Suburb, locality or town",
       "type": "text",
       "required": false,
       "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "POSTALSUBURB",
       "addressType": "postal"
     },
     {
       "order": 19,
-      "fieldId": "postalState",
+      "fieldId": "postalstate",
       "name": "State/Territory",
       "type": "select",
       "required": false,
       "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "POSTALSTATE",
       "addressType": "postal",
       "options": [
         { "display": "NSW", "value": "NSW" },
@@ -289,11 +311,13 @@
     },
     {
       "order": 20,
-      "fieldId": "postalPostcode",
+      "fieldId": "postalpostcode",
       "name": "Postcode",
       "type": "text",
       "required": false,
       "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "POSTALPOSTCODE",
       "addressType": "postal",
       "validation": {
         "pattern": "^[0-9]{4}$",
@@ -302,11 +326,13 @@
     },
     {
       "order": 21,
-      "fieldId": "postalCountry",
+      "fieldId": "postalcountry",
       "name": "Country",
       "type": "select",
       "required": false,
       "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "POSTALCOUNTRY",
       "addressType": "postal",
       "options": [
         { "display": "Afghanistan", "value": "AF" },
