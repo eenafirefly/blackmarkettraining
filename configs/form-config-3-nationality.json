@@ -17,7 +17,8 @@
       "type": "select",
       "required": false,
       "dataField": true,
-      "syncToCustomField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "COUNTRYOFBIRTH",
       "options": [
         { "display": "Afghanistan", "value": "AF" },
         { "display": "Albania", "value": "AL" },
@@ -92,7 +93,8 @@
       "type": "text",
       "required": true,
       "dataField": true,
-      "syncToCustomField": true
+      "syncToCustomField": false,
+      "mapsToContactField": "BIRTHPLACE"
     },
     {
       "order": 3,
@@ -101,7 +103,8 @@
       "type": "select",
       "required": true,
       "dataField": true,
-      "syncToCustomField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "CITIZENSHIPSTATUS",
       "options": [
         { "display": "Australian Citizen", "value": "1" },
         { "display": "New Zealand Citizen", "value": "2" },
@@ -155,7 +158,8 @@
       "type": "select",
       "required": false,
       "dataField": true,
-      "syncToCustomField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "LANGUAGESPOKEN",
       "hideInitially": "hidden",
       "tooltip": "If you speak more than one language, please indicate the one that is spoken most often",
       "options": [
@@ -197,7 +201,8 @@
       "type": "select",
       "required": false,
       "dataField": true,
-      "syncToCustomField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "ENGLISHPROFICIENCY",
       "tooltip": "How well you speak English.",
       "options": [
         { "display": "Not specified", "value": "Not specified" },
