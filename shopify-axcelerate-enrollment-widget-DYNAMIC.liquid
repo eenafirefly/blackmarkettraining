@@ -1041,10 +1041,29 @@
       fetchFormConfigurations()
     ]);
     
-    // Try to restore previous session first
+    // IMPORTANT: Check URL parameters FIRST (resume link takes priority over localStorage)
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasResumeLink = urlParams.has('auth_token') && urlParams.has('contact_id');
+    
+    if (hasResumeLink) {
+      console.log('🔗 Resume link detected - clearing old progress and using URL parameters');
+      localStorage.removeItem('ax_enrollment_progress'); // Clear old data
+      const hasOAuthReturn = await checkOAuthReturn();
+      
+      if (hasOAuthReturn) {
+        setupEventListeners();
+        setTimeout(() => {
+          elements.loading.style.display = 'none';
+          elements.form.style.display = 'flex';
+        }, 500);
+        return; // Exit early - OAuth/resume handled
+      }
+    }
+    
+    // Try to restore previous session from localStorage
     const hasRestoredProgress = await restoreProgress();
     
-    // If no restored progress, check if user is returning from OAuth
+    // If no restored progress and no resume link, check if user is returning from OAuth
     const hasOAuthReturn = !hasRestoredProgress && await checkOAuthReturn();
     
     // Setup event listeners
@@ -2043,11 +2062,12 @@
     }
     
     if (authToken && contactId) {
-      console.log('✅ OAuth successful! Contact ID:', contactId);
+      console.log('✅ OAuth/Resume successful! Contact ID:', contactId);
       
       // Fetch contact details for pre-filling (await to ensure data is loaded)
-      console.log('📋 Fetching contact details after OAuth...');
+      console.log('📋 Fetching contact details from aXcelerate...');
       await fetchContactDetailsForPrefill(contactId);
+      console.log('📋 Contact details fetched:', contactDetails);
       
       // Unlock all tabs now that user is logged in
       unlockAllTabs();
@@ -2058,7 +2078,14 @@
       // Get the first dynamic step (background)
       const firstStep = formSteps.find(s => s.id !== 'login');
       if (firstStep) {
+        console.log(`📍 Showing first step after resume: ${firstStep.id}`);
         showStep(firstStep.id);
+        
+        // Pre-fill contact details with longer delay to ensure DOM is ready
+        setTimeout(() => {
+          console.log('👤 Attempting to pre-fill contact details for:', firstStep.id);
+          prefillContactDetails(firstStep.id);
+        }, 1000);
       }
       
       setTimeout(() => cleanUrl(), 100);
@@ -2557,8 +2584,12 @@
       
       if (isContactStep && (contactDetails.givenName || contactDetails.email || contactDetails.mobile)) {
         console.log(`👤 Pre-filling contact details for step "${stepId}"`);
+        console.log(`   Contact details available:`, contactDetails);
         // Increased timeout to ensure DOM is fully rendered
-        setTimeout(() => prefillContactDetails(stepId), 500);
+        setTimeout(() => {
+          console.log(`   ⏰ Pre-fill timeout triggered for "${stepId}"`);
+          prefillContactDetails(stepId);
+        }, 1000);
       }
     }, 100);
     
