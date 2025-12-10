@@ -21,7 +21,8 @@
       "type": "text",
       "required": false,
       "dataField": true,
-      "syncToCustomField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "BUILDINGNAME",
       "tooltip": "Building/property name is the official place name or common usage name for an address site, including the name of a building, Aboriginal community, homestead, building complex, agricultural property, park or unbounded address site.",
       "events": {
         "postal_copy": { "action": "clone", "trigger": "click" },
@@ -35,7 +36,8 @@
       "type": "text",
       "required": false,
       "dataField": true,
-      "syncToCustomField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "UNITNO",
       "events": {
         "postal_copy": { "action": "clone", "trigger": "click" },
         "postal_toggle": { "action": "toggle", "trigger": "change" }
@@ -224,7 +226,8 @@
       "type": "text",
       "required": false,
       "dataField": true,
-      "syncToCustomField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "SBUILDINGNAME",
       "addressType": "postal",
       "tooltip": "Building/property name is the official place name or common usage name for an address site, including the name of a building, Aboriginal community, homestead, building complex, agricultural property, park or unbounded address site."
     },
@@ -235,7 +238,8 @@
       "type": "text",
       "required": false,
       "dataField": true,
-      "syncToCustomField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "SUNITNO",
       "addressType": "postal"
     },
     {
@@ -267,7 +271,8 @@
       "type": "text",
       "required": false,
       "dataField": true,
-      "syncToCustomField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "POBOX",
       "addressType": "postal"
     },
     {

@@ -596,9 +596,9 @@ router.post('/save-step', async (req, res) => {
       'organisation', 'organization', 'position', 'jobtitle',
       'emergencycontact', 'emergencycontactname', 'emergencycontactrelation', 'emergencyrelationship', 'emergencycontactphone', 'emergencycontactnumber',
       'address', 'streetaddress', 'streetnumber', 'streetname', 'suburb', 'city', 'postcode', 'state', 'country',
-      'buildingpropertyname', 'flatunitdetails', 'poboxdetails',
+      'buildingpropertyname', 'buildingname', 'flatunitdetails', 'unitno', 'poboxdetails', 'pobox',
       'postaladdress', 'postalstreetnumber', 'postalstreetname', 'postalsuburb', 'postalpostcode', 'postalstate', 'postalcountry',
-      'postalbuildingpropertyname', 'postalflatunitdetails', 'postalpoboxdetails',
+      'postalbuildingpropertyname', 'postalflatunitdetails', 'postalpoboxdetails', 'postalpobox',
       'usi', 'uniquestudentidentifier', 'studentidentifier',
       'countryofbirth', 'birthplace', 'cityofbirth', 
       'citizenshipstatus', 'countryofcitizenship', 'residencystatus',
@@ -647,9 +647,9 @@ router.post('/save-step', async (req, res) => {
         if (keyLower === 'streetaddress' || keyLower === 'address') axFieldName = 'ADDRESS1';
         if (keyLower === 'streetnumber') axFieldName = 'ADDRESS1'; // Street number goes to ADDRESS1
         if (keyLower === 'streetname') axFieldName = 'ADDRESS2'; // Street name goes to ADDRESS2
-        if (keyLower === 'buildingpropertyname') axFieldName = 'BUILDINGPROPERTYNAME';
-        if (keyLower === 'flatunitdetails') axFieldName = 'FLATUNITDETAILS';
-        if (keyLower === 'poboxdetails') axFieldName = 'POBOXDETAILS';
+        if (keyLower === 'buildingpropertyname' || keyLower === 'buildingname') axFieldName = 'BUILDINGNAME';
+        if (keyLower === 'flatunitdetails' || keyLower === 'unitno') axFieldName = 'UNITNO';
+        if (keyLower === 'poboxdetails' || keyLower === 'pobox') axFieldName = 'POBOX';
         if (keyLower === 'city' || keyLower === 'suburb') axFieldName = 'CITY'; // aXcelerate uses CITY, not SUBURB
         if (keyLower === 'postcode') axFieldName = 'POSTCODE';
         if (keyLower === 'state') axFieldName = 'STATE';
@@ -659,9 +659,9 @@ router.post('/save-step', async (req, res) => {
         if (keyLower === 'postaladdress') axFieldName = 'SADDRESS1';
         if (keyLower === 'postalstreetnumber') axFieldName = 'SADDRESS1';
         if (keyLower === 'postalstreetname') axFieldName = 'SADDRESS2';
-        if (keyLower === 'postalbuildingpropertyname') axFieldName = 'POSTALBUILDINGPROPERTYNAME';
-        if (keyLower === 'postalflatunitdetails') axFieldName = 'POSTALFLATUNITDETAILS';
-        if (keyLower === 'postalpoboxdetails' || keyLower === 'postalpobox') axFieldName = 'POSTALPOBOXDETAILS';
+        if (keyLower === 'postalbuildingpropertyname') axFieldName = 'SBUILDINGNAME';
+        if (keyLower === 'postalflatunitdetails') axFieldName = 'SUNITNO';
+        if (keyLower === 'postalpoboxdetails' || keyLower === 'postalpobox') axFieldName = 'POBOX';
         if (keyLower === 'postalsuburb') axFieldName = 'SCITY'; // aXcelerate uses SCITY for postal
         if (keyLower === 'postalpostcode') axFieldName = 'SPOSTCODE';
         if (keyLower === 'postalstate') axFieldName = 'SSTATE';
@@ -670,18 +670,18 @@ router.post('/save-step', async (req, res) => {
         // Learner identifiers
         if (keyLower === 'uniquestudentidentifier' || keyLower === 'studentidentifier' || keyLower === 'usi') axFieldName = 'USI';
         
-        // VET Related Details - Nationality/Citizenship
-        if (keyLower === 'countryofbirth') axFieldName = 'COUNTRYOFBIRTH';
-        if (keyLower === 'birthplace' || keyLower === 'cityofbirth') axFieldName = 'BIRTHPLACE';
-        if (keyLower === 'citizenshipstatus') axFieldName = 'CITIZENSHIPSTATUS';
-        if (keyLower === 'countryofcitizenship') axFieldName = 'COUNTRYOFCITIZENSHIP';
-        if (keyLower === 'residencystatus') axFieldName = 'RESIDENCYSTATUS';
+        // VET Related Details - Nationality/Citizenship (use NAME fields, not ID fields)
+        if (keyLower === 'countryofbirth') axFieldName = 'COUNTRYOFBIRTHNAME';
+        if (keyLower === 'birthplace' || keyLower === 'cityofbirth') axFieldName = 'CITYOFBIRTH';
+        if (keyLower === 'citizenshipstatus') axFieldName = 'CITIZENSTATUSNAME';
+        if (keyLower === 'countryofcitizenship') axFieldName = 'COUNTRYOFCITIZENNAME';
+        if (keyLower === 'residencystatus') axFieldName = 'RESIDENCYSTATUSNAME';
         
-        // VET Related Details - Language
-        if (keyLower === 'languagespoken' || keyLower === 'languageidentifier') axFieldName = 'LANGUAGESPOKEN';
-        if (keyLower === 'englishproficiency') axFieldName = 'ENGLISHPROFICIENCY';
-        if (keyLower === 'englishassistance') axFieldName = 'ENGLISHASSISTANCE';
-        if (keyLower === 'atschool') axFieldName = 'ATSCHOOL';
+        // VET Related Details - Language (use NAME fields)
+        if (keyLower === 'languagespoken' || keyLower === 'languageidentifier') axFieldName = 'MAINLANGUAGENAME';
+        if (keyLower === 'englishproficiency') axFieldName = 'ENGLISHPROFICIENCYNAME';
+        if (keyLower === 'englishassistance') axFieldName = 'ENGLISHASSISTANCEFLAG';
+        if (keyLower === 'atschool') axFieldName = 'ATSCHOOLFLAG';
         
         // VET Related Details - Indigenous/Employment
         if (keyLower === 'indigenousstatus' || keyLower === 'aboriginalortorresstraitislanderorigin') axFieldName = 'INDIGENOUSSTATUS';
