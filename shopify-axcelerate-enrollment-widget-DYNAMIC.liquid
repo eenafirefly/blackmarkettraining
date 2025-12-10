@@ -2977,7 +2977,9 @@
         employmentstatus: contact.EMPLOYMENTSTATUS || '',
         highestschoollevel: contact.HIGHESTSCHOOLLEVEL || '',
         prioreducation: contact.PRIOREDUCATION || '',
-        disabilitytypes: contact.DISABILITYTYPES || ''
+        prioreducationstatus: contact.PRIOREDUCATIONSTATUS || '',
+        disabilitytypes: contact.DISABILITYTYPES || '',
+        studyreason: contact.STUDYREASON || ''
       };
       
       console.log('📝 Extracted standard fields:', standardFields);
@@ -3006,9 +3008,9 @@
           'fivemilk'
         ],
         'nationality': ['countryofbirth', 'birthplace', 'citizenshipstatus', 'languagespoken', 'englishproficiency', 'indigenousstatus', 'speakotherlanguage', 'languagespokenmostoften'],
-        'schooling': ['highestschoollevel', 'prioreducation', 'prioreducationstatus', 'yearhighestschoolcompleted'],
-        'additional': ['employmentstatus', 'disabilitytypes', 'hasdisability', 'occupationidentifier', 'industryofemployment'],
-        'studyreason': ['studyreason', 'mainreason', 'undertakingcourse'],
+        'schooling': ['highestschoollevel', 'prioreducation', 'prioreducationstatus', 'yearhighestschoolcompleted', 'stillenrolledsecondary'],
+        'additional': ['employmentstatus', 'disabilitytypes', 'hasdisability', 'indigenousstatus'],
+        'studyreason': ['studyreason'],
         'emergency': ['emergencycontactname', 'emergencyrelationship', 'emergencycontactnumber']
       };
       

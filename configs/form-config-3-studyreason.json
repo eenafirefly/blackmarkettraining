@@ -10,7 +10,7 @@
   "fields": [
     {
       "order": 1,
-      "fieldId": "studyReason",
+      "fieldId": "studyreason",
       "name": "Of the following categories, select the one which best describes the main reason you are undertaking this course?",
       "type": "select",
       "required": true,
