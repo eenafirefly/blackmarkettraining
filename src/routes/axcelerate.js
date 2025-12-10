@@ -667,79 +667,112 @@ router.get('/contact/search', async (req, res) => {
       });
     }
     
-    console.log('Searching for contact:', email);
+    console.log('='.repeat(80));
+    console.log('🔍 CONTACT SEARCH REQUEST');
+    console.log('='.repeat(80));
+    console.log('Searching for email:', email);
+    console.log('Encoded email:', encodeURIComponent(email));
     
-    const response = await fetch(
-      `${process.env.AXCELERATE_API_URL}/contacts/search?emailAddress=${encodeURIComponent(email)}`,
-      {
-        headers: {
-          'APIToken': process.env.AXCELERATE_API_TOKEN,
-          'WSToken': process.env.AXCELERATE_WS_TOKEN
-        }
+    const searchUrl = `${process.env.AXCELERATE_API_URL}/contacts/search?emailAddress=${encodeURIComponent(email)}`;
+    console.log('Search URL:', searchUrl);
+    console.log('API URL from env:', process.env.AXCELERATE_API_URL);
+    
+    const response = await fetch(searchUrl, {
+      headers: {
+        'APIToken': process.env.AXCELERATE_API_TOKEN,
+        'WSToken': process.env.AXCELERATE_WS_TOKEN
       }
-    );
+    });
+    
+    console.log('📥 aXcelerate response status:', response.status);
+    console.log('📥 Response headers:', Object.fromEntries(response.headers.entries()));
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`aXcelerate API error: ${response.status}`, errorText);
+      console.error(`❌ aXcelerate API error: ${response.status}`);
+      console.error('Error body:', errorText);
       // Return empty array on error instead of throwing
       return res.json([]);
     }
     
     const data = await response.json();
-    console.log('Contact search result:', data);
+    console.log('📋 Raw API response type:', typeof data);
+    console.log('📋 Is array:', Array.isArray(data));
     console.log('📋 Raw API response:', JSON.stringify(data, null, 2));
     
     // Ensure we always return an array
     let contacts = [];
     if (Array.isArray(data)) {
       contacts = data;
+      console.log(`✅ Received array with ${contacts.length} contacts`);
     } else if (data && data.ERROR) {
       // aXcelerate returned an error object
-      console.log('aXcelerate returned error:', data.MESSAGES);
+      console.log('❌ aXcelerate returned error:', data.MESSAGES);
       return res.json([]);
     } else if (data && data.CONTACTID) {
       // Single contact returned, wrap in array
       contacts = [data];
+      console.log(`✅ Received single contact, wrapped in array`);
+    } else if (data && data.contacts && Array.isArray(data.contacts)) {
+      // Sometimes aXcelerate returns { contacts: [...] }
+      contacts = data.contacts;
+      console.log(`✅ Received nested contacts array with ${contacts.length} contacts`);
+    } else if (data && data.data && Array.isArray(data.data)) {
+      // Sometimes aXcelerate returns { data: [...] }
+      contacts = data.data;
+      console.log(`✅ Received nested data array with ${contacts.length} contacts`);
     } else {
       // No data
+      console.log('⚠️ No contacts found in response');
       return res.json([]);
     }
     
-    console.log(`📊 Processing ${contacts.length} contacts. Searching for email: "${email}"`);
+    console.log(`\n📊 Processing ${contacts.length} contacts`);
+    console.log(`🎯 Target email: "${email}"`);
+    console.log('-'.repeat(80));
     
     // Filter to only return contacts that actually match the email
-    const matchingContacts = contacts.filter(contact => {
-      console.log(`🔍 Checking contact ${contact.CONTACTID}:`, {
-        hasEMAIL: !!contact.EMAIL,
-        EMAIL: contact.EMAIL,
-        hasEmail: !!contact.email,
-        email: contact.email,
-        allKeys: Object.keys(contact)
-      });
+    const matchingContacts = contacts.filter((contact, index) => {
+      console.log(`\n🔍 Contact #${index + 1}:`);
+      console.log(`   CONTACTID: ${contact.CONTACTID}`);
+      console.log(`   Has EMAIL: ${!!contact.EMAIL}`);
+      console.log(`   EMAIL value: "${contact.EMAIL}"`);
+      console.log(`   Has email: ${!!contact.email}`);
+      console.log(`   email value: "${contact.email}"`);
+      console.log(`   All keys: ${Object.keys(contact).join(', ')}`);
       
       const contactEmail = getContactEmail(contact);
       if (!contactEmail) {
-        console.log(`   ❌ No email field found for contact ${contact.CONTACTID}`);
+        console.log(`   ❌ RESULT: No email field found`);
         return false;
       }
       
       // Case-insensitive email comparison
-      const matches = contactEmail.toLowerCase() === email.toLowerCase();
-      console.log(`   "${contactEmail}" vs "${email}" = ${matches ? '✅ MATCH' : '❌ NO MATCH'}`);
+      const matches = contactEmail.toLowerCase().trim() === email.toLowerCase().trim();
+      console.log(`   📧 Contact email: "${contactEmail}"`);
+      console.log(`   🎯 Search email:  "${email}"`);
+      console.log(`   ${matches ? '✅ MATCH!' : '❌ NO MATCH'}`);
       return matches;
     });
     
-    console.log(`Found ${contacts.length} contacts, ${matchingContacts.length} matching email "${email}"`);
-    
-    if (matchingContacts.length === 0 && contacts.length > 0) {
-      console.warn(`⚠️ API returned contacts but none matched email "${email}". Returned:`, 
-        contacts.map(c => `ID:${c.CONTACTID} EMAIL:"${getContactEmail(c) || 'NONE'}"`).join(', '));
+    console.log('\n' + '='.repeat(80));
+    console.log(`📊 SEARCH SUMMARY`);
+    console.log(`   Total contacts returned by aXcelerate: ${contacts.length}`);
+    console.log(`   Matching contacts found: ${matchingContacts.length}`);
+    if (matchingContacts.length > 0) {
+      console.log(`   ✅ Returning contact IDs: ${matchingContacts.map(c => c.CONTACTID).join(', ')}`);
+    } else {
+      console.log(`   ❌ No matching contacts found`);
+      if (contacts.length > 0) {
+        console.log(`   📋 Non-matching contacts: ${contacts.map(c => `ID:${c.CONTACTID} EMAIL:"${getContactEmail(c) || 'NONE'}"`).join(', ')}`);
+      }
     }
+    console.log('='.repeat(80));
     
     res.json(matchingContacts);
   } catch (error) {
-    console.error('Error searching contacts:', error);
+    console.error('❌ ERROR in contact search:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({ 
       error: 'Failed to search contacts',
       message: error.message 
