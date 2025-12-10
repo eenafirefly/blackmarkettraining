@@ -643,43 +643,44 @@ router.post('/save-step', async (req, res) => {
         if (keyLower === 'emergencycontactrelation' || keyLower === 'emergencyrelationship') axFieldName = 'EMERGENCYCONTACTRELATION';
         if (keyLower === 'emergencycontactphone' || keyLower === 'emergencycontactnumber') axFieldName = 'EMERGENCYCONTACTPHONE';
         
-        // Address fields - Residential (aXcelerate uses ADDRESS1/ADDRESS2, not ADDRESS)
+        // Address fields - Residential
         if (keyLower === 'streetaddress' || keyLower === 'address') axFieldName = 'ADDRESS1';
-        if (keyLower === 'streetnumber') axFieldName = 'ADDRESS1'; // Street number goes to ADDRESS1
-        if (keyLower === 'streetname') axFieldName = 'ADDRESS2'; // Street name goes to ADDRESS2
+        if (keyLower === 'streetnumber') axFieldName = 'STREETNO';
+        if (keyLower === 'streetname') axFieldName = 'STREETNAME';
         if (keyLower === 'buildingpropertyname' || keyLower === 'buildingname') axFieldName = 'BUILDINGNAME';
         if (keyLower === 'flatunitdetails' || keyLower === 'unitno') axFieldName = 'UNITNO';
         if (keyLower === 'poboxdetails' || keyLower === 'pobox') axFieldName = 'POBOX';
-        if (keyLower === 'city' || keyLower === 'suburb') axFieldName = 'CITY'; // aXcelerate uses CITY, not SUBURB
+        if (keyLower === 'city' || keyLower === 'suburb') axFieldName = 'CITY';
         if (keyLower === 'postcode') axFieldName = 'POSTCODE';
         if (keyLower === 'state') axFieldName = 'STATE';
-        if (keyLower === 'country') axFieldName = 'COUNTRY';
+        if (keyLower === 'country') axFieldName = 'COUNTRYNAME';
         
-        // Address fields - Postal (aXcelerate uses SADDRESS1/SADDRESS2, SCITY, etc.)
+        // Address fields - Postal
         if (keyLower === 'postaladdress') axFieldName = 'SADDRESS1';
-        if (keyLower === 'postalstreetnumber') axFieldName = 'SADDRESS1';
-        if (keyLower === 'postalstreetname') axFieldName = 'SADDRESS2';
+        if (keyLower === 'postalstreetnumber') axFieldName = 'SSTREETNO';
+        if (keyLower === 'postalstreetname') axFieldName = 'SSTREETNAME';
         if (keyLower === 'postalbuildingpropertyname') axFieldName = 'SBUILDINGNAME';
         if (keyLower === 'postalflatunitdetails') axFieldName = 'SUNITNO';
         if (keyLower === 'postalpoboxdetails' || keyLower === 'postalpobox') axFieldName = 'POBOX';
-        if (keyLower === 'postalsuburb') axFieldName = 'SCITY'; // aXcelerate uses SCITY for postal
+        if (keyLower === 'postalsuburb') axFieldName = 'SCITY';
         if (keyLower === 'postalpostcode') axFieldName = 'SPOSTCODE';
         if (keyLower === 'postalstate') axFieldName = 'SSTATE';
-        if (keyLower === 'postalcountry') axFieldName = 'SCOUNTRY';
+        if (keyLower === 'postalcountry') axFieldName = 'SCOUNTRYNAME';
         
         // Learner identifiers
         if (keyLower === 'uniquestudentidentifier' || keyLower === 'studentidentifier' || keyLower === 'usi') axFieldName = 'USI';
         
-        // VET Related Details - Nationality/Citizenship (use NAME fields, not ID fields)
-        if (keyLower === 'countryofbirth') axFieldName = 'COUNTRYOFBIRTHNAME';
+        // VET Related Details - Nationality/Citizenship (use ID fields for codes)
+        if (keyLower === 'countryofbirth') axFieldName = 'COUNTRYOFBIRTHID';
         if (keyLower === 'birthplace' || keyLower === 'cityofbirth') axFieldName = 'CITYOFBIRTH';
-        if (keyLower === 'citizenshipstatus') axFieldName = 'CITIZENSTATUSNAME';
-        if (keyLower === 'countryofcitizenship') axFieldName = 'COUNTRYOFCITIZENNAME';
-        if (keyLower === 'residencystatus') axFieldName = 'RESIDENCYSTATUSNAME';
+        if (keyLower === 'citizenshipstatus') axFieldName = 'CITIZENSTATUSID';
+        if (keyLower === 'countryofcitizenship') axFieldName = 'COUNTRYOFCITIZENID';
+        if (keyLower === 'residencystatus') axFieldName = 'RESIDENCYSTATUSID';
         
-        // VET Related Details - Language (use NAME fields)
-        if (keyLower === 'languagespoken' || keyLower === 'languageidentifier') axFieldName = 'MAINLANGUAGENAME';
-        if (keyLower === 'englishproficiency') axFieldName = 'ENGLISHPROFICIENCYNAME';
+        // VET Related Details - Language (use ID fields for codes)
+        if (keyLower === 'speakotherlanguage') axFieldName = 'CUSTOMFIELD_SPEAKOTHERLANGUAGE';
+        if (keyLower === 'languagespoken' || keyLower === 'languageidentifier') axFieldName = 'MAINLANGUAGEID';
+        if (keyLower === 'englishproficiency') axFieldName = 'ENGLISHPROFICIENCYID';
         if (keyLower === 'englishassistance') axFieldName = 'ENGLISHASSISTANCEFLAG';
         if (keyLower === 'atschool') axFieldName = 'ATSCHOOLFLAG';
         

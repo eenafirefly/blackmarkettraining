@@ -51,7 +51,7 @@
       "required": true,
       "dataField": true,
       "syncToCustomField": false,
-      "mapsToContactField": "ADDRESS",
+      "mapsToContactField": "STREETNO",
       "events": {
         "postal_copy": { "action": "clone", "trigger": "click" },
         "postal_toggle": { "action": "toggle", "trigger": "change" }
@@ -65,7 +65,7 @@
       "required": true,
       "dataField": true,
       "syncToCustomField": false,
-      "mapsToContactField": "ADDRESS",
+      "mapsToContactField": "STREETNAME",
       "events": {
         "postal_copy": { "action": "clone", "trigger": "click" },
         "postal_toggle": { "action": "toggle", "trigger": "change" }
@@ -130,6 +130,8 @@
       "type": "select",
       "required": true,
       "dataField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "COUNTRYNAME",
       "events": {
         "postal_copy": { "action": "clone", "trigger": "click" },
         "postal_toggle": { "action": "toggle", "trigger": "change" }
@@ -250,7 +252,7 @@
       "required": false,
       "dataField": true,
       "syncToCustomField": false,
-      "mapsToContactField": "POSTALADDRESS",
+      "mapsToContactField": "SSTREETNO",
       "addressType": "postal"
     },
     {
@@ -261,7 +263,7 @@
       "required": false,
       "dataField": true,
       "syncToCustomField": false,
-      "mapsToContactField": "POSTALADDRESS",
+      "mapsToContactField": "SSTREETNAME",
       "addressType": "postal"
     },
     {
@@ -332,7 +334,7 @@
       "required": false,
       "dataField": true,
       "syncToCustomField": false,
-      "mapsToContactField": "POSTALCOUNTRY",
+      "mapsToContactField": "SCOUNTRYNAME",
       "addressType": "postal",
       "options": [
         { "display": "Afghanistan", "value": "AF" },

@@ -11,16 +11,15 @@
     {
       "order": 1,
       "fieldId": "disabilityflag",
-      "name": "Disabilities",
-      "type": "radio",
+      "name": "Do you consider yourself to have a disability, impairment or long-term condition?",
+      "type": "select",
       "required": true,
       "dataField": true,
       "syncToCustomField": false,
       "mapsToContactField": "DISABILITYFLAG",
       "options": [
-        { "display": "Yes", "value": "Y" },
         { "display": "No", "value": "N" },
-        { "display": "Not Specified", "value": "@" }
+        { "display": "Yes", "value": "Y" }
       ],
       "events": {
         "disabilitytypes_show": {
@@ -31,7 +30,7 @@
         "disabilitytypes_hide": {
           "trigger": "change",
           "action": "hide",
-          "condition": "value === 'N' || value === '@'"
+          "condition": "value === 'N'"
         }
       }
     },
