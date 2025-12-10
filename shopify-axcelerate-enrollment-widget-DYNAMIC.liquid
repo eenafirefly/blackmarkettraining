@@ -2979,7 +2979,10 @@
         prioreducation: contact.PRIOREDUCATION || '',
         prioreducationstatus: contact.PRIOREDUCATIONSTATUS || '',
         disabilitytypes: contact.DISABILITYTYPES || '',
-        studyreason: contact.STUDYREASON || ''
+        studyreason: contact.STUDYREASON || '',
+        emergencycontact: contact.EMERGENCYCONTACT || contact.emergencycontact || '',
+        emergencycontactrelation: contact.EMERGENCYCONTACTRELATION || contact.emergencycontactrelation || '',
+        emergencycontactphone: contact.EMERGENCYCONTACTPHONE || contact.emergencycontactphone || ''
       };
       
       console.log('📝 Extracted standard fields:', standardFields);
@@ -3011,7 +3014,7 @@
         'schooling': ['highestschoollevel', 'prioreducation', 'prioreducationstatus', 'yearhighestschoolcompleted', 'stillenrolledsecondary'],
         'additional': ['employmentstatus', 'disabilitytypes', 'hasdisability', 'indigenousstatus'],
         'studyreason': ['studyreason'],
-        'emergency': ['emergencycontactname', 'emergencyrelationship', 'emergencycontactnumber']
+        'emergency': ['emergencycontact', 'emergencycontactrelation', 'emergencycontactphone']
       };
       
       // Populate formData for each step

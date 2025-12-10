@@ -594,6 +594,7 @@ router.post('/save-step', async (req, res) => {
       'email', 'emailaddress', 'alternativeemail', 'alternativeemailaddress',
       'phone', 'mobilephone', 'mobile', 'homephone', 'workphone', 'fax',
       'organisation', 'organization', 'position', 'jobtitle',
+      'emergencycontact', 'emergencycontactname', 'emergencycontactrelation', 'emergencyrelationship', 'emergencycontactphone', 'emergencycontactnumber',
       'address', 'streetaddress', 'streetnumber', 'streetname', 'suburb', 'city', 'postcode', 'state', 'country',
       'buildingpropertyname', 'flatunitdetails', 'poboxdetails',
       'postaladdress', 'postalstreetnumber', 'postalstreetname', 'postalsuburb', 'postalpostcode', 'postalstate', 'postalcountry',
@@ -636,6 +637,11 @@ router.post('/save-step', async (req, res) => {
         if (keyLower === 'fax') axFieldName = 'FAX';
         if (keyLower === 'organisation' || keyLower === 'organization') axFieldName = 'ORGANISATION';
         if (keyLower === 'position' || keyLower === 'jobtitle') axFieldName = 'POSITION';
+        
+        // Emergency Contact fields
+        if (keyLower === 'emergencycontact' || keyLower === 'emergencycontactname') axFieldName = 'EMERGENCYCONTACT';
+        if (keyLower === 'emergencycontactrelation' || keyLower === 'emergencyrelationship') axFieldName = 'EMERGENCYCONTACTRELATION';
+        if (keyLower === 'emergencycontactphone' || keyLower === 'emergencycontactnumber') axFieldName = 'EMERGENCYCONTACTPHONE';
         
         // Address fields - Residential
         if (keyLower === 'streetaddress' || keyLower === 'address') axFieldName = 'ADDRESS';
