@@ -2799,7 +2799,7 @@
         }
       } else {
         // Input with this ID not found - might be a radio or checkbox group
-        console.log(`     🔍 Input #${inputId} not found, checking for radio/checkbox group...`);
+        console.log(`     🔍 Input #${inputIdLower} (or #${inputIdCamel}) not found, checking for radio/checkbox group...`);
         
         // Try to find radio buttons by name
         const radios = widget.querySelectorAll(`input[name="${fieldId}"][type="radio"]`);
@@ -2814,7 +2814,7 @@
             console.warn(`     ⚠️ No radio with value "${value}" found. Available:`, Array.from(radios).map(r => r.value));
           }
         } else {
-          console.warn(`     ❌ NOT FOUND: #${inputId} or radio group`);
+          console.warn(`     ❌ NOT FOUND: #${inputIdLower} or radio group`);
           // List all input IDs in the step to help debug
           const allInputs = widget.querySelectorAll(`#ax-step-${stepId}-${widgetId} input, #ax-step-${stepId}-${widgetId} select, #ax-step-${stepId}-${widgetId} textarea`);
           if (allInputs.length > 0) {
@@ -2881,7 +2881,17 @@
       }
       
       const contact = await response.json();
+      console.log('📋 Full contact data from aXcelerate (all keys):', Object.keys(contact));
       console.log('📋 Full contact data from aXcelerate:', contact);
+      
+      // Log all fields that contain 'COMPUTER' or 'SKILL' for debugging
+      const computerFields = Object.keys(contact).filter(k => 
+        k.toUpperCase().includes('COMPUTER') || k.toUpperCase().includes('SKILL')
+      );
+      if (computerFields.length > 0) {
+        console.log('🔍 Computer/Skill related fields in aXcelerate:');
+        computerFields.forEach(k => console.log(`   ${k} = ${contact[k]}`));
+      }
       
       // Extract custom fields (CUSTOMFIELD_ prefix)
       const customFields = {};
@@ -2889,15 +2899,23 @@
         if (key.startsWith('CUSTOMFIELD_')) {
           const fieldName = key.replace('CUSTOMFIELD_', '').toLowerCase();
           const fieldValue = contact[key];
-          customFields[fieldName] = fieldValue;
           
-          // Log each custom field for debugging
-          console.log(`   📝 Custom field: ${fieldName} = "${fieldValue}"`);
+          // Skip empty/null values
+          if (fieldValue !== null && fieldValue !== undefined && fieldValue !== '') {
+            customFields[fieldName] = fieldValue;
+            console.log(`   📝 Custom field: ${fieldName} = "${fieldValue}" (from ${key})`);
+          }
         }
       });
       
       console.log('📝 Extracted custom fields:', customFields);
       console.log('   Total custom fields found:', Object.keys(customFields).length);
+      
+      // Special check for computerskills
+      if (customFields.computerskills) {
+        console.log('✅ computerSkills found in custom fields:', customFields.computerskills);
+      } else {
+        console.warn('⚠️ computerSkills NOT found in custom fields!');
       
       // Also extract standard fields that might be in forms
       const standardFields = {
@@ -2964,10 +2982,20 @@
         const stepData = {};
         let fieldCount = 0;
         
+        console.log(`\n🔍 Processing step "${stepId}" with ${fieldNames.length} possible fields...`);
+        
         fieldNames.forEach(fieldName => {
-          if (allFields[fieldName] && allFields[fieldName] !== '') {
-            stepData[fieldName] = allFields[fieldName];
+          const fieldValue = allFields[fieldName];
+          
+          if (fieldValue && fieldValue !== '') {
+            stepData[fieldName] = fieldValue;
             fieldCount++;
+            console.log(`   ✅ ${fieldName} = "${fieldValue}"`);
+          } else {
+            // Log which fields are missing for debugging
+            if (fieldName.includes('computer') || fieldName.includes('skill')) {
+              console.log(`   ⚠️ ${fieldName} = ${fieldValue} (empty or not found in allFields)`);
+            }
           }
         });
         
@@ -2975,6 +3003,7 @@
           formData[stepId] = stepData;
           sessionStorage.setItem(`ax_form_${stepId}`, JSON.stringify(stepData));
           console.log(`✅ Populated ${stepId} with ${fieldCount} fields:`, Object.keys(stepData));
+          console.log(`   Step data:`, stepData);
           
           // Mark step as completed if it has data
           markStepCompleted(stepId);
