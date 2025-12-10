@@ -908,6 +908,10 @@ Date: ${new Date().toLocaleString()}
 
 Email sent to student to resume enrollment.`;
           
+          // Note: aXcelerate note creation disabled temporarily due to API endpoint issues
+          // The email tracking is now handled by checking recent notes instead
+          // TODO: Re-enable when correct aXcelerate note API endpoint is confirmed
+          /*
           try {
             console.log('📝 Creating note in aXcelerate to track email sent...');
             const noteResponse = await fetch(
@@ -927,12 +931,13 @@ Email sent to student to resume enrollment.`;
               const noteResult = await noteResponse.json();
               console.log('✅ Note created successfully in aXcelerate:', noteResult);
             } else {
-              const noteError = await noteResponse.text();
-              console.error(`❌ Failed to create note (${noteResponse.status}):`, noteError);
+              console.warn(`⚠️ Could not create note (${noteResponse.status}) - continuing anyway`);
             }
           } catch (noteError) {
-            console.error('❌ Exception while creating note:', noteError);
+            console.warn('⚠️ Exception while creating note - continuing anyway:', noteError.message);
           }
+          */
+          console.log('ℹ️ Note creation skipped - email tracking via existing notes only');
         } else {
           const errorText = await sendGridResponse.text();
           console.warn('⚠️ SendGrid error:', sendGridResponse.status, errorText);

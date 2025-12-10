@@ -1859,16 +1859,16 @@
   }
   
   function copyResidentialToPostal(stepId) {
-    // Mapping of residential fields to postal fields
+    // Mapping of residential fields to postal fields (lowercase to match updated config)
     const fieldMappings = {
-      'buildingPropertyName': 'postalBuildingPropertyName',
-      'flatUnitDetails': 'postalFlatUnitDetails',
-      'streetNumber': 'postalStreetNumber',
-      'streetName': 'postalStreetName',
-      'suburb': 'postalSuburb',
-      'postcode': 'postalPostcode',
-      'state': 'postalState',
-      'country': 'postalCountry'
+      'buildingpropertyname': 'postalbuildingpropertyname',
+      'flatunitdetails': 'postalflatunitdetails',
+      'streetnumber': 'postalstreetnumber',
+      'streetname': 'postalstreetname',
+      'suburb': 'postalsuburb',
+      'postcode': 'postalpostcode',
+      'state': 'postalstate',
+      'country': 'postalcountry'
     };
     
     let copiedCount = 0;
