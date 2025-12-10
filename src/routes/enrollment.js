@@ -184,6 +184,39 @@ function getContactEmail(contact) {
   return contact.EMAIL || contact.email || contact.emailAddress || contact.EMAILADDRESS || null;
 }
 
+// Helper function to map country codes to full country names for aXcelerate
+function getCountryName(countryCode) {
+  if (!countryCode) return countryCode;
+  
+  const countryMap = {
+    'AF': 'Afghanistan', 'AL': 'Albania', 'DZ': 'Algeria', 'AR': 'Argentina',
+    'AU': 'Australia', 'AT': 'Austria', 'BD': 'Bangladesh', 'BE': 'Belgium',
+    'BR': 'Brazil', 'BG': 'Bulgaria', 'CA': 'Canada', 'CL': 'Chile',
+    'CN': 'China', 'CO': 'Colombia', 'HR': 'Croatia', 'CY': 'Cyprus',
+    'CZ': 'Czech Republic', 'DK': 'Denmark', 'EG': 'Egypt', 'EE': 'Estonia',
+    'FJ': 'Fiji', 'FI': 'Finland', 'FR': 'France', 'DE': 'Germany',
+    'GR': 'Greece', 'HK': 'Hong Kong', 'HU': 'Hungary', 'IS': 'Iceland',
+    'IN': 'India', 'ID': 'Indonesia', 'IE': 'Ireland', 'IL': 'Israel',
+    'IT': 'Italy', 'JP': 'Japan', 'KE': 'Kenya', 'LV': 'Latvia',
+    'LB': 'Lebanon', 'LT': 'Lithuania', 'LU': 'Luxembourg', 'MY': 'Malaysia',
+    'MT': 'Malta', 'MX': 'Mexico', 'NL': 'Netherlands', 'NZ': 'New Zealand',
+    'NG': 'Nigeria', 'NO': 'Norway', 'PK': 'Pakistan', 'PA': 'Panama',
+    'PH': 'Philippines', 'PL': 'Poland', 'PT': 'Portugal', 'RO': 'Romania',
+    'RU': 'Russia', 'SA': 'Saudi Arabia', 'RS': 'Serbia', 'SG': 'Singapore',
+    'SK': 'Slovakia', 'SI': 'Slovenia', 'ZA': 'South Africa', 'KR': 'South Korea',
+    'ES': 'Spain', 'LK': 'Sri Lanka', 'SE': 'Sweden', 'CH': 'Switzerland',
+    'TW': 'Taiwan', 'TH': 'Thailand', 'TR': 'Turkey', 'UA': 'Ukraine',
+    'AE': 'United Arab Emirates', 'GB': 'United Kingdom', 'US': 'United States',
+    'VN': 'Vietnam', 'ZW': 'Zimbabwe'
+  };
+  
+  // If it's already a full country name, return it as is
+  if (countryCode.length > 2) return countryCode;
+  
+  // Otherwise map the code to full name
+  return countryMap[countryCode.toUpperCase()] || countryCode;
+}
+
 async function findOrCreateContact(contactData) {
   try {
     const { givenName, surname, email, phone } = contactData;
@@ -653,7 +686,10 @@ router.post('/save-step', async (req, res) => {
         if (keyLower === 'city' || keyLower === 'suburb') axFieldName = 'CITY';
         if (keyLower === 'postcode') axFieldName = 'POSTCODE';
         if (keyLower === 'state') axFieldName = 'STATE';
-        if (keyLower === 'country') axFieldName = 'COUNTRYNAME';
+        if (keyLower === 'country') {
+          axFieldName = 'COUNTRYNAME';
+          value = getCountryName(value); // Convert country code to full name
+        }
         
         // Address fields - Postal
         if (keyLower === 'postaladdress') axFieldName = 'SADDRESS1';
@@ -665,22 +701,31 @@ router.post('/save-step', async (req, res) => {
         if (keyLower === 'postalsuburb') axFieldName = 'SCITY';
         if (keyLower === 'postalpostcode') axFieldName = 'SPOSTCODE';
         if (keyLower === 'postalstate') axFieldName = 'SSTATE';
-        if (keyLower === 'postalcountry') axFieldName = 'SCOUNTRYNAME';
+        if (keyLower === 'postalcountry') {
+          axFieldName = 'SCOUNTRYNAME';
+          value = getCountryName(value); // Convert country code to full name
+        }
         
         // Learner identifiers
         if (keyLower === 'uniquestudentidentifier' || keyLower === 'studentidentifier' || keyLower === 'usi') axFieldName = 'USI';
         
-        // VET Related Details - Nationality/Citizenship (use ID fields for codes)
-        if (keyLower === 'countryofbirth') axFieldName = 'COUNTRYOFBIRTHID';
+        // VET Related Details - Nationality/Citizenship
+        if (keyLower === 'countryofbirth') {
+          axFieldName = 'COUNTRYOFBIRTHNAME';
+          value = getCountryName(value); // Convert country code to full name
+        }
         if (keyLower === 'birthplace' || keyLower === 'cityofbirth') axFieldName = 'CITYOFBIRTH';
-        if (keyLower === 'citizenshipstatus') axFieldName = 'CITIZENSTATUSID';
-        if (keyLower === 'countryofcitizenship') axFieldName = 'COUNTRYOFCITIZENID';
+        if (keyLower === 'citizenshipstatus') axFieldName = 'CITIZENSTATUSID'; // This uses numeric IDs (1-8)
+        if (keyLower === 'countryofcitizenship') {
+          axFieldName = 'COUNTRYOFCITIZENNAME';
+          value = getCountryName(value); // Convert country code to full name
+        }
         if (keyLower === 'residencystatus') axFieldName = 'RESIDENCYSTATUSID';
         
-        // VET Related Details - Language (use ID fields for codes)
+        // VET Related Details - Language (use NAME fields for text values)
         if (keyLower === 'speakotherlanguage') axFieldName = 'CUSTOMFIELD_SPEAKOTHERLANGUAGE';
-        if (keyLower === 'languagespoken' || keyLower === 'languageidentifier') axFieldName = 'MAINLANGUAGEID';
-        if (keyLower === 'englishproficiency') axFieldName = 'ENGLISHPROFICIENCYID';
+        if (keyLower === 'languagespoken' || keyLower === 'languageidentifier') axFieldName = 'MAINLANGUAGENAME';
+        if (keyLower === 'englishproficiency') axFieldName = 'ENGLISHPROFICIENCYNAME';
         if (keyLower === 'englishassistance') axFieldName = 'ENGLISHASSISTANCEFLAG';
         if (keyLower === 'atschool') axFieldName = 'ATSCHOOLFLAG';
         
@@ -890,20 +935,25 @@ router.post('/save-step', async (req, res) => {
           console.log('✅ Incomplete enrollment email sent via SendGrid (Template 111502 equivalent)');
           
           // Update custom field to track when email was sent (prevents duplicates)
+          // Store the timestamp in the contact's data - will be included in next save
           try {
             console.log('📝 Updating CUSTOMFIELD_LASTINCOMPLETEEMAILSENT timestamp...');
             const timestamp = new Date().toISOString();
             
+            // Use PUT method with proper payload structure
+            const trackingPayload = new URLSearchParams();
+            trackingPayload.append('CUSTOMFIELD_LASTINCOMPLETEEMAILSENT', timestamp);
+            
             const trackingUpdateResponse = await fetch(
               `${process.env.AXCELERATE_API_URL}/contact/${contactId}`,
               {
-                method: 'POST',
+                method: 'PUT',
                 headers: {
                   'APIToken': process.env.AXCELERATE_API_TOKEN,
                   'WSToken': process.env.AXCELERATE_WS_TOKEN,
                   'Content-Type': 'application/x-www-form-urlencoded'
                 },
-                body: `CUSTOMFIELD_LASTINCOMPLETEEMAILSENT=${encodeURIComponent(timestamp)}`
+                body: trackingPayload.toString()
               }
             );
             
