@@ -2748,10 +2748,22 @@
     console.log(`   Fields to populate: ${Object.keys(data).length}`);
     
     Object.entries(data).forEach(([fieldId, value]) => {
-      const inputId = `ax-${fieldId}-${widgetId}`;
-      const input = document.getElementById(inputId);
+      // Try multiple case variations since aXcelerate lowercases but config might have camelCase
+      const inputIdLower = `ax-${fieldId}-${widgetId}`;
+      const inputIdCamel = `ax-${fieldId.charAt(0).toLowerCase() + fieldId.slice(1)}-${widgetId}`;
       
-      console.log(`   - Field "${fieldId}": looking for #${inputId}`);
+      let input = document.getElementById(inputIdLower);
+      if (!input && fieldId !== inputIdCamel.replace(`ax-`, '').replace(`-${widgetId}`, '')) {
+        // Try camelCase version (e.g., computerSkills instead of computerskills)
+        input = document.getElementById(inputIdCamel);
+        if (input) {
+          console.log(`   - Field "${fieldId}": ✨ Found using camelCase: #${inputIdCamel}`);
+        }
+      }
+      
+      if (!input) {
+        console.log(`   - Field "${fieldId}": looking for #${inputIdLower}${inputIdLower !== inputIdCamel ? ` or #${inputIdCamel}` : ''}`);
+      }
       
       if (input) {
         if (Array.isArray(value)) {
@@ -2876,7 +2888,11 @@
       Object.keys(contact).forEach(key => {
         if (key.startsWith('CUSTOMFIELD_')) {
           const fieldName = key.replace('CUSTOMFIELD_', '').toLowerCase();
-          customFields[fieldName] = contact[key];
+          const fieldValue = contact[key];
+          customFields[fieldName] = fieldValue;
+          
+          // Log each custom field for debugging
+          console.log(`   📝 Custom field: ${fieldName} = "${fieldValue}"`);
         }
       });
       
@@ -2927,13 +2943,13 @@
         'background': [
           'obtainusi', 'previousstudy', 'studyoutcome', 'dedicatetime', 'deadlines', 'worklifestudy',
           'internetaccess', 'standingperiods', 'multitasking', 'languagenumeracy', 'speakenglish',
-          'computerskills', 'medicalissues', 'previousexperience', 'fourcommunication', 'threecontamination',
+          'computerskills', 'computerSkills', 'medicalissues', 'previousexperience', 'fourcommunication', 'threecontamination',
           'fivemilk', 'milktypes', 'nonverbalcommunication', 'hospitalityexperience'
         ],
         'subjectmatter': [
           'obtainusi', 'previousstudy', 'studyoutcome', 'dedicatetime', 'deadlines', 'worklifestudy',
           'internetaccess', 'standingperiods', 'multitasking', 'languagenumeracy', 'speakenglish',
-          'computerskills', 'medicalissues', 'previousexperience', 'fourcommunication', 'threecontamination',
+          'computerskills', 'computerSkills', 'medicalissues', 'previousexperience', 'fourcommunication', 'threecontamination',
           'fivemilk', 'milktypes', 'nonverbalcommunication', 'hospitalityexperience'
         ],
         'nationality': ['countryofbirth', 'birthplace', 'citizenshipstatus', 'languagespoken', 'englishproficiency', 'indigenousstatus', 'speakotherlanguage', 'languagespokenmostoften'],
