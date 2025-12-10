@@ -17,8 +17,7 @@
       "type": "select",
       "required": false,
       "dataField": true,
-      "syncToCustomField": false,
-      "mapsToContactField": "COUNTRYOFBIRTHNAME",
+      "syncToCustomField": true,
       "options": [
         { "display": "Afghanistan", "value": "AF" },
         { "display": "Albania", "value": "AL" },
@@ -158,8 +157,7 @@
       "type": "select",
       "required": false,
       "dataField": true,
-      "syncToCustomField": false,
-      "mapsToContactField": "MAINLANGUAGENAME",
+      "syncToCustomField": true,
       "hideInitially": "hidden",
       "tooltip": "If you speak more than one language, please indicate the one that is spoken most often",
       "options": [
@@ -201,8 +199,7 @@
       "type": "select",
       "required": false,
       "dataField": true,
-      "syncToCustomField": false,
-      "mapsToContactField": "ENGLISHPROFICIENCYNAME",
+      "syncToCustomField": true,
       "tooltip": "How well you speak English.",
       "options": [
         { "display": "Not specified", "value": "Not specified" },
