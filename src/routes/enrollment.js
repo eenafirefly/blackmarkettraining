@@ -86,14 +86,28 @@ router.post('/create', async (req, res) => {
       }
       
       // Find or create contact
-      const contact = await findOrCreateContact({
+      const contactResult = await findOrCreateContact({
         givenName,
         surname,
         email,
         phone
       });
       
-      enrolmentContactId = contact.CONTACTID;
+      // Check if this was an existing contact
+      if (contactResult.alreadyExists) {
+        console.log('🔄 Existing contact detected - sending incomplete booking email');
+        
+        // Return special response to trigger existing contact flow
+        return res.json({
+          success: false,
+          existingContact: true,
+          contactId: contactResult.contact.CONTACTID,
+          email: email,
+          message: 'Existing contact found. Please check your email for resuming your enrollment.'
+        });
+      }
+      
+      enrolmentContactId = contactResult.contact.CONTACTID;
     }
     
     // Update contact with custom fields if provided
@@ -208,8 +222,11 @@ async function findOrCreateContact(contactData) {
       });
       
       if (matchingContacts.length > 0) {
-        console.log('✅ Found existing contact with matching email:', matchingContacts[0].CONTACTID, matchingContacts[0].EMAIL);
-        return matchingContacts[0];
+        console.log('✅ Found existing contact with matching email:', matchingContacts[0].CONTACTID, getContactEmail(matchingContacts[0]));
+        return {
+          alreadyExists: true,
+          contact: matchingContacts[0]
+        };
       }
       
       if (contacts.length > 0 && matchingContacts.length === 0) {
@@ -268,13 +285,21 @@ async function findOrCreateContact(contactData) {
       console.error(`   Requested: ${email}`);
       console.error(`   Returned: ${newContact.EMAIL}`);
       console.error(`   This suggests aXcelerate did duplicate detection and returned existing contact`);
+      // Treat as existing contact
+      return {
+        alreadyExists: true,
+        contact: newContact
+      };
     } else if (!newContact.EMAIL) {
       console.warn('⚠️ Returned contact has no EMAIL field, cannot verify if it\'s new');
     } else {
       console.log('✅ Email matches - this appears to be a genuine new contact');
     }
     
-    return newContact;
+    return {
+      alreadyExists: false,
+      contact: newContact
+    };
     
   } catch (error) {
     console.error('Error in findOrCreateContact:', error);

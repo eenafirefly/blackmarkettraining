@@ -2220,65 +2220,10 @@
       elements.form.style.display = 'none';
       elements.loading.style.display = 'block';
       
-      // Check if contact exists (use emailAddress parameter per aXcelerate API)
-      console.log('🔍 Checking if contact exists:', email);
-      const response = await fetch(`${RENDER_APP_URL}/api/axcelerate/contact/search?emailAddress=${encodeURIComponent(email)}`);
+      // Note: Backend will handle duplicate detection automatically
+      // No need for frontend search - this avoids 405 errors
       
-      if (!response.ok) {
-        console.warn('⚠️ Contact search request failed:', response.status);
-        // If search fails, proceed to create
-      } else {
-      const contacts = await response.json();
-      console.log('📋 Contact search result:', contacts, 'Type:', typeof contacts, 'IsArray:', Array.isArray(contacts), 'Length:', contacts?.length);
-      
-      // Double-check: must be array AND have items with valid CONTACTID
-      const hasValidContact = Array.isArray(contacts) && 
-                             contacts.length > 0 && 
-                             contacts[0] && 
-                             contacts[0].CONTACTID && 
-                             (typeof contacts[0].CONTACTID === 'number' 
-                               ? contacts[0].CONTACTID > 0 
-                               : String(contacts[0].CONTACTID).trim().length > 0);
-      
-      if (hasValidContact) {
-        console.log('✋ Existing contact found:', contacts[0].CONTACTID);
-        
-        // Notify backend to create incomplete booking record in aXcelerate
-        // This triggers aXcelerate's automatic incomplete booking email
-        try {
-          console.log('📧 Creating incomplete booking record in aXcelerate...');
-          const verifyResponse = await fetch(`${RENDER_APP_URL}/api/enrollment/send-verification`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contactId: contacts[0].CONTACTID,
-              email: email,
-              instanceId: instanceId,
-              courseId: courseId,
-              courseType: courseType,
-              courseName: courseName,
-              resumeUrl: window.location.href
-            })
-          });
-          
-          const verifyResult = await verifyResponse.json();
-          console.log('✅ Incomplete booking record created:', verifyResult);
-          console.log('📧 aXcelerate will send incomplete booking email automatically');
-        } catch (emailError) {
-          console.error('⚠️ Failed to create incomplete booking record:', emailError);
-          // Continue anyway to show the modal
-        }
-        
-        showExistingRecordModal(email);
-        elements.loading.style.display = 'none';
-        elements.form.style.display = 'flex';
-        return;
-      } else {
-        console.log('✅ No existing contact found or invalid CONTACTID, proceeding to create');
-      }
-      }
-      
-      // Create new contact
+      // Create new contact (backend will detect if it already exists)
       console.log('🆕 Creating new contact...');
       const createResponse = await fetch(`${RENDER_APP_URL}/api/enrollment/create`, {
         method: 'POST',
@@ -2294,6 +2239,41 @@
       
       const result = await createResponse.json();
       console.log('Create contact result:', result);
+      
+      // Check if this is an existing contact
+      if (result.existingContact) {
+        console.log('✋ Existing contact detected by backend:', result.contactId);
+        
+        // Send incomplete booking email
+        try {
+          console.log('📧 Sending incomplete booking email...');
+          const emailResponse = await fetch(`${RENDER_APP_URL}/api/enrollment/send-verification`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contactId: result.contactId,
+              email: email,
+              instanceId: instanceId,
+              courseId: courseId,
+              courseType: courseType,
+              courseName: courseName,
+              resumeUrl: window.location.href
+            })
+          });
+          
+          const emailResult = await emailResponse.json();
+          console.log('✅ Incomplete booking email sent:', emailResult);
+        } catch (emailError) {
+          console.error('⚠️ Failed to send incomplete booking email:', emailError);
+          // Continue anyway to show the modal
+        }
+        
+        // Show existing record modal
+        showExistingRecordModal(email);
+        elements.loading.style.display = 'none';
+        elements.form.style.display = 'flex';
+        return;
+      }
       
       if (result.success) {
         contactId = result.data.contactId;
