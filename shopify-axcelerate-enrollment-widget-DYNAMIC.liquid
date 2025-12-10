@@ -1439,6 +1439,84 @@
         input.rows = field.rows || 4;
         break;
         
+      case 'checkbox-with-recognition':
+        // Create table-like structure for checkboxes with recognition ID dropdowns
+        const priorEdTable = document.createElement('div');
+        priorEdTable.className = 'ax-prioreducation-table';
+        priorEdTable.style.cssText = 'width: 100%;';
+        
+        if (field.options) {
+          field.options.forEach((opt, i) => {
+            const row = document.createElement('div');
+            row.className = 'ax-prioreducation-row';
+            row.style.cssText = 'display: flex; gap: 15px; margin-bottom: 10px; align-items: center;';
+            
+            // Checkbox column
+            const checkboxCol = document.createElement('div');
+            checkboxCol.style.cssText = 'flex: 1;';
+            
+            const label = document.createElement('label');
+            label.className = 'ax-checkbox-label';
+            label.style.cssText = 'display: flex; align-items: center; gap: 8px;';
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.name = field.fieldId;
+            checkbox.value = opt.value;
+            checkbox.className = 'ax-checkbox';
+            checkbox.id = `ax-${field.fieldId}-${opt.value}-${widgetId}`;
+            
+            const span = document.createElement('span');
+            span.textContent = opt.display;
+            
+            label.appendChild(checkbox);
+            label.appendChild(span);
+            checkboxCol.appendChild(label);
+            
+            // Recognition ID dropdown column
+            const recognitionCol = document.createElement('div');
+            recognitionCol.style.cssText = 'flex: 0 0 250px;';
+            
+            const recognitionSelect = document.createElement('select');
+            recognitionSelect.className = 'ax-input';
+            recognitionSelect.id = `ax-${opt.recognitionField}-${widgetId}`;
+            recognitionSelect.name = opt.recognitionField;
+            recognitionSelect.disabled = true; // Disabled until checkbox is checked
+            
+            // Add recognition options
+            if (field.recognitionOptions) {
+              field.recognitionOptions.forEach(recOpt => {
+                const option = document.createElement('option');
+                option.value = recOpt.value;
+                option.textContent = recOpt.display;
+                recognitionSelect.appendChild(option);
+              });
+            }
+            
+            // Enable/disable recognition dropdown based on checkbox state
+            checkbox.addEventListener('change', (e) => {
+              recognitionSelect.disabled = !e.target.checked;
+              if (!e.target.checked) {
+                recognitionSelect.value = ''; // Reset if unchecked
+              }
+            });
+            
+            recognitionCol.appendChild(recognitionSelect);
+            
+            row.appendChild(checkboxCol);
+            row.appendChild(recognitionCol);
+            priorEdTable.appendChild(row);
+          });
+        }
+        
+        fieldGroup.appendChild(priorEdTable);
+        
+        if (field.hideInitially === 'hidden') {
+          fieldGroup.classList.add('ax-hidden');
+        }
+        
+        return fieldGroup;
+      
       case 'checkbox':
         const checkboxGroup = document.createElement('div');
         checkboxGroup.className = 'ax-checkbox-group';
@@ -2361,7 +2439,32 @@
     
     // Handle different field types
     config.fields.forEach(field => {
-      if (field.type === 'checkbox') {
+      if (field.type === 'checkbox-with-recognition') {
+        // Collect all checked values for the main field
+        const checked = [];
+        const recognitions = {};
+        
+        form.querySelectorAll(`input[name="${field.fieldId}"]:checked`).forEach(cb => {
+          checked.push(cb.value);
+          
+          // Get the corresponding recognition dropdown value
+          if (field.options) {
+            const opt = field.options.find(o => o.value === cb.value);
+            if (opt && opt.recognitionField) {
+              const recognitionSelect = form.querySelector(`select[name="${opt.recognitionField}"]`);
+              if (recognitionSelect && recognitionSelect.value) {
+                recognitions[opt.recognitionField] = recognitionSelect.value;
+                // Store recognition ID separately for each qualification
+                stepData[opt.recognitionField] = recognitionSelect.value;
+              }
+            }
+          }
+        });
+        
+        if (checked.length > 0) {
+          stepData[field.fieldId] = checked.join(', '); // Join for aXcelerate
+        }
+      } else if (field.type === 'checkbox') {
         // Collect all checked values
         const checked = [];
         form.querySelectorAll(`input[name="${field.fieldId}"]:checked`).forEach(cb => {
@@ -2771,7 +2874,20 @@
           console.log(`     ✅ Found (checkbox group), setting values:`, value);
           value.forEach(v => {
             const checkbox = widget.querySelector(`input[name="${fieldId}"][value="${v}"]`);
-            if (checkbox) checkbox.checked = true;
+            if (checkbox) {
+              checkbox.checked = true;
+              
+              // For checkbox-with-recognition fields, also enable recognition dropdown
+              const recognitionFieldName = `${fieldId}_${v}_recognition`;
+              if (data[recognitionFieldName]) {
+                const recognitionSelect = widget.querySelector(`select[name="${recognitionFieldName}"]`);
+                if (recognitionSelect) {
+                  recognitionSelect.disabled = false;
+                  recognitionSelect.value = data[recognitionFieldName];
+                  console.log(`     ✅ Set recognition ID for ${fieldId}[${v}] = "${data[recognitionFieldName]}"`);
+                }
+              }
+            }
           });
         } else if (input.type === 'radio') {
           // Radio button - need to find the specific radio with this value
@@ -2821,11 +2937,37 @@
             console.warn(`     ⚠️ No radio with value "${value}" found. Available:`, Array.from(radios).map(r => r.value));
           }
         } else {
-          console.warn(`     ❌ NOT FOUND: #${inputIdLower} or radio group`);
-          // List all input IDs in the step to help debug
-          const allInputs = widget.querySelectorAll(`#ax-step-${stepId}-${widgetId} input, #ax-step-${stepId}-${widgetId} select, #ax-step-${stepId}-${widgetId} textarea`);
-          if (allInputs.length > 0) {
-            console.warn(`     Available inputs in step:`, Array.from(allInputs).map(i => i.id || i.name));
+          // Try to find checkboxes by name (might be comma-separated values from aXcelerate)
+          const checkboxes = widget.querySelectorAll(`input[name="${fieldId}"][type="checkbox"]`);
+          if (checkboxes.length > 0) {
+            console.log(`     ✅ Found ${checkboxes.length} checkboxes for "${fieldId}"`);
+            const values = typeof value === 'string' ? value.split(',').map(v => v.trim()) : [value];
+            values.forEach(v => {
+              const checkbox = Array.from(checkboxes).find(cb => cb.value === String(v));
+              if (checkbox) {
+                checkbox.checked = true;
+                console.log(`     ✅ Checked checkbox: ${fieldId}[${v}]`);
+                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                
+                // For checkbox-with-recognition fields, also enable recognition dropdown
+                const recognitionFieldName = `${fieldId}_${v}_recognition`;
+                if (data[recognitionFieldName]) {
+                  const recognitionSelect = widget.querySelector(`select[name="${recognitionFieldName}"]`);
+                  if (recognitionSelect) {
+                    recognitionSelect.disabled = false;
+                    recognitionSelect.value = data[recognitionFieldName];
+                    console.log(`     ✅ Set recognition ID for ${fieldId}[${v}] = "${data[recognitionFieldName]}"`);
+                  }
+                }
+              }
+            });
+          } else {
+            console.warn(`     ❌ NOT FOUND: #${inputIdLower} or radio/checkbox group`);
+            // List all input IDs in the step to help debug
+            const allInputs = widget.querySelectorAll(`#ax-step-${stepId}-${widgetId} input, #ax-step-${stepId}-${widgetId} select, #ax-step-${stepId}-${widgetId} textarea`);
+            if (allInputs.length > 0) {
+              console.warn(`     Available inputs in step:`, Array.from(allInputs).map(i => i.id || i.name));
+            }
           }
         }
       }

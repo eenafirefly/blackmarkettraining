@@ -108,22 +108,28 @@
       "order": 6,
       "fieldId": "prioreducation",
       "name": "Prior Education",
-      "type": "checkbox",
+      "type": "checkbox-with-recognition",
       "required": true,
       "dataField": true,
       "syncToCustomField": false,
       "mapsToContactField": "PRIOREDUCATION",
       "hideInitially": "hidden",
       "tooltip": "Select any relevant prior education achieved.",
+      "recognitionOptions": [
+        { "display": "Not specified", "value": "" },
+        { "display": "Australian Qualification", "value": "AustQual" },
+        { "display": "Australian Equivalent", "value": "AustEquiv" },
+        { "display": "International", "value": "International" }
+      ],
       "options": [
-        { "display": "Bachelor Degree or Higher Degree level", "value": "008" },
-        { "display": "Advanced Diploma or Associate Degree Level", "value": "410" },
-        { "display": "Diploma Level", "value": "420" },
-        { "display": "Certificate IV", "value": "511" },
-        { "display": "Certificate III", "value": "514" },
-        { "display": "Certificate II", "value": "521" },
-        { "display": "Certificate I", "value": "524" },
-        { "display": "Other education (including certificates or overseas qualifications not listed above)", "value": "990" }
+        { "display": "Bachelor Degree or Higher Degree level", "value": "008", "recognitionField": "prioreducation_008_recognition" },
+        { "display": "Advanced Diploma or Associate Degree Level", "value": "410", "recognitionField": "prioreducation_410_recognition" },
+        { "display": "Diploma Level", "value": "420", "recognitionField": "prioreducation_420_recognition" },
+        { "display": "Certificate IV", "value": "511", "recognitionField": "prioreducation_511_recognition" },
+        { "display": "Certificate III", "value": "514", "recognitionField": "prioreducation_514_recognition" },
+        { "display": "Certificate II", "value": "521", "recognitionField": "prioreducation_521_recognition" },
+        { "display": "Certificate I", "value": "524", "recognitionField": "prioreducation_524_recognition" },
+        { "display": "Other education (including certificates or overseas qualifications not listed above)", "value": "990", "recognitionField": "prioreducation_990_recognition" }
       ]
     }
   ]

@@ -695,6 +695,10 @@ router.post('/save-step', async (req, res) => {
         if (keyLower === 'prioreducationstatus') axFieldName = 'PRIOREDUCATIONSTATUS';
         if (keyLower === 'prioreducation') axFieldName = 'PRIOREDUCATION';
         
+        // Prior Education Recognition IDs (stored as custom fields)
+        // e.g., prioreducation_008_recognition, prioreducation_410_recognition, etc.
+        // These will be automatically handled as custom fields below
+        
         // VET Related Details - Disability
         if (keyLower === 'disabilities' || keyLower === 'disabilityflag') axFieldName = 'DISABILITYFLAG';
         if (keyLower === 'disabilitytypes') axFieldName = 'DISABILITYTYPES';
