@@ -3464,6 +3464,7 @@
     const mobileFields = ['mobile', 'mobilephone', 'mobilePhone', 'phone', 'cellphone'];
     
     let filledCount = 0;
+    const prefilledData = {}; // Track what we pre-fill to save to formData
     
     // Try to find and populate given name field
     if (contactDetails.givenName) {
@@ -3472,6 +3473,7 @@
         // Pre-fill if input exists and is empty or contains only whitespace
         if (input && (!input.value || input.value.trim() === '')) {
           input.value = contactDetails.givenName;
+          prefilledData[fieldId] = contactDetails.givenName;
           console.log(`   ✅ Pre-filled givenName: ${fieldId} = "${contactDetails.givenName}"`);
           filledCount++;
           return true;
@@ -3490,6 +3492,7 @@
         // Pre-fill if input exists and is empty or contains only whitespace
         if (input && (!input.value || input.value.trim() === '')) {
           input.value = contactDetails.surname;
+          prefilledData[fieldId] = contactDetails.surname;
           console.log(`   ✅ Pre-filled surname: ${fieldId} = "${contactDetails.surname}"`);
           filledCount++;
           return true;
@@ -3511,11 +3514,14 @@
         // Pre-fill if input exists and is empty or contains only whitespace
         if (input && (!input.value || input.value.trim() === '')) {
           input.value = contactDetails.email;
+          prefilledData[fieldId] = contactDetails.email;
           console.log(`   ✅ Pre-filled email: ${fieldId} = "${contactDetails.email}"`);
           filledCount++;
           return true;
         } else if (input && input.value) {
           console.log(`      ⏭️ Skipping ${elementId} - already has value: "${input.value}"`);
+          // Still save to formData even if field already had value
+          prefilledData[fieldId] = input.value;
         }
         return false;
       });
@@ -3536,11 +3542,14 @@
         // Pre-fill if input exists and is empty or contains only whitespace
         if (input && (!input.value || input.value.trim() === '')) {
           input.value = contactDetails.mobile;
+          prefilledData[fieldId] = contactDetails.mobile;
           console.log(`   ✅ Pre-filled mobile: ${fieldId} = "${contactDetails.mobile}"`);
           filledCount++;
           return true;
         } else if (input && input.value) {
           console.log(`      ⏭️ Skipping ${elementId} - already has value: "${input.value}"`);
+          // Still save to formData even if field already had value
+          prefilledData[fieldId] = input.value;
         }
         return false;
       });
@@ -3560,6 +3569,31 @@
     }
     
     console.log(`✅ Pre-filled ${filledCount} fields for step "${stepId}"`);
+    
+    // IMPORTANT: Save pre-filled data to formData and sessionStorage so validation can see it
+    if (Object.keys(prefilledData).length > 0) {
+      console.log(`💾 Saving pre-filled data to formData['${stepId}']:`, prefilledData);
+      
+      // Merge with existing formData for this step (don't overwrite other fields)
+      if (!formData[stepId]) {
+        formData[stepId] = {};
+      }
+      Object.assign(formData[stepId], prefilledData);
+      
+      // Also save to sessionStorage
+      sessionStorage.setItem(`ax_form_${stepId}`, JSON.stringify(formData[stepId]));
+      
+      console.log(`✅ formData['${stepId}'] now contains:`, formData[stepId]);
+      
+      // Re-validate the step now that we have the data
+      const isValid = validateStepRequiredFields(stepId);
+      if (isValid) {
+        console.log(`✅ Step "${stepId}" passes validation after pre-fill - marking as completed`);
+        markStepCompleted(stepId);
+      } else {
+        console.log(`⚠️ Step "${stepId}" still missing required fields after pre-fill`);
+      }
+    }
   }
   
   // =========================================================================
