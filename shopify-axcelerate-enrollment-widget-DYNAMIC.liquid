@@ -1050,6 +1050,49 @@
     return value;
   }
   
+  // Country name to ISO code converter
+  function convertCountryNameToISO(countryName) {
+    if (!countryName || typeof countryName !== 'string') return '';
+    
+    // Map of country names to ISO codes (based on form config options)
+    const countryMap = {
+      'Afghanistan': 'AF', 'Albania': 'AL', 'Algeria': 'DZ', 'Argentina': 'AR',
+      'Australia': 'AU', 'Austria': 'AT', 'Bangladesh': 'BD', 'Belgium': 'BE',
+      'Brazil': 'BR', 'Canada': 'CA', 'Chile': 'CL', 'China': 'CN',
+      'Colombia': 'CO', 'Croatia': 'HR', 'Czech Republic': 'CZ', 'Denmark': 'DK',
+      'Egypt': 'EG', 'Finland': 'FI', 'France': 'FR', 'Germany': 'DE',
+      'Greece': 'GR', 'Hong Kong': 'HK', 'Hungary': 'HU', 'India': 'IN',
+      'Indonesia': 'ID', 'Iran': 'IR', 'Iraq': 'IQ', 'Ireland': 'IE',
+      'Israel': 'IL', 'Italy': 'IT', 'Japan': 'JP', 'Jordan': 'JO',
+      'Kenya': 'KE', 'Korea, South': 'KR', 'Lebanon': 'LB', 'Malaysia': 'MY',
+      'Mexico': 'MX', 'Nepal': 'NP', 'Netherlands': 'NL', 'New Zealand': 'NZ',
+      'Nigeria': 'NG', 'Norway': 'NO', 'Pakistan': 'PK', 'Philippines': 'PH',
+      'Poland': 'PL', 'Portugal': 'PT', 'Romania': 'RO', 'Russia': 'RU',
+      'Saudi Arabia': 'SA', 'Singapore': 'SG', 'South Africa': 'ZA', 'Spain': 'ES',
+      'Sri Lanka': 'LK', 'Sweden': 'SE', 'Switzerland': 'CH', 'Syria': 'SY',
+      'Taiwan': 'TW', 'Thailand': 'TH', 'Turkey': 'TR', 'Ukraine': 'UA',
+      'United Arab Emirates': 'AE', 'United Kingdom': 'GB', 'United States': 'US',
+      'Vietnam': 'VN'
+    };
+    
+    // Try exact match first
+    if (countryMap[countryName]) {
+      return countryMap[countryName];
+    }
+    
+    // Try case-insensitive match
+    const normalizedName = countryName.trim();
+    for (const [name, code] of Object.entries(countryMap)) {
+      if (name.toLowerCase() === normalizedName.toLowerCase()) {
+        return code;
+      }
+    }
+    
+    // Return original if no match found
+    console.warn(`⚠️ Country name "${countryName}" not found in ISO map`);
+    return countryName;
+  }
+  
   // Course data for enrollment summary (will be fetched dynamically)
   let courseData = null;
   
@@ -3203,7 +3246,17 @@
         suburb: contact.CITY || contact.SUBURB || contact.suburb || '',
         postcode: contact.POSTCODE || contact.postcode || '',
         state: contact.STATE || contact.state || '',
-        country: contact.COUNTRYNAME || contact.COUNTRY || contact.country || '',
+        country: (() => {
+          const countryName = contact.COUNTRYNAME || contact.COUNTRY || contact.country || '';
+          console.log('🌏 Loading residential country (raw):', countryName);
+          // Convert country name to ISO code for the dropdown
+          if (countryName) {
+            const isoCode = convertCountryNameToISO(countryName);
+            console.log('🌏 Residential country converted to ISO:', isoCode);
+            return isoCode;
+          }
+          return '';
+        })(),
         postaladdress: contact.SADDRESS1 || contact.SADDRESS2 || contact.postaladdress || '',
         postalstreetnumber: contact.SSTREETNO || contact.SADDRESS1 || '',
         postalstreetname: contact.SSTREETNAME || contact.SADDRESS2 || '',
@@ -3213,7 +3266,17 @@
         postalsuburb: contact.SCITY || contact.SCOUNTRY || contact.postalsuburb || '',
         postalpostcode: contact.SPOSTCODE || contact.postalpostcode || '',
         postalstate: contact.SSTATE || contact.postalstate || '',
-        postalcountry: contact.SCOUNTRYNAME || contact.SCOUNTRY || contact.postalcountry || '',
+        postalcountry: (() => {
+          const countryName = contact.SCOUNTRYNAME || contact.SCOUNTRY || contact.postalcountry || '';
+          console.log('🌏 Loading postal country (raw):', countryName);
+          // Convert country name to ISO code for the dropdown
+          if (countryName) {
+            const isoCode = convertCountryNameToISO(countryName);
+            console.log('🌏 Postal country converted to ISO:', isoCode);
+            return isoCode;
+          }
+          return '';
+        })(),
         countryofbirth: (() => {
           let value = contact.COUNTRYOFBIRTHID || contact.COUNTRYOFBIRTHNAME || contact.COUNTRYOFBIRTH || '';
           console.log('🌍 Loading Country of Birth (raw):', value);
