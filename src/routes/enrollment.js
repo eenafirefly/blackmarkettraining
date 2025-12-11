@@ -1284,7 +1284,7 @@ Note: Enrollment will be created when user returns and completes the form.`;
  */
 router.post('/upload-documents', upload.array('files', 10), async (req, res) => {
   try {
-    const { contactId, fieldId, stepId } = req.body;
+    const { contactId, fieldId, stepId, portfolioChecklistId, portfolioItemType } = req.body;
     
     if (!contactId) {
       return res.status(400).json({
@@ -1300,49 +1300,150 @@ router.post('/upload-documents', upload.array('files', 10), async (req, res) => 
       });
     }
     
-    console.log(`📤 Uploading ${req.files.length} files for contact ${contactId}, field ${fieldId}`);
+    console.log('📤 Starting Axcelerate Portfolio document upload...');
+    console.log(`   Contact ID: ${contactId}`);
+    console.log(`   Field ID: ${fieldId}`);
+    console.log(`   Portfolio Checklist ID: ${portfolioChecklistId}`);
+    console.log(`   Portfolio Item Type: ${portfolioItemType}`);
+    console.log(`   Files to upload: ${req.files.length}`);
     
-    const uploadedFiles = req.files.map(file => ({
-      id: file.filename,
-      name: file.originalname,
-      fileName: file.originalname,
-      path: file.path,
-      size: file.size,
-      uploadedAt: new Date().toISOString()
-    }));
+    const uploadedFiles = [];
+    const fs = require('fs');
     
-    // TODO: Upload files to aXcelerate portfolio/checklist system
-    // For now, store file metadata in a custom field or note
-    
-    // Create a note about uploaded documents
-    const fileNames = uploadedFiles.map(f => f.name).join(', ');
-    const noteText = `Document Upload - ${fieldId}
-
-Files: ${fileNames}
-Upload Date: ${new Date().toLocaleString()}
-Field: ${fieldId}
-Step: ${stepId}
-
-Files stored locally and will be submitted with final enrollment.`;
-    
-    await fetch(
-      `${process.env.AXCELERATE_API_URL}/contact/${contactId}/note`,
-      {
-        method: 'POST',
-        headers: {
-          'APIToken': process.env.AXCELERATE_API_TOKEN,
-          'WSToken': process.env.AXCELERATE_WS_TOKEN,
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: `note=${encodeURIComponent(noteText)}&type=General`
+    // Process each file
+    for (const file of req.files) {
+      try {
+        console.log(`\n📄 Processing file: ${file.originalname}`);
+        
+        // Step 1: Get presigned upload URL from Axcelerate
+        console.log('   ⏳ Getting presigned upload URL...');
+        const presignedResponse = await fetch(
+          `${process.env.AXCELERATE_API_URL}/file/getUploadUrl`,
+          {
+            method: 'POST',
+            headers: {
+              'APIToken': process.env.AXCELERATE_API_TOKEN,
+              'WSToken': process.env.AXCELERATE_WS_TOKEN,
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({
+              fileName: file.originalname,
+              dir: 'portfolio',
+              forceOverwrite: 'true'
+            })
+          }
+        );
+        
+        if (!presignedResponse.ok) {
+          throw new Error(`Failed to get presigned URL: ${presignedResponse.status}`);
+        }
+        
+        const presignedData = await presignedResponse.json();
+        console.log('   ✅ Got presigned URL:', presignedData.uploadUrl ? 'Success' : 'Failed');
+        
+        if (!presignedData.uploadUrl || !presignedData.fileID) {
+          throw new Error('Invalid presigned URL response');
+        }
+        
+        // Step 2: Upload file to presigned URL
+        console.log('   ⏳ Uploading file to Axcelerate storage...');
+        const fileBuffer = fs.readFileSync(file.path);
+        
+        const uploadResponse = await fetch(presignedData.uploadUrl, {
+          method: 'PUT',
+          body: fileBuffer,
+          headers: {
+            'Content-Type': file.mimetype
+          }
+        });
+        
+        if (!uploadResponse.ok) {
+          throw new Error(`Failed to upload file: ${uploadResponse.status}`);
+        }
+        
+        console.log('   ✅ File uploaded to storage');
+        
+        // Step 3: Create portfolio record
+        console.log('   ⏳ Creating portfolio record...');
+        const portfolioResponse = await fetch(
+          `${process.env.AXCELERATE_API_URL}/contact/portfolio/`,
+          {
+            method: 'POST',
+            headers: {
+              'APIToken': process.env.AXCELERATE_API_TOKEN,
+              'WSToken': process.env.AXCELERATE_WS_TOKEN,
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({
+              contactID: contactId,
+              portfolioTypeID: portfolioChecklistId,
+              itemType: portfolioItemType || fieldId,
+              name: file.originalname,
+              description: `Uploaded via enrollment form - ${stepId}`
+            })
+          }
+        );
+        
+        if (!portfolioResponse.ok) {
+          const errorText = await portfolioResponse.text();
+          console.error('   ❌ Portfolio creation failed:', errorText);
+          throw new Error(`Failed to create portfolio record: ${portfolioResponse.status}`);
+        }
+        
+        const portfolioData = await portfolioResponse.json();
+        console.log('   ✅ Portfolio record created:', portfolioData.certificationID || portfolioData.portfolioID);
+        
+        // Step 4: Link file to portfolio
+        console.log('   ⏳ Linking file to portfolio...');
+        const linkResponse = await fetch(
+          `${process.env.AXCELERATE_API_URL}/contact/portfolio/file`,
+          {
+            method: 'PUT',
+            headers: {
+              'APIToken': process.env.AXCELERATE_API_TOKEN,
+              'WSToken': process.env.AXCELERATE_WS_TOKEN,
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({
+              portfolioID: portfolioData.certificationID || portfolioData.portfolioID,
+              fileID: presignedData.fileID
+            })
+          }
+        );
+        
+        if (!linkResponse.ok) {
+          const errorText = await linkResponse.text();
+          console.error('   ❌ File linking failed:', errorText);
+          throw new Error(`Failed to link file to portfolio: ${linkResponse.status}`);
+        }
+        
+        console.log('   ✅ File linked to portfolio successfully');
+        
+        uploadedFiles.push({
+          id: presignedData.fileID,
+          name: file.originalname,
+          portfolioID: portfolioData.certificationID || portfolioData.portfolioID,
+          uploadedAt: new Date().toISOString()
+        });
+        
+        // Clean up temporary file
+        fs.unlinkSync(file.path);
+        
+      } catch (fileError) {
+        console.error(`   ❌ Error processing file ${file.originalname}:`, fileError.message);
+        // Continue with other files even if one fails
       }
-    );
+    }
     
-    console.log(`✅ ${uploadedFiles.length} files uploaded successfully`);
+    if (uploadedFiles.length === 0) {
+      throw new Error('No files were successfully uploaded to Axcelerate Portfolio');
+    }
+    
+    console.log(`\n✅ Successfully uploaded ${uploadedFiles.length}/${req.files.length} files to Axcelerate Portfolio`);
     
     res.json({
       success: true,
-      message: 'Files uploaded successfully',
+      message: `Successfully uploaded ${uploadedFiles.length} file(s) to Axcelerate Portfolio`,
       files: uploadedFiles
     });
     

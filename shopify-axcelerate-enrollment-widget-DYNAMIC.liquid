@@ -2080,10 +2080,26 @@
     
     console.log(`📤 Uploading ${fileInput.files.length} file(s) for ${fieldId}...`);
     
+    // Get portfolio configuration from the field config
+    const config = stepConfigs[stepId];
+    const fieldConfig = config?.fields?.find(f => f.fieldId === fieldId);
+    
     const formData = new FormData();
     formData.append('contactId', contactId);
     formData.append('fieldId', fieldId);
     formData.append('stepId', stepId);
+    
+    // Add portfolio parameters for Axcelerate
+    if (fieldConfig) {
+      if (fieldConfig.portfolioChecklistId) {
+        formData.append('portfolioChecklistId', fieldConfig.portfolioChecklistId);
+        console.log(`   🎫 Portfolio Checklist ID: ${fieldConfig.portfolioChecklistId}`);
+      }
+      if (fieldConfig.portfolioItemType) {
+        formData.append('portfolioItemType', fieldConfig.portfolioItemType);
+        console.log(`   📋 Portfolio Item Type: ${fieldConfig.portfolioItemType}`);
+      }
+    }
     
     // Add all selected files
     Array.from(fileInput.files).forEach((file, index) => {
