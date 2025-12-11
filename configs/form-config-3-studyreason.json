@@ -3,9 +3,8 @@
   "configName": "Accredited Enrolment Form - Single - No Payment",
   "step": "studyreason",
   "stepName": "Study Reason",
-  "stepType": "enrol-details",
+  "stepType": "contact-update",
   "stepOrder": 11,
-  "stepId": "enrolOptions",
   "stepHeader": "Study Reason",
   "fields": [
     {

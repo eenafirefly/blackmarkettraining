@@ -844,11 +844,10 @@ router.post('/save-step', async (req, res) => {
         updatePayload[axFieldName] = value;
         console.log(`   📝 Personal field: ${key} → ${axFieldName} = "${value}"`);
       } else {
-        // Custom field - send with CUSTOMFIELD_ prefix
-        // Preserve original case for variable name (Axcelerate might be case-sensitive)
-        const axcelerateFieldName = `CUSTOMFIELD_${key}`;
-        updatePayload[axcelerateFieldName] = value;
-        console.log(`   📝 Custom field: ${key} → ${axcelerateFieldName} = "${value}"`);
+        // Custom field - send with just the variable name (no CUSTOMFIELD_ prefix for contact updates)
+        // Axcelerate contact endpoint expects just the variable name, not prefixed
+        updatePayload[key] = value;
+        console.log(`   📝 Custom field: ${key} = "${value}" (saved as contact custom field)`);
       }
     });
     
