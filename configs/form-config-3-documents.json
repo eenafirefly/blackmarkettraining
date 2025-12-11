@@ -9,6 +9,7 @@
   "stepOptional": false,
   "contactType": "Student",
   "buttonText": "Save",
+  "portfolioChecklistId": "3549",
   "appearance": {
     "topBlurb": "Please upload the required documents below. Each section requires at least one document."
   },
