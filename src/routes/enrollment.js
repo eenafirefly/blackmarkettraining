@@ -621,6 +621,18 @@ router.post('/save-step', async (req, res) => {
     // Update contact with step data
     const updatePayload = {};
     
+    // Special handling for prior education with recognition
+    // If prioreducation exists, combine it with recognition fields
+    if (stepData.prioreducation && Array.isArray(stepData.prioreducation)) {
+      const priorEdWithRecognition = stepData.prioreducation.map(code => {
+        const recognitionField = `prioreducation_${code}_recognition`;
+        const recognition = stepData[recognitionField] || '';
+        return `${code}${recognition}`; // e.g., "008A" or "410E"
+      });
+      stepData.prioreducationids = priorEdWithRecognition.join(','); // e.g., "008A,410E"
+      console.log('✅ Built PRIOREDUCATIONIDS:', stepData.prioreducationids);
+    }
+    
     // Personal detail fields that update the contact record directly (not custom fields)
     const personalDetailFields = [
       'title', 'givenname', 'firstname', 'surname', 'lastname', 'preferredname', 'middlename',
@@ -640,7 +652,7 @@ router.post('/save-step', async (req, res) => {
       'indigenousstatus', 'aboriginalortorresstraitislanderorigin',
       'employmentstatus', 'occupationidentifier', 'industryofemployment',
       'schoollevel', 'highestschoollevel', 'highestcompletedschoollevel', 'yearhighestschoolcompleted',
-      'prioreducationstatus', 'prioreducation',
+      'prioreducationstatus', 'prioreducation', 'prioreducationids',
       'disabilities', 'disabilitytypes', 'disabilityflag', 'hasdisability',
       'surveycontactstatus'
     ];
@@ -758,12 +770,23 @@ router.post('/save-step', async (req, res) => {
           axFieldName = 'HIGHESTSCHOOLLEVELYEAR';
           // Value is a year like "2020"
         }
-        if (keyLower === 'prioreducationstatus') axFieldName = 'PRIOREDUCATIONSTATUS';
-        if (keyLower === 'prioreducation') axFieldName = 'PRIOREDUCATION';
+        if (keyLower === 'prioreducationstatus') {
+          axFieldName = 'PRIOREDUCATIONSTATUS';
+          // Convert string "true"/"false" to boolean
+          if (value === 'true') value = true;
+          else if (value === 'false') value = false;
+        }
+        if (keyLower === 'prioreducation' || keyLower === 'prioreducationids') {
+          axFieldName = 'PRIOREDUCATIONIDS';
+          // Value should be comma-separated list of codes with recognition letters
+          // e.g., "008A,410E" (Bachelor + AustQual, Advanced Diploma + AustEquiv)
+          // The checkbox-with-recognition field handler should format this correctly
+        }
         
-        // Prior Education Recognition IDs (stored as custom fields)
-        // e.g., prioreducation_008_recognition, prioreducation_410_recognition, etc.
-        // These will be automatically handled as custom fields below
+        // Prior Education Recognition fields (e.g., prioreducation_008_recognition)
+        // These are used to build the PRIOREDUCATIONIDS value with recognition letters
+        // e.g., if prioreducation has "008" checked and prioreducation_008_recognition is "A",
+        // then PRIOREDUCATIONIDS should include "008A" in the comma-separated list
         
         // VET Related Details - Disability
         if (keyLower === 'disabilities' || keyLower === 'disabilityflag' || keyLower === 'hasdisability') axFieldName = 'DISABILITYFLAG';

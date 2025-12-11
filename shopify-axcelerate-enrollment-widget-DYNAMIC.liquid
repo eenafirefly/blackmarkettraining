@@ -3129,12 +3129,37 @@
         postalpostcode: contact.SPOSTCODE || contact.postalpostcode || '',
         postalstate: contact.SSTATE || contact.postalstate || '',
         postalcountry: contact.SCOUNTRYNAME || contact.SCOUNTRY || contact.postalcountry || '',
-        countryofbirth: contact.COUNTRYOFBIRTHID || contact.COUNTRYOFBIRTHNAME || contact.COUNTRYOFBIRTH || '',
+        countryofbirth: (() => {
+          const value = contact.COUNTRYOFBIRTHID || contact.COUNTRYOFBIRTHNAME || contact.COUNTRYOFBIRTH || '';
+          console.log('🌍 Loading Country of Birth:', value);
+          return value;
+        })(),
         birthplace: contact.CITYOFBIRTH || contact.BIRTHPLACE || '',
         citizenshipstatus: contact.CITIZENSTATUSID || contact.CITIZENSTATUSNAME || contact.CITIZENSHIPSTATUS || '',
-        countryofcitizenship: contact.COUNTRYOFCITIZENID || contact.COUNTRYOFCITIZENNAME || contact.COUNTRYOFCITIZENSHIP || '',
+        countryofcitizenship: (() => {
+          const value = contact.COUNTRYOFCITIZENID || contact.COUNTRYOFCITIZENNAME || contact.COUNTRYOFCITIZENSHIP || '';
+          console.log('🌍 Loading Country of Citizenship:', value, 'from contact:', {
+            COUNTRYOFCITIZENID: contact.COUNTRYOFCITIZENID,
+            COUNTRYOFCITIZENNAME: contact.COUNTRYOFCITIZENNAME,
+            COUNTRYOFCITIZENSHIP: contact.COUNTRYOFCITIZENSHIP
+          });
+          return value;
+        })(),
         languagespoken: contact.MAINLANGUAGEID || contact.MAINLANGUAGENAME || contact.LANGUAGESPOKEN || '',
         englishproficiency: contact.ENGLISHPROFICIENCYID || contact.ENGLISHPROFICIENCYNAME || contact.ENGLISHPROFICIENCY || '',
+        speakotherlanguage: (() => {
+          // Auto-populate based on whether there's a language identifier
+          const hasLanguage = contact.MAINLANGUAGEID || contact.MAINLANGUAGENAME || contact.LANGUAGESPOKEN;
+          if (hasLanguage) {
+            // If language is English (code 1201), consider as "No"
+            if (hasLanguage === '1201' || hasLanguage === 'English') {
+              return 'No';
+            }
+            return 'Yes';
+          }
+          // Default to "No" if no language set
+          return 'No';
+        })(),
         indigenousstatus: contact.INDIGENOUSSTATUSNAME || contact.INDIGENOUSSTATUSID || contact.INDIGENOUSSTATUS || '',
         employmentstatus: contact.EMPLOYMENTSTATUSNAME || contact.EMPLOYMENTSTATUSID || contact.EMPLOYMENTSTATUS || '',
         disabilityflag: contact.DISABILITYFLAG || '',
@@ -3143,7 +3168,12 @@
         yearhighestschoolcompleted: contact.HIGHESTSCHOOLLEVELYEAR || '',
         stillenrolledsecondary: contact.ATSCHOOLFLAG !== undefined ? String(contact.ATSCHOOLFLAG) : '',
         prioreducation: contact.PRIOREDUCATION || '',
-        prioreducationstatus: contact.PRIOREDUCATIONSTATUS || '',
+        prioreducationstatus: (() => {
+          // Convert boolean to string for the select field
+          if (contact.PRIOREDUCATIONSTATUS === true || contact.PRIOREDUCATIONSTATUS === 'true') return 'true';
+          if (contact.PRIOREDUCATIONSTATUS === false || contact.PRIOREDUCATIONSTATUS === 'false') return 'false';
+          return '';
+        })(),
         disabilitytypes: contact.DISABILITYTYPES || '',
         studyreason: contact.STUDYREASON || '',
         emergencycontact: contact.EMERGENCYCONTACT || contact.emergencycontact || '',

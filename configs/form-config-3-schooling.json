@@ -114,14 +114,14 @@
       "required": true,
       "dataField": true,
       "syncToCustomField": false,
-      "mapsToContactField": "PRIOREDUCATION",
+      "mapsToContactField": "PRIOREDUCATIONIDS",
       "hideInitially": "hidden",
       "tooltip": "Select any relevant prior education achieved.",
       "recognitionOptions": [
         { "display": "Not specified", "value": "" },
-        { "display": "Australian Qualification", "value": "AustQual" },
-        { "display": "Australian Equivalent", "value": "AustEquiv" },
-        { "display": "International", "value": "International" }
+        { "display": "Australian Qualification", "value": "A" },
+        { "display": "Australian Equivalent", "value": "E" },
+        { "display": "International", "value": "I" }
       ],
       "options": [
         { "display": "Bachelor Degree or Higher Degree level", "value": "008", "recognitionField": "prioreducation_008_recognition" },
