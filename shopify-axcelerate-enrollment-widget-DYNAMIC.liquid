@@ -3247,7 +3247,13 @@
         })(),
         indigenousstatus: contact.INDIGENOUSSTATUSID || contact.INDIGENOUSSTATUSNAME || contact.INDIGENOUSSTATUS || '',
         employmentstatus: contact.EMPLOYMENTSTATUSID || contact.EMPLOYMENTSTATUSNAME || contact.EMPLOYMENTSTATUS || '',
-        disabilityflag: contact.DISABILITYFLAG || '',
+        disabilityflag: (() => {
+          // Convert boolean to Y/N for the select dropdown
+          const flag = contact.DISABILITYFLAG;
+          if (flag === true || flag === 'true' || flag === 'Y' || flag === 'Yes') return 'Y';
+          if (flag === false || flag === 'false' || flag === 'N' || flag === 'No') return 'N';
+          return '';
+        })(),
         disabilitytypes: (() => {
           // Parse DISABILITYTYPES from Axcelerate (format: "11,12" or array)
           let types = contact.DISABILITYTYPES || '';

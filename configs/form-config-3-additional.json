@@ -87,6 +87,7 @@
       "required": true,
       "dataField": true,
       "syncToCustomField": false,
+      "mapsToContactField": "EMPLOYMENTSTATUSID",
       "mapsToContactField": "EMPLOYMENTSTATUSNAME",
       "tooltip": "For casual, seasonal, contract and shift work, use the current number of hours worked per week to determine whether full time (35 hours or more per week) or part-time employed (less than 35 hours per week).",
       "options": [

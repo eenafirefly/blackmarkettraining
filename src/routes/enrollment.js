@@ -814,7 +814,16 @@ router.post('/save-step', async (req, res) => {
         // then PRIOREDUCATIONIDS should include "008A" in the comma-separated list
         
         // VET Related Details - Disability
-        if (keyLower === 'disabilities' || keyLower === 'disabilityflag' || keyLower === 'hasdisability') axFieldName = 'DISABILITYFLAG';
+        if (keyLower === 'disabilities' || keyLower === 'disabilityflag' || keyLower === 'hasdisability') {
+          axFieldName = 'DISABILITYFLAG';
+          // Convert Y/N to boolean for Axcelerate
+          if (value === 'Y' || value === 'Yes' || value === 'true' || value === true) {
+            value = true;
+          } else if (value === 'N' || value === 'No' || value === 'false' || value === false) {
+            value = false;
+          }
+          console.log(`   🔄 Converted DISABILITYFLAG to boolean: ${value}`);
+        }
         if (keyLower === 'disabilitytypes') {
           axFieldName = 'DISABILITYTYPES';
           // DISABILITYTYPES expects comma-separated string like "11,12,13"
