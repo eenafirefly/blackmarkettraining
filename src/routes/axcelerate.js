@@ -1150,24 +1150,31 @@ router.get('/instance/:instanceId/:courseType?', async (req, res) => {
     }
     
     const instance = await response.json();
-    console.log('✅ Course instance fetched');
-    console.log('   Available fields:', Object.keys(instance));
-    console.log('   COURSENAME:', instance.COURSENAME);
-    console.log('   STARTDATE:', instance.STARTDATE);
-    console.log('   LOCATION:', instance.LOCATION);
-    console.log('   FEE:', instance.FEE);
-    console.log('   DESCRIPTION:', instance.DESCRIPTION);
-    console.log('   COURSEOUTLINE:', instance.COURSEOUTLINE);
+    console.log('✅ Course instance fetched - RAW RESPONSE:');
+    console.log('   ALL FIELDS:', JSON.stringify(instance, null, 2));
+    console.log('');
+    console.log('   Checking common field names:');
+    console.log('   - NAME:', instance.NAME);
+    console.log('   - COURSENAME:', instance.COURSENAME);
+    console.log('   - STARTDATE:', instance.STARTDATE);
+    console.log('   - FINISHDATE:', instance.FINISHDATE);
+    console.log('   - LOCATION:', instance.LOCATION);
+    console.log('   - VENUENAME:', instance.VENUENAME);
+    console.log('   - FEE:', instance.FEE);
+    console.log('   - COURSEFEE:', instance.COURSEFEE);
+    console.log('   - COST:', instance.COST);
+    console.log('   - DESCRIPTION:', instance.DESCRIPTION);
+    console.log('   - COURSEOUTLINE:', instance.COURSEOUTLINE);
     
-    // Format the response
+    // Format the response - try all possible field names
     const formattedData = {
-      courseName: instance.COURSENAME || instance.courseName || instance.name || 'Course',
-      courseCode: instance.COURSECODE || instance.courseCode || '',
+      courseName: instance.NAME || instance.COURSENAME || instance.courseName || instance.name || 'Course',
+      courseCode: instance.CODE || instance.COURSECODE || instance.courseCode || '',
       description: instance.DESCRIPTION || instance.description || instance.COURSEOUTLINE || instance.courseOutline || '',
       startDate: instance.STARTDATE || instance.startDate || instance.start || '',
-      endDate: instance.ENDDATE || instance.endDate || instance.end || '',
-      location: instance.LOCATION || instance.location || instance.venue || instance.VENUENAME || '',
-      fee: instance.FEE || instance.fee || instance.price || instance.COURSEFEE || '',
+      endDate: instance.FINISHDATE || instance.ENDDATE || instance.endDate || instance.end || instance.finish || '',
+      location: instance.VENUENAME || instance.LOCATION || instance.location || instance.venue || '',
+      fee: instance.COURSEFEE || instance.FEE || instance.fee || instance.price || instance.COST || '',
       status: instance.STATUS || instance.status || ''
     };
     
