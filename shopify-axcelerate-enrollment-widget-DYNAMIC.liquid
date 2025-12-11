@@ -2637,6 +2637,22 @@
     console.log('💾 Stored in formData object. Total steps in formData:', Object.keys(formData));
     console.log('💾 Full formData object:', formData);
     
+    // Special handling for document-upload steps
+    if (config.stepType === 'document-upload') {
+      console.log('📄 Document upload step - checking if all required files are uploaded...');
+      
+      // Check if all required file fields have uploads
+      const isValid = validateStepRequiredFields(stepId);
+      
+      if (!isValid) {
+        console.error('❌ Cannot proceed - required documents not uploaded');
+        alert('⚠️ Please upload all required documents before proceeding to the next step.');
+        return; // Don't allow progression
+      }
+      
+      console.log('✅ All required documents uploaded - allowing progression');
+    }
+    
     // Save to aXcelerate (update contact with custom fields)
     if (Object.keys(stepData).length > 0) {
       await saveStepToAxcelerate(stepId, stepData);

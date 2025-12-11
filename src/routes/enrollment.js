@@ -1316,6 +1316,12 @@ router.post('/upload-documents', upload.array('files', 10), async (req, res) => 
         
         // Step 1: Get presigned upload URL from Axcelerate
         console.log('   ⏳ Getting presigned upload URL...');
+        console.log('   Request params:', {
+          fileName: file.originalname,
+          dir: 'portfolio',
+          forceOverwrite: 'true'
+        });
+        
         const presignedResponse = await fetch(
           `${process.env.AXCELERATE_API_URL}/file/getUploadUrl`,
           {
@@ -1333,12 +1339,18 @@ router.post('/upload-documents', upload.array('files', 10), async (req, res) => 
           }
         );
         
+        console.log('   Response status:', presignedResponse.status);
+        
         if (!presignedResponse.ok) {
-          throw new Error(`Failed to get presigned URL: ${presignedResponse.status}`);
+          const errorText = await presignedResponse.text();
+          console.error('   ❌ Presigned URL request failed:', presignedResponse.status);
+          console.error('   Response:', errorText);
+          throw new Error(`Failed to get presigned URL: ${presignedResponse.status} - ${errorText}`);
         }
         
         const presignedData = await presignedResponse.json();
         console.log('   ✅ Got presigned URL:', presignedData.uploadUrl ? 'Success' : 'Failed');
+        console.log('   Presigned response:', JSON.stringify(presignedData, null, 2));
         
         if (!presignedData.uploadUrl || !presignedData.fileID) {
           throw new Error('Invalid presigned URL response');
