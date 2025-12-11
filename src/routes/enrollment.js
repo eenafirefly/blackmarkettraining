@@ -1480,7 +1480,8 @@ router.post('/upload-documents', upload.array('files', 10), async (req, res) => 
             body: new URLSearchParams({
               contactID: contactId,
               filename: file.originalname,
-              portfolioID: certificationID
+              portfolioID: certificationID,
+              folder: ''  // Required parameter (empty string for portfolio files)
             })
           }
         );
