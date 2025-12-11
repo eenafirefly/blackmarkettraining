@@ -3516,31 +3516,58 @@
       
       if (portfolioData && Array.isArray(portfolioData)) {
         portfolioData.forEach((item, index) => {
-          console.log(`   Item ${index + 1} (FULL):`, item);
+          console.log(`   Item ${index + 1}:`, {
+            PORTFOLIOTYPENAME: item.PORTFOLIOTYPENAME,
+            PORTFOLIOID: item.PORTFOLIOID,
+            FILES: item.FILES
+          });
           
           const typeName = item.PORTFOLIOTYPENAME || item.portfolioTypeName || '';
-          // Check ALL possible filename fields
-          const fileName = item.FILENAME || item.fileName || item.PORTFOLIONAME || 
-                          item.portfolioName || item.NAME || item.name || 
-                          item.DOCUMENTNAME || item.documentName || '';
           const portfolioId = item.PORTFOLIOID || item.portfolioID || item.CERTIFICATIONID || '';
           
-          console.log(`   Extracted: type="${typeName}", file="${fileName}", id="${portfolioId}"`);
-          
-          if (typeName && fileName) {
-            if (!documentsByType[typeName]) {
-              documentsByType[typeName] = [];
-            }
-            documentsByType[typeName].push({
-              id: portfolioId,
-              name: fileName,
-              portfolioID: portfolioId,
-              uploadedAt: item.DATECREATED || item.dateCreated || new Date().toISOString()
+          // Files are in the FILES array/object, not at the top level!
+          if (item.FILES && Array.isArray(item.FILES) && item.FILES.length > 0) {
+            console.log(`   📎 Found ${item.FILES.length} file(s) in FILES array`);
+            
+            item.FILES.forEach((file, fileIndex) => {
+              const fileName = file.FILENAME || file.filename || file.NAME || file.name || '';
+              console.log(`      File ${fileIndex + 1}: "${fileName}"`);
+              
+              if (typeName && fileName) {
+                if (!documentsByType[typeName]) {
+                  documentsByType[typeName] = [];
+                }
+                documentsByType[typeName].push({
+                  id: `${portfolioId}_${fileIndex}`,
+                  name: fileName,
+                  portfolioID: portfolioId,
+                  fileData: file,
+                  uploadedAt: item.DATEISSUED || item.dateIssued || new Date().toISOString()
+                });
+                console.log(`      ✅ Grouped: ${typeName} → ${fileName}`);
+              }
             });
-            console.log(`   ✅ Grouped: ${typeName} → ${fileName}`);
+          } else if (item.FILES && typeof item.FILES === 'object' && !Array.isArray(item.FILES)) {
+            // FILES might be a single object instead of array
+            console.log(`   📎 FILES is an object (not array):`, item.FILES);
+            const fileName = item.FILES.FILENAME || item.FILES.filename || item.FILES.NAME || item.FILES.name || '';
+            
+            if (typeName && fileName) {
+              if (!documentsByType[typeName]) {
+                documentsByType[typeName] = [];
+              }
+              documentsByType[typeName].push({
+                id: portfolioId,
+                name: fileName,
+                portfolioID: portfolioId,
+                fileData: item.FILES,
+                uploadedAt: item.DATEISSUED || item.dateIssued || new Date().toISOString()
+              });
+              console.log(`   ✅ Grouped: ${typeName} → ${fileName}`);
+            }
           } else {
-            console.warn(`   ⚠️ Skipped item ${index + 1}: typeName="${typeName}", fileName="${fileName}"`);
-            console.warn(`   Available fields:`, Object.keys(item));
+            console.warn(`   ⚠️ Item ${index + 1}: No FILES or FILES is empty`);
+            console.warn(`   FILES value:`, item.FILES);
           }
         });
       }
