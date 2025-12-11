@@ -3321,7 +3321,7 @@
           
           return result;
         })(),
-        studyreason: customFields.studyreason || contact.STUDYREASON || '',
+        studyreason: contact.STUDYREASONID || contact.STUDYREASON || customFields.studyreason || '',
         emergencycontact: contact.EMERGENCYCONTACT || contact.emergencycontact || '',
         emergencycontactrelation: contact.EMERGENCYCONTACTRELATION || contact.emergencycontactrelation || '',
         emergencycontactphone: contact.EMERGENCYCONTACTPHONE || contact.emergencycontactphone || ''
