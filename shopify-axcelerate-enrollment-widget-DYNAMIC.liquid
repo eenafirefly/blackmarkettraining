@@ -413,7 +413,9 @@
     border-color: #2196F3;
     box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
   }
-  
+  .ax-prioreducation-table .ax-input{
+        padding: 6px 20px;
+  }
   textarea.ax-input {
     min-height: 80px;
     resize: vertical;
@@ -951,6 +953,16 @@
     padding: 10px 15px;
     border-radius: 4px;
   }
+  .ax-prioreducation-table{
+        border: 1px solid;
+  }
+  .ax-prioreducation-row{
+      border-bottom: 1px solid;
+    padding: 10px;
+  }
+  .ax-prioreducation-row:last-child{
+  border-bottom:0;
+}
   
   @media (max-width: 768px) {
     .ax-summary-row {
@@ -3120,6 +3132,7 @@
         countryofbirth: contact.COUNTRYOFBIRTHID || contact.COUNTRYOFBIRTHNAME || contact.COUNTRYOFBIRTH || '',
         birthplace: contact.CITYOFBIRTH || contact.BIRTHPLACE || '',
         citizenshipstatus: contact.CITIZENSTATUSID || contact.CITIZENSTATUSNAME || contact.CITIZENSHIPSTATUS || '',
+        countryofcitizenship: contact.COUNTRYOFCITIZENID || contact.COUNTRYOFCITIZENNAME || contact.COUNTRYOFCITIZENSHIP || '',
         languagespoken: contact.MAINLANGUAGENAME || contact.MAINLANGUAGEID || contact.LANGUAGESPOKEN || '',
         englishproficiency: contact.ENGLISHPROFICIENCYNAME || contact.ENGLISHPROFICIENCYID || contact.ENGLISHPROFICIENCY || '',
         indigenousstatus: contact.INDIGENOUSSTATUSNAME || contact.INDIGENOUSSTATUSID || contact.INDIGENOUSSTATUS || '',

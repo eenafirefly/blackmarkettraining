@@ -717,10 +717,11 @@ router.post('/save-step', async (req, res) => {
           value = convertISOtoSACC(value);
         }
         if (keyLower === 'birthplace' || keyLower === 'cityofbirth') axFieldName = 'CITYOFBIRTH';
-        if (keyLower === 'citizenshipstatus') axFieldName = 'CITIZENSTATUSID'; // This uses numeric IDs (1-8)
+        if (keyLower === 'citizenshipstatus') axFieldName = 'CITIZENSTATUSID'; // This uses numeric IDs (1-11)
         if (keyLower === 'countryofcitizenship') {
-          axFieldName = 'COUNTRYOFCITIZENNAME';
-          value = getCountryName(value); // Convert country code to full name
+          axFieldName = 'COUNTRYOFCITIZENID';
+          // Convert ISO code to 4-digit SACC code (e.g., AU → 1101)
+          value = convertISOtoSACC(value);
         }
         if (keyLower === 'residencystatus') axFieldName = 'RESIDENCYSTATUSID';
         
