@@ -726,8 +726,14 @@ router.post('/save-step', async (req, res) => {
         if (keyLower === 'residencystatus') axFieldName = 'RESIDENCYSTATUSID';
         
         // VET Related Details - Language
-        if (keyLower === 'languagespoken' || keyLower === 'languageidentifier') axFieldName = 'MAINLANGUAGENAME';
-        if (keyLower === 'englishproficiency') axFieldName = 'ENGLISHPROFICIENCYNAME';
+        if (keyLower === 'languagespoken' || keyLower === 'languageidentifier') {
+          axFieldName = 'MAINLANGUAGEID';
+          // Value is already a SACC code (4-digit like "1201" for English)
+        }
+        if (keyLower === 'englishproficiency') {
+          axFieldName = 'ENGLISHPROFICIENCYID';
+          // Value is numeric ID (1-4) or empty string
+        }
         if (keyLower === 'englishassistance') axFieldName = 'ENGLISHASSISTANCEFLAG';
         if (keyLower === 'atschool') axFieldName = 'ATSCHOOLFLAG';
         
