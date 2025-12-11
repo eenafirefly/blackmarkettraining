@@ -2273,6 +2273,16 @@
     
     console.log(`   📊 Saved data for ${stepId}:`, allStepData);
     
+    // Special debug for contact step
+    if (stepId === 'contact') {
+      console.log(`📧 CONTACT STEP VALIDATION DEBUG:`);
+      console.log(`   formData['contact']:`, formData['contact']);
+      console.log(`   sessionStorage data:`, parsedSavedData);
+      console.log(`   Merged allStepData:`, allStepData);
+      console.log(`   email value:`, allStepData.email);
+      console.log(`   mobile value:`, allStepData.mobile);
+    }
+    
     let allFilled = true;
     
     for (const field of requiredFields) {
@@ -3068,20 +3078,22 @@
       console.log('📋 Raw contact data from aXcelerate:', contact);
       console.log('   EMAILADDRESS:', contact.EMAILADDRESS);
       console.log('   EMAIL:', contact.EMAIL);
+      console.log('   EmailAddress:', contact.EmailAddress);
+      console.log('   ALTERNATIVEEMAILADDRESS:', contact.ALTERNATIVEEMAILADDRESS);
       console.log('   MOBILE:', contact.MOBILE);
       console.log('   MOBILEPHONE:', contact.MOBILEPHONE);
       
       // Extract contact details (handle different casings)
-      contactDetails.givenName = contact.GIVENNAME || contact.givenname || contact.givenName || '';
-      contactDetails.surname = contact.SURNAME || contact.surname || '';
-      contactDetails.email = contact.EMAILADDRESS || contact.emailAddress || contact.EMAIL || contact.email || '';
-      contactDetails.mobile = contact.MOBILE || contact.MOBILEPHONE || contact.mobile || contact.mobilePhone || '';
+      contactDetails.givenName = contact.GIVENNAME || contact.givenname || contact.givenName || contact.GivenName || '';
+      contactDetails.surname = contact.SURNAME || contact.surname || contact.Surname || '';
+      contactDetails.email = contact.EMAILADDRESS || contact.EmailAddress || contact.EMAIL || contact.email || contact.emailaddress || contact.emailAddress || '';
+      contactDetails.mobile = contact.MOBILE || contact.MOBILEPHONE || contact.mobile || contact.mobilePhone || contact.Mobile || '';
       
       console.log('✅ Stored contact details:', contactDetails);
       console.log('   givenName:', contactDetails.givenName);
       console.log('   surname:', contactDetails.surname);
-      console.log('   email:', contactDetails.email);
-      console.log('   mobile:', contactDetails.mobile);
+      console.log('   email:', contactDetails.email, '(length:', contactDetails.email?.length || 0, ')');
+      console.log('   mobile:', contactDetails.mobile, '(length:', contactDetails.mobile?.length || 0, ')');
       
       // Save to localStorage for persistence
       const progress = localStorage.getItem('ax_enrollment_progress');
@@ -3157,19 +3169,28 @@
       
       // Also extract standard fields that might be in forms
       const standardFields = {
-        givenname: contact.GIVENNAME || contact.givenname || '',
-        surname: contact.SURNAME || contact.surname || '',
-        lastname: contact.SURNAME || contact.surname || '',
-        title: contact.TITLE || contact.title || '',
-        preferredname: contact.PREFERREDNAME || contact.preferredname || '',
-        middlename: contact.MIDDLENAME || contact.middlename || '',
-        email: contact.EMAILADDRESS || contact.EMAIL || contact.emailaddress || contact.email || '',
-        alternativeemail: contact.ALTERNATIVEEMAILADDRESS || contact.ALTERNATIVEEMAIL || contact.alternativeemailaddress || contact.alternativeemail || '',
-        organisation: contact.ORGANISATION || contact.organisation || '',
-        position: contact.POSITION || contact.position || '',
-        mobile: contact.MOBILE || contact.MOBILEPHONE || contact.mobile || '',
-        homephone: contact.PHONE || contact.homephone || '',
-        workphone: contact.WORKPHONE || contact.workphone || '',
+        givenname: contact.GIVENNAME || contact.givenname || contact.GivenName || '',
+        surname: contact.SURNAME || contact.surname || contact.Surname || '',
+        lastname: contact.SURNAME || contact.surname || contact.Surname || '',
+        title: contact.TITLE || contact.title || contact.Title || '',
+        preferredname: contact.PREFERREDNAME || contact.preferredname || contact.PreferredName || '',
+        middlename: contact.MIDDLENAME || contact.middlename || contact.MiddleName || '',
+        email: (() => {
+          const emailValue = contact.EMAILADDRESS || contact.EmailAddress || contact.EMAIL || contact.email || contact.emailaddress || contact.emailAddress || '';
+          console.log('📧 Loading email for formData:', emailValue, 'from fields:', {
+            EMAILADDRESS: contact.EMAILADDRESS,
+            EmailAddress: contact.EmailAddress,
+            EMAIL: contact.EMAIL,
+            email: contact.email
+          });
+          return emailValue;
+        })(),
+        alternativeemail: contact.ALTERNATIVEEMAILADDRESS || contact.AlternativeEmailAddress || contact.ALTERNATIVEEMAIL || contact.alternativeemailaddress || contact.alternativeemail || '',
+        organisation: contact.ORGANISATION || contact.organisation || contact.Organisation || '',
+        position: contact.POSITION || contact.position || contact.Position || '',
+        mobile: contact.MOBILE || contact.MOBILEPHONE || contact.mobile || contact.Mobile || '',
+        homephone: contact.PHONE || contact.homephone || contact.Phone || '',
+        workphone: contact.WORKPHONE || contact.workphone || contact.WorkPhone || '',
         dob: contact.DOB || contact.dateofbirth || '',
         dateofbirth: contact.DOB || contact.dateofbirth || '',
         usi: contact.USI || contact.usi || '',
@@ -3386,6 +3407,15 @@
           sessionStorage.setItem(`ax_form_${stepId}`, JSON.stringify(stepData));
           console.log(`✅ Populated ${stepId} with ${fieldCount} fields:`, Object.keys(stepData));
           console.log(`   Step data:`, stepData);
+          
+          // Special debug for contact step email
+          if (stepId === 'contact') {
+            console.log(`📧 CONTACT STEP DEBUG:`);
+            console.log(`   email in stepData:`, stepData.email);
+            console.log(`   alternativeemail in stepData:`, stepData.alternativeemail);
+            console.log(`   mobile in stepData:`, stepData.mobile);
+            console.log(`   All contact fields:`, Object.keys(stepData).join(', '));
+          }
           
           // Actually populate the DOM fields (this was missing!)
           console.log(`   📝 Now populating DOM fields for step "${stepId}"...`);
