@@ -2329,16 +2329,38 @@
     }
   }
   
-  function updateCurrentFilesList(fieldId, files) {
+  function updateCurrentFilesList(fieldId, files, retryCount = 0) {
+    console.log(`📎 updateCurrentFilesList called for "${fieldId}":`, files);
+    console.log(`   Looking for element: ax-current-files-${fieldId}-${widgetId}`);
+    
     const currentFilesList = document.getElementById(`ax-current-files-${fieldId}-${widgetId}`);
-    if (!currentFilesList) return;
+    
+    if (!currentFilesList) {
+      console.error(`   ❌ Current files list element not found for ${fieldId} (attempt ${retryCount + 1})`);
+      console.log(`   Available file list elements:`, Array.from(document.querySelectorAll('[id^="ax-current-files-"]')).map(el => el.id));
+      
+      // Retry up to 3 times with increasing delays
+      if (retryCount < 3) {
+        const delay = (retryCount + 1) * 500; // 500ms, 1000ms, 1500ms
+        console.log(`   ⏳ Retrying in ${delay}ms...`);
+        setTimeout(() => updateCurrentFilesList(fieldId, files, retryCount + 1), delay);
+      } else {
+        console.error(`   ❌ Failed to find element after ${retryCount + 1} attempts`);
+      }
+      return;
+    }
+    
+    console.log(`   ✅ Found current files list element`);
     
     currentFilesList.innerHTML = '';
     
     if (!files || files.length === 0) {
+      console.log(`   📝 No files to display`);
       currentFilesList.innerHTML = '<div class="ax-no-files">No files uploaded yet</div>';
       return;
     }
+    
+    console.log(`   📄 Adding ${files.length} file(s) to the list`);
     
     files.forEach((file, index) => {
       const fileRow = document.createElement('div');
@@ -2346,18 +2368,20 @@
       
       const fileName = document.createElement('span');
       fileName.className = 'ax-file-name';
-      fileName.textContent = file.name || file.fileName || `File ${index + 1}`;
+      fileName.textContent = file.name || file.fileName || file.FILENAME || `File ${index + 1}`;
       
       const deleteBtn = document.createElement('button');
       deleteBtn.type = 'button';
       deleteBtn.className = 'ax-file-delete-btn';
       deleteBtn.innerHTML = '🗑';
       deleteBtn.title = 'Delete file';
-      deleteBtn.addEventListener('click', () => deleteFile(fieldId, file.id || index));
+      deleteBtn.addEventListener('click', () => deleteFile(fieldId, file.id || file.portfolioID || index));
       
       fileRow.appendChild(fileName);
       fileRow.appendChild(deleteBtn);
       currentFilesList.appendChild(fileRow);
+      
+      console.log(`   ✅ Added file: ${file.name || file.fileName || file.FILENAME}`);
     });
   }
   
@@ -3264,6 +3288,14 @@
     }
     
     Object.entries(data).forEach(([fieldId, value]) => {
+      // Skip file-upload fields - they are handled differently (can't set file input values)
+      if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object' && value[0].name) {
+        console.log(`   📎 Skipping file-upload field "${fieldId}" (handled via updateCurrentFilesList)`);
+        // Update the current files list for this field
+        updateCurrentFilesList(fieldId, value);
+        return;
+      }
+      
       // Try multiple case variations since aXcelerate lowercases but config might have camelCase
       const inputIdLower = `ax-${fieldId}-${widgetId}`;
       const inputIdCamel = `ax-${fieldId.charAt(0).toLowerCase() + fieldId.slice(1)}-${widgetId}`;
