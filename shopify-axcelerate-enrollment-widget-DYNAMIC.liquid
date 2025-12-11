@@ -3516,18 +3516,16 @@
       
       if (portfolioData && Array.isArray(portfolioData)) {
         portfolioData.forEach((item, index) => {
-          console.log(`   Item ${index + 1}:`, {
-            PORTFOLIOTYPENAME: item.PORTFOLIOTYPENAME,
-            portfolioTypeName: item.portfolioTypeName,
-            FILENAME: item.FILENAME,
-            fileName: item.fileName,
-            PORTFOLIONAME: item.PORTFOLIONAME,
-            PORTFOLIOID: item.PORTFOLIOID
-          });
+          console.log(`   Item ${index + 1} (FULL):`, item);
           
           const typeName = item.PORTFOLIOTYPENAME || item.portfolioTypeName || '';
-          const fileName = item.FILENAME || item.fileName || item.PORTFOLIONAME || '';
-          const portfolioId = item.PORTFOLIOID || item.portfolioID || '';
+          // Check ALL possible filename fields
+          const fileName = item.FILENAME || item.fileName || item.PORTFOLIONAME || 
+                          item.portfolioName || item.NAME || item.name || 
+                          item.DOCUMENTNAME || item.documentName || '';
+          const portfolioId = item.PORTFOLIOID || item.portfolioID || item.CERTIFICATIONID || '';
+          
+          console.log(`   Extracted: type="${typeName}", file="${fileName}", id="${portfolioId}"`);
           
           if (typeName && fileName) {
             if (!documentsByType[typeName]) {
@@ -3542,6 +3540,7 @@
             console.log(`   ✅ Grouped: ${typeName} → ${fileName}`);
           } else {
             console.warn(`   ⚠️ Skipped item ${index + 1}: typeName="${typeName}", fileName="${fileName}"`);
+            console.warn(`   Available fields:`, Object.keys(item));
           }
         });
       }
