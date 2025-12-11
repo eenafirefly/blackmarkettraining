@@ -2169,14 +2169,43 @@
     const courseDescription = courseData?.description || courseData?.courseDescription || '';
     const courseCode = courseData?.courseCode || '';
     
-    const studentName = contactDetails.givenName && contactDetails.surname 
-      ? `${contactDetails.givenName} ${contactDetails.surname}`
-      : 'Student';
+    // Try multiple sources for student name
+    let studentName = 'Student';
+    
+    // Method 1: From contactDetails object
+    if (contactDetails?.givenName && contactDetails?.surname) {
+      studentName = `${contactDetails.givenName} ${contactDetails.surname}`;
+      console.log('   ✅ Student name from contactDetails:', studentName);
+    }
+    // Method 2: From formData.personal or formData.contact
+    else if (formData?.personal?.givenname && formData?.personal?.surname) {
+      studentName = `${formData.personal.givenname} ${formData.personal.surname}`;
+      console.log('   ✅ Student name from formData.personal:', studentName);
+    }
+    else if (formData?.contact?.givenname && formData?.contact?.surname) {
+      studentName = `${formData.contact.givenname} ${formData.contact.surname}`;
+      console.log('   ✅ Student name from formData.contact:', studentName);
+    }
+    // Method 3: From sessionStorage
+    else {
+      try {
+        const personalData = JSON.parse(sessionStorage.getItem('ax_form_personal') || '{}');
+        if (personalData.givenname && personalData.surname) {
+          studentName = `${personalData.givenname} ${personalData.surname}`;
+          console.log('   ✅ Student name from sessionStorage.personal:', studentName);
+        }
+      } catch (e) {
+        console.warn('   ⚠️ Could not load student name from sessionStorage');
+      }
+    }
     
     console.log('   Display values:', {
       courseNameDisplay,
       studentName,
-      courseCode
+      courseCode,
+      contactDetailsAvailable: !!contactDetails,
+      contactDetailsGivenName: contactDetails?.givenName,
+      contactDetailsSurname: contactDetails?.surname
     });
     
     // Format date nicely
