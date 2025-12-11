@@ -780,9 +780,9 @@ router.post('/save-step', async (req, res) => {
           else if (value === '') value = null;
         }
         
-        // VET Related Details - Indigenous/Employment (use NAME fields for text values)
-        if (keyLower === 'indigenousstatus' || keyLower === 'aboriginalortorresstraitislanderorigin') axFieldName = 'INDIGENOUSSTATUSNAME';
-        if (keyLower === 'employmentstatus') axFieldName = 'EMPLOYMENTSTATUSNAME';
+        // VET Related Details - Indigenous/Employment
+        if (keyLower === 'indigenousstatus' || keyLower === 'aboriginalortorresstraitislanderorigin') axFieldName = 'INDIGENOUSSTATUSID';
+        if (keyLower === 'employmentstatus') axFieldName = 'EMPLOYMENTSTATUSID';
         if (keyLower === 'occupationidentifier') axFieldName = 'OCCUPATIONIDENTIFIER';
         if (keyLower === 'industryofemployment') axFieldName = 'INDUSTRYOFEMPLOYMENT';
         

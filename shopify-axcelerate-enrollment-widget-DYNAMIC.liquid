@@ -3245,8 +3245,8 @@
           // Default to "No" if no language set
           return 'No';
         })(),
-        indigenousstatus: contact.INDIGENOUSSTATUSNAME || contact.INDIGENOUSSTATUSID || contact.INDIGENOUSSTATUS || '',
-        employmentstatus: contact.EMPLOYMENTSTATUSNAME || contact.EMPLOYMENTSTATUSID || contact.EMPLOYMENTSTATUS || '',
+        indigenousstatus: contact.INDIGENOUSSTATUSID || contact.INDIGENOUSSTATUSNAME || contact.INDIGENOUSSTATUS || '',
+        employmentstatus: contact.EMPLOYMENTSTATUSID || contact.EMPLOYMENTSTATUSNAME || contact.EMPLOYMENTSTATUS || '',
         disabilityflag: contact.DISABILITYFLAG || '',
         disabilitytypes: (() => {
           // Parse DISABILITYTYPES from Axcelerate (format: "11,12" or array)

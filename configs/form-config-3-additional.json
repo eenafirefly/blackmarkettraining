@@ -71,7 +71,7 @@
       "required": false,
       "dataField": true,
       "syncToCustomField": false,
-      "mapsToContactField": "INDIGENOUSSTATUSNAME",
+      "mapsToContactField": "INDIGENOUSSTATUSID",
       "options": [
         { "display": "No", "value": "4" },
         { "display": "Aboriginal", "value": "1" },
