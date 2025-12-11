@@ -1119,6 +1119,8 @@ router.get('/portfolio/:contactId', async (req, res) => {
       url += `&portfolioChecklistID=${checklistId}`;
     }
     
+    console.log('   Request URL:', url);
+    
     const response = await fetch(url, {
       headers: {
         'APIToken': process.env.AXCELERATE_API_TOKEN,
@@ -1137,6 +1139,17 @@ router.get('/portfolio/:contactId', async (req, res) => {
     
     const portfolioData = await response.json();
     console.log(`✅ Retrieved ${Array.isArray(portfolioData) ? portfolioData.length : 0} portfolio item(s)`);
+    
+    // Log each item for debugging
+    if (Array.isArray(portfolioData)) {
+      portfolioData.forEach((item, index) => {
+        console.log(`   Item ${index + 1}:`, {
+          PORTFOLIOTYPENAME: item.PORTFOLIOTYPENAME,
+          FILENAME: item.FILENAME,
+          PORTFOLIOID: item.PORTFOLIOID
+        });
+      });
+    }
     
     res.json(portfolioData);
     
