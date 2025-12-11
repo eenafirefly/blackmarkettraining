@@ -2779,6 +2779,14 @@
       if (formDataForStep && Object.keys(formDataForStep).length > 0) {
         dataToRestore = formDataForStep;
         console.log(`🔄 Restoring data for step "${stepId}" from formData:`, dataToRestore);
+        
+        // Special debug for contact step email
+        if (stepId === 'contact') {
+          console.log(`📧 CONTACT STEP RESTORE DEBUG:`);
+          console.log(`   formData['contact']:`, formData['contact']);
+          console.log(`   email in formData:`, formData['contact']?.email);
+          console.log(`   Keys in formData['contact']:`, Object.keys(formData['contact'] || {}));
+        }
       } else if (saved) {
         try {
           dataToRestore = JSON.parse(saved);
@@ -2966,6 +2974,20 @@
     console.log(`📝 Populating form data for step "${stepId}":`, data);
     console.log(`   Widget ID: ${widgetId}`);
     console.log(`   Fields to populate: ${Object.keys(data).length}`);
+    
+    // Special debug for email field
+    if (stepId === 'contact' && data.email) {
+      console.log(`📧 EMAIL POPULATION DEBUG for step "contact":`);
+      console.log(`   data.email value: "${data.email}"`);
+      console.log(`   Looking for input ID: ax-email-${widgetId}`);
+      const emailInput = document.getElementById(`ax-email-${widgetId}`);
+      console.log(`   Email input found:`, emailInput ? 'YES' : 'NO');
+      if (emailInput) {
+        console.log(`   Current input value: "${emailInput.value}"`);
+        console.log(`   Input type: ${emailInput.type}`);
+        console.log(`   Input name: ${emailInput.name}`);
+      }
+    }
     
     Object.entries(data).forEach(([fieldId, value]) => {
       // Try multiple case variations since aXcelerate lowercases but config might have camelCase
