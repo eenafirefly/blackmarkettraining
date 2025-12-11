@@ -1314,67 +1314,7 @@ router.post('/upload-documents', upload.array('files', 10), async (req, res) => 
       try {
         console.log(`\n📄 Processing file: ${file.originalname}`);
         
-        // Step 1: Get presigned upload URL from Axcelerate
-        console.log('   ⏳ Getting presigned upload URL...');
-        console.log('   Request params:', {
-          fileName: file.originalname,
-          dir: 'portfolio',
-          forceOverwrite: 'true'
-        });
-        
-        const presignedResponse = await fetch(
-          `${process.env.AXCELERATE_API_URL}/file/getUploadUrl`,
-          {
-            method: 'POST',
-            headers: {
-              'APIToken': process.env.AXCELERATE_API_TOKEN,
-              'WSToken': process.env.AXCELERATE_WS_TOKEN,
-              'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: new URLSearchParams({
-              fileName: file.originalname,
-              dir: 'portfolio',
-              forceOverwrite: 'true'
-            })
-          }
-        );
-        
-        console.log('   Response status:', presignedResponse.status);
-        
-        if (!presignedResponse.ok) {
-          const errorText = await presignedResponse.text();
-          console.error('   ❌ Presigned URL request failed:', presignedResponse.status);
-          console.error('   Response:', errorText);
-          throw new Error(`Failed to get presigned URL: ${presignedResponse.status} - ${errorText}`);
-        }
-        
-        const presignedData = await presignedResponse.json();
-        console.log('   ✅ Got presigned URL:', presignedData.uploadUrl ? 'Success' : 'Failed');
-        console.log('   Presigned response:', JSON.stringify(presignedData, null, 2));
-        
-        if (!presignedData.uploadUrl || !presignedData.fileID) {
-          throw new Error('Invalid presigned URL response');
-        }
-        
-        // Step 2: Upload file to presigned URL
-        console.log('   ⏳ Uploading file to Axcelerate storage...');
-        const fileBuffer = fs.readFileSync(file.path);
-        
-        const uploadResponse = await fetch(presignedData.uploadUrl, {
-          method: 'PUT',
-          body: fileBuffer,
-          headers: {
-            'Content-Type': file.mimetype
-          }
-        });
-        
-        if (!uploadResponse.ok) {
-          throw new Error(`Failed to upload file: ${uploadResponse.status}`);
-        }
-        
-        console.log('   ✅ File uploaded to storage');
-        
-        // Step 3: Create portfolio record
+        // Step 1: Create portfolio record FIRST (to get certificationID)
         console.log('   ⏳ Creating portfolio record...');
         const portfolioResponse = await fetch(
           `${process.env.AXCELERATE_API_URL}/contact/portfolio/`,
@@ -1398,11 +1338,81 @@ router.post('/upload-documents', upload.array('files', 10), async (req, res) => 
         if (!portfolioResponse.ok) {
           const errorText = await portfolioResponse.text();
           console.error('   ❌ Portfolio creation failed:', errorText);
-          throw new Error(`Failed to create portfolio record: ${portfolioResponse.status}`);
+          throw new Error(`Failed to create portfolio record: ${portfolioResponse.status} - ${errorText}`);
         }
         
         const portfolioData = await portfolioResponse.json();
-        console.log('   ✅ Portfolio record created:', portfolioData.certificationID || portfolioData.portfolioID);
+        const certificationID = portfolioData.certificationID || portfolioData.CERTIFICATIONID || portfolioData.portfolioID;
+        console.log('   ✅ Portfolio record created. Certification ID:', certificationID);
+        
+        // Step 2: Get presigned upload URL with certificationID
+        console.log('   ⏳ Getting presigned upload URL...');
+        console.log('   Request params:', {
+          fileName: file.originalname,
+          contactID: contactId,
+          certificationID: certificationID,
+          contentType: file.mimetype
+        });
+        
+        const presignedResponse = await fetch(
+          `${process.env.AXCELERATE_API_URL}/file/getUploadUrl`,
+          {
+            method: 'POST',
+            headers: {
+              'APIToken': process.env.AXCELERATE_API_TOKEN,
+              'WSToken': process.env.AXCELERATE_WS_TOKEN,
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({
+              fileName: file.originalname,
+              contactID: contactId,
+              certificationID: certificationID,
+              contentType: file.mimetype
+            })
+          }
+        );
+        
+        console.log('   Response status:', presignedResponse.status);
+        
+        if (!presignedResponse.ok) {
+          const errorText = await presignedResponse.text();
+          console.error('   ❌ Presigned URL request failed:', presignedResponse.status);
+          console.error('   Response:', errorText);
+          throw new Error(`Failed to get presigned URL: ${presignedResponse.status} - ${errorText}`);
+        }
+        
+        const presignedData = await presignedResponse.json();
+        console.log('   ✅ Got presigned URL');
+        console.log('   Upload URL:', presignedData.URL || presignedData.uploadUrl);
+        console.log('   Method:', presignedData.METHOD);
+        
+        const uploadUrl = presignedData.URL || presignedData.uploadUrl;
+        const uploadMethod = presignedData.METHOD || 'PUT';
+        
+        if (!uploadUrl) {
+          throw new Error('No upload URL in presigned response');
+        }
+        
+        // Step 3: Upload file to presigned URL
+        console.log('   ⏳ Uploading file to Axcelerate storage...');
+        const fileBuffer = fs.readFileSync(file.path);
+        
+        const uploadResponse = await fetch(uploadUrl, {
+          method: uploadMethod,
+          body: fileBuffer,
+          headers: {
+            'Content-Type': presignedData.CONTENTTYPE || file.mimetype
+          }
+        });
+        
+        if (!uploadResponse.ok) {
+          const errorText = await uploadResponse.text();
+          console.error('   ❌ File upload to storage failed:', uploadResponse.status);
+          console.error('   Response:', errorText);
+          throw new Error(`Failed to upload file to storage: ${uploadResponse.status}`);
+        }
+        
+        console.log('   ✅ File uploaded to storage');
         
         // Step 4: Link file to portfolio
         console.log('   ⏳ Linking file to portfolio...');
@@ -1416,8 +1426,9 @@ router.post('/upload-documents', upload.array('files', 10), async (req, res) => 
               'Content-Type': 'application/x-www-form-urlencoded'
             },
             body: new URLSearchParams({
-              portfolioID: portfolioData.certificationID || portfolioData.portfolioID,
-              fileID: presignedData.fileID
+              contactID: contactId,
+              filename: file.originalname,
+              portfolioID: certificationID
             })
           }
         );
@@ -1425,15 +1436,15 @@ router.post('/upload-documents', upload.array('files', 10), async (req, res) => 
         if (!linkResponse.ok) {
           const errorText = await linkResponse.text();
           console.error('   ❌ File linking failed:', errorText);
-          throw new Error(`Failed to link file to portfolio: ${linkResponse.status}`);
+          throw new Error(`Failed to link file to portfolio: ${linkResponse.status} - ${errorText}`);
         }
         
         console.log('   ✅ File linked to portfolio successfully');
         
         uploadedFiles.push({
-          id: presignedData.fileID,
+          id: certificationID,
           name: file.originalname,
-          portfolioID: portfolioData.certificationID || portfolioData.portfolioID,
+          portfolioID: certificationID,
           uploadedAt: new Date().toISOString()
         });
         
