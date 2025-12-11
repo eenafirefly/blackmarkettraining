@@ -1557,11 +1557,31 @@
           form.insertBefore(termsDiv, form.firstChild);
         }
         
+        // Check if user is already enrolled
+        const isAlreadyEnrolled = window.isAlreadyEnrolled || false;
+        console.log('🎯 Declaration step - isAlreadyEnrolled:', isAlreadyEnrolled);
+        
         const buttonGroup = document.createElement('div');
         buttonGroup.className = 'ax-button-group relative z-10 mt-5';
-        buttonGroup.innerHTML = `
-         <button type="submit" class="push-btn inline-block w-100 text-center ax-btn ax-btn-primary"><span class="push-btn__surface w-100">Save</span></button>
-        `;
+        
+        if (isAlreadyEnrolled) {
+          // User is already enrolled - show disabled button and warning
+          buttonGroup.innerHTML = `
+            <div class="ax-already-enrolled-warning" style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 15px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 30px;">⚠️</span>
+              <span style="color: #92400e; font-weight: 500;">You are already enrolled in this course. Enrollment cannot be completed.</span>
+            </div>
+            <button type="button" disabled class="push-btn inline-block w-100 text-center ax-btn ax-btn-primary" style="opacity: 0.5; cursor: not-allowed;">
+              <span class="push-btn__surface w-100">Already Enrolled</span>
+            </button>
+          `;
+        } else {
+          // Normal case - allow enrollment
+          buttonGroup.innerHTML = `
+           <button type="submit" class="push-btn inline-block w-100 text-center ax-btn ax-btn-primary"><span class="push-btn__surface w-100">Save</span></button>
+          `;
+        }
+        
         form.appendChild(buttonGroup);
       }
       
@@ -1991,16 +2011,17 @@
   
   /**
    * Check if student is already enrolled in the current course instance
-   * Returns true if already enrolled (and shows warning modal)
+   * @param {boolean} showModal - Whether to show warning modal if enrolled
+   * Returns true if already enrolled
    */
-  async function checkExistingEnrollment() {
+  async function checkExistingEnrollment(showModal = false) {
     if (!contactId || !instanceId) {
       console.warn('⚠️ Missing contactId or instanceId for enrollment check');
       return false;
     }
     
     try {
-      console.log('🔍 Checking enrollment status:', { contactId, instanceId });
+      console.log('🔍 Checking enrollment status:', { contactId, instanceId, showModal });
       
       const response = await fetch(
         `${RENDER_APP_URL}/api/axcelerate/enrollment-check/${contactId}/${instanceId}`
@@ -2015,12 +2036,14 @@
       console.log('✅ Enrollment check result:', data);
       
       if (data.alreadyEnrolled) {
-        // Show warning modal
-        const courseName = data.enrollment?.courseName || courseData?.courseName || 'this course';
-        showWarningModal(
-          'Already Enrolled',
-          `Student is already enrolled in ${courseName}.`
-        );
+        if (showModal) {
+          // Show warning modal only if requested
+          const courseName = data.enrollment?.courseName || courseData?.courseName || 'this course';
+          showWarningModal(
+            'Already Enrolled',
+            `Student is already enrolled in ${courseName}.`
+          );
+        }
         return true;
       }
       
@@ -2102,12 +2125,21 @@
     console.log('📊 Creating enrollment summary...');
     console.log('   Current contactDetails:', contactDetails);
     console.log('   Current courseData:', courseData);
+    console.log('   instanceId:', instanceId);
+    console.log('   contactId:', contactId);
     
     // Fetch course data if not already loaded
     if (!courseData) {
-      console.log('   Fetching course instance data...');
+      console.log('   Course data not loaded - fetching now...');
+      console.log('   Will call fetchCourseInstanceData() with instanceId:', instanceId);
       courseData = await fetchCourseInstanceData();
-      console.log('   Course data fetched:', courseData);
+      console.log('   ✅ Course data fetch complete:', courseData);
+      
+      if (!courseData) {
+        console.error('   ❌ Course data fetch returned null!');
+      }
+    } else {
+      console.log('   ✅ Course data already loaded from login');
     }
     
     // Get course and contact information
@@ -2631,6 +2663,28 @@
       console.log('📊 Fetching all saved form data from aXcelerate...');
       await fetchSavedFormData(contactId);
       
+      // Fetch course instance data early
+      console.log('📚 Fetching course instance data on login...');
+      console.log('   instanceId available:', instanceId);
+      if (instanceId) {
+        courseData = await fetchCourseInstanceData();
+        console.log('✅ Course data loaded:', courseData);
+      } else {
+        console.warn('⚠️ No instanceId available - course data will not be loaded');
+      }
+      
+      // Check for existing enrollment
+      console.log('🔍 Checking for existing enrollment on login...');
+      const alreadyEnrolled = await checkExistingEnrollment();
+      if (alreadyEnrolled) {
+        console.warn('⚠️ Student is already enrolled - will disable declaration step');
+        // Store enrollment status globally
+        window.isAlreadyEnrolled = true;
+      } else {
+        console.log('✅ Student is not enrolled - can proceed with enrollment');
+        window.isAlreadyEnrolled = false;
+      }
+      
       // Get the first dynamic step (background)
       const firstStep = formSteps.find(s => s.id !== 'login');
       if (firstStep) {
@@ -3030,11 +3084,11 @@
     // Handle based on step type
     if (config.stepType === 'enrollment-summary') {
       // Check for existing enrollment before proceeding
-      console.log('🔍 Checking for existing enrollment...');
-      const alreadyEnrolled = await checkExistingEnrollment();
+      console.log('🔍 Checking for existing enrollment before proceeding...');
+      const alreadyEnrolled = await checkExistingEnrollment(true); // Show modal
       
       if (alreadyEnrolled) {
-        console.warn('⚠️ Student is already enrolled in this course');
+        console.warn('⚠️ Student is already enrolled - blocking progression');
         return; // Stop here, warning has been shown
       }
       
@@ -3045,11 +3099,11 @@
       }
     } else if (config.stepType === 'review') {
       // Check for existing enrollment before proceeding
-      console.log('🔍 Checking for existing enrollment...');
-      const alreadyEnrolled = await checkExistingEnrollment();
+      console.log('🔍 Checking for existing enrollment before proceeding...');
+      const alreadyEnrolled = await checkExistingEnrollment(true); // Show modal
       
       if (alreadyEnrolled) {
-        console.warn('⚠️ Student is already enrolled in this course');
+        console.warn('⚠️ Student is already enrolled - blocking progression');
         return; // Stop here, warning has been shown
       }
       
