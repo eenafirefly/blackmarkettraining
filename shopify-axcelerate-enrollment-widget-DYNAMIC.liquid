@@ -151,6 +151,24 @@
       </div>
     </div>
     
+    <!-- Upload Loading Modal -->
+    <div id="ax-upload-loading-{{ widget_id }}" class="ax-upload-modal" style="display: none;">
+      <div class="ax-upload-modal-overlay"></div>
+      <div class="ax-upload-modal-content">
+        <div class="ax-upload-spinner"></div>
+        <p class="ax-upload-message">Uploading files...</p>
+      </div>
+    </div>
+    
+    <!-- Upload Success Modal -->
+    <div id="ax-upload-success-{{ widget_id }}" class="ax-upload-modal" style="display: none;">
+      <div class="ax-upload-modal-overlay"></div>
+      <div class="ax-upload-modal-content">
+        <div class="ax-upload-success-icon">✓</div>
+        <p class="ax-upload-message">Files uploaded successfully!</p>
+      </div>
+    </div>
+    
   </div>
 </div>
 
@@ -895,6 +913,109 @@
     margin-top: -10px;
   }
   
+  /* Upload Modal Styles */
+  .ax-upload-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .ax-upload-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+  }
+  
+  .ax-upload-modal-content {
+    position: relative;
+    background: white;
+    padding: 40px;
+    border-radius: 12px;
+    text-align: center;
+    min-width: 300px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  }
+  
+  .ax-upload-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #5892c7;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: ax-spin 1s linear infinite;
+    margin: 0 auto 20px;
+  }
+  
+  .ax-upload-success-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #4CAF50;
+    color: white;
+    font-size: 40px;
+    line-height: 60px;
+    margin: 0 auto 20px;
+    animation: ax-success-pop 0.3s ease-out;
+  }
+  
+  @keyframes ax-success-pop {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+  
+  .ax-upload-message {
+    font-size: 18px;
+    color: #333;
+    margin: 0;
+    font-weight: 500;
+  }
+  
+  /* Notice Box Styles */
+  .ax-notice {
+    display: flex;
+    gap: 15px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    border-left: 4px solid;
+  }
+  
+  .ax-notice-info {
+    background: #e3f2fd;
+    border-left-color: #2196F3;
+  }
+  
+  .ax-notice-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+  
+  .ax-notice-content {
+    flex: 1;
+    color: #1565c0;
+  }
+  
+  .ax-notice-content strong {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 16px;
+  }
+  
+  .ax-notice-content ul {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  
   /* Enrollment Summary Styles */
   .ax-enrollment-summary {
     background: #fff;
@@ -1371,6 +1492,23 @@
         header.className = 'ax-step-header';
         header.textContent = config.stepHeader || config.stepName;
         form.appendChild(header);
+        
+        // Add instructions notice for document-upload steps
+        if (config.stepType === 'document-upload') {
+          const notice = document.createElement('div');
+          notice.className = 'ax-notice ax-notice-info';
+          notice.innerHTML = `
+            <div class="ax-notice-icon">ℹ️</div>
+            <div class="ax-notice-content">
+              <strong>Enrolment Documents Instructions</strong>
+              <ul style="margin: 8px 0 0 0; padding-left: 20px;">
+                <li>Photo ID - Drivers License or NSW Photo Card</li>
+                <li>Proof of Residency - Medicare Card or Passport</li>
+              </ul>
+            </div>
+          `;
+          form.appendChild(notice);
+        }
       }
       
       // Handle enrollment-summary stepType
@@ -1387,8 +1525,8 @@
         });
       }
       
-      // Add navigation buttons (except for review and declaration)
-      if (config.stepType !== 'review' && config.stepType !== 'enrol' && config.stepType !== 'enrollment-summary') {
+      // Add navigation buttons (except for review, declaration, and document-upload)
+      if (config.stepType !== 'review' && config.stepType !== 'enrol' && config.stepType !== 'enrollment-summary' && config.stepType !== 'document-upload') {
         const buttonGroup = createNavigationButtons(stepId, config);
         form.appendChild(buttonGroup);
       } else if (config.stepType === 'enrollment-summary') {
@@ -2072,6 +2210,8 @@
   async function handleFileUpload(fieldId, stepId) {
     const fileInput = document.getElementById(`ax-${fieldId}-${widgetId}`);
     const currentFilesList = document.getElementById(`ax-current-files-${fieldId}-${widgetId}`);
+    const loadingModal = document.getElementById(`ax-upload-loading-${widgetId}`);
+    const successModal = document.getElementById(`ax-upload-success-${widgetId}`);
     
     if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
       alert('Please select at least one file to upload');
@@ -2079,6 +2219,11 @@
     }
     
     console.log(`📤 Uploading ${fileInput.files.length} file(s) for ${fieldId}...`);
+    
+    // Show loading modal
+    if (loadingModal) {
+      loadingModal.style.display = 'flex';
+    }
     
     // Get portfolio configuration from the field config
     const config = stepConfigs[stepId];
@@ -2127,13 +2272,25 @@
       
       console.log('✅ Files uploaded successfully to Axcelerate Portfolio:', result);
       
+      // Hide loading modal
+      if (loadingModal) {
+        loadingModal.style.display = 'none';
+      }
+      
+      // Show success modal
+      if (successModal) {
+        successModal.style.display = 'flex';
+        // Auto-close after 2 seconds
+        setTimeout(() => {
+          successModal.style.display = 'none';
+        }, 2000);
+      }
+      
       // Update current files list
       updateCurrentFilesList(fieldId, result.files || []);
       
       // Clear file input
       fileInput.value = '';
-      
-      alert(`✅ Success! ${result.files.length} file(s) uploaded to Axcelerate Portfolio`);
       
       // Save progress - IMPORTANT: Only save if upload succeeded
       if (!formData[stepId]) {
@@ -2143,8 +2300,28 @@
       sessionStorage.setItem(`ax_form_${stepId}`, JSON.stringify(formData[stepId]));
       saveProgress();
       
+      // Check if all required documents are uploaded to enable next step
+      const isStepComplete = validateStepRequiredFields(stepId);
+      if (isStepComplete) {
+        console.log('✅ All required documents uploaded - marking step complete');
+        markStepCompleted(stepId);
+        
+        // Enable next step
+        const currentIndex = formSteps.findIndex(s => s.id === stepId);
+        if (currentIndex >= 0 && currentIndex < formSteps.length - 1) {
+          const nextStep = formSteps[currentIndex + 1];
+          enableStep(nextStep.id);
+        }
+      }
+      
     } catch (error) {
       console.error('❌ File upload error:', error);
+      
+      // Hide loading modal
+      if (loadingModal) {
+        loadingModal.style.display = 'none';
+      }
+      
       alert(`❌ Failed to upload files to Axcelerate: ${error.message}\n\nPlease try again.`);
       
       // Don't save to formData if upload failed - this prevents step from being marked complete
@@ -2445,6 +2622,17 @@
         
         console.log(`⚠️ Step ${stepId} has empty required fields - removed completed status`);
       }
+    }
+  }
+  
+  function enableStep(stepId) {
+    const tabs = widget.querySelectorAll('.ax-sidebar-tab');
+    const stepIndex = formSteps.findIndex(s => s.id === stepId);
+    
+    if (stepIndex >= 0 && stepIndex < tabs.length) {
+      const tab = tabs[stepIndex];
+      tab.classList.remove('locked', 'disabled');
+      console.log(`🔓 Enabled step: ${stepId}`);
     }
   }
   
