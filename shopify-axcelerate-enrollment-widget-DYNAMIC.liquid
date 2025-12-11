@@ -3492,12 +3492,18 @@
   async function fetchPortfolioDocuments(contactIdToFetch, portfolioChecklistId) {
     try {
       console.log('📄 Fetching portfolio documents for contact:', contactIdToFetch, 'checklist:', portfolioChecklistId);
+      const url = `${RENDER_APP_URL}/api/axcelerate/portfolio/${contactIdToFetch}?checklistId=${portfolioChecklistId}`;
+      console.log('   Request URL:', url);
       
       // Fetch portfolio documents from backend (which calls Axcelerate)
-      const response = await fetch(`${RENDER_APP_URL}/api/axcelerate/portfolio/${contactIdToFetch}?checklistId=${portfolioChecklistId}`);
+      const response = await fetch(url);
+      
+      console.log('   Response status:', response.status);
       
       if (!response.ok) {
-        console.log('⚠️ Failed to fetch portfolio documents:', response.status);
+        const errorText = await response.text();
+        console.error('❌ Failed to fetch portfolio documents:', response.status);
+        console.error('   Error response:', errorText);
         return {};
       }
       
@@ -3549,6 +3555,9 @@
       
     } catch (error) {
       console.error('❌ Error fetching portfolio documents:', error);
+      console.error('   Error name:', error.name);
+      console.error('   Error message:', error.message);
+      console.error('   Error stack:', error.stack);
       return {};
     }
   }
@@ -3914,48 +3923,77 @@
       console.log('📦 Total steps populated:', Object.keys(formData).length);
       
       // Load portfolio documents for document-upload steps
+      console.log('🔍 Checking for document-upload steps...');
+      console.log('   Available stepConfigs:', Object.keys(stepConfigs));
+      
+      let documentStepsFound = 0;
       for (const [stepId, config] of Object.entries(stepConfigs)) {
-        if (config.stepType === 'document-upload' && config.portfolioChecklistId) {
-          console.log(`📄 Loading portfolio documents for step "${stepId}"...`);
-          const portfolioDocuments = await fetchPortfolioDocuments(contactIdToFetch, config.portfolioChecklistId);
+        if (config.stepType === 'document-upload') {
+          documentStepsFound++;
+          console.log(`📄 Found document-upload step: "${stepId}"`);
+          console.log(`   portfolioChecklistId: ${config.portfolioChecklistId}`);
           
-          console.log(`📦 Portfolio documents received:`, Object.keys(portfolioDocuments));
-          
-          // Map documents to their field IDs
-          if (config.fields) {
-            config.fields.forEach(field => {
-              if (field.type === 'file-upload' && field.portfolioItemType) {
-                console.log(`   🔍 Looking for field "${field.fieldId}" with portfolioItemType="${field.portfolioItemType}"`);
-                console.log(`   Available types in portfolioDocuments:`, Object.keys(portfolioDocuments));
-                
-                const docs = portfolioDocuments[field.portfolioItemType];
-                if (docs && docs.length > 0) {
-                  console.log(`   ✅ Found ${docs.length} document(s) for ${field.portfolioItemType}:`, docs.map(d => d.name));
-                  
-                  // Save to formData
-                  if (!formData[stepId]) {
-                    formData[stepId] = {};
+          if (config.portfolioChecklistId) {
+            try {
+              console.log(`📥 Fetching portfolio documents for step "${stepId}"...`);
+              const portfolioDocuments = await fetchPortfolioDocuments(contactIdToFetch, config.portfolioChecklistId);
+              
+              console.log(`📦 Portfolio documents received:`, Object.keys(portfolioDocuments));
+              console.log(`   Document counts:`, Object.entries(portfolioDocuments).map(([type, docs]) => `${type}: ${docs.length}`));
+              
+              // Map documents to their field IDs
+              if (config.fields) {
+                console.log(`   📋 Processing ${config.fields.length} fields...`);
+                config.fields.forEach(field => {
+                  if (field.type === 'file-upload' && field.portfolioItemType) {
+                    console.log(`   🔍 Looking for field "${field.fieldId}" with portfolioItemType="${field.portfolioItemType}"`);
+                    console.log(`   Available types in portfolioDocuments:`, Object.keys(portfolioDocuments));
+                    
+                    const docs = portfolioDocuments[field.portfolioItemType];
+                    if (docs && docs.length > 0) {
+                      console.log(`   ✅ Found ${docs.length} document(s) for ${field.portfolioItemType}:`, docs.map(d => d.name));
+                      
+                      // Save to formData
+                      if (!formData[stepId]) {
+                        formData[stepId] = {};
+                      }
+                      formData[stepId][field.fieldId] = docs;
+                      sessionStorage.setItem(`ax_form_${stepId}`, JSON.stringify(formData[stepId]));
+                      console.log(`   💾 Saved to formData[${stepId}][${field.fieldId}]`);
+                      
+                      // Update the current files list in the DOM
+                      updateCurrentFilesList(field.fieldId, docs);
+                    } else {
+                      console.warn(`   ❌ No documents found for portfolioItemType="${field.portfolioItemType}"`);
+                      console.warn(`   portfolioDocuments keys:`, Object.keys(portfolioDocuments));
+                    }
+                  } else if (field.type === 'file-upload') {
+                    console.warn(`   ⚠️ File-upload field "${field.fieldId}" has no portfolioItemType!`);
                   }
-                  formData[stepId][field.fieldId] = docs;
-                  sessionStorage.setItem(`ax_form_${stepId}`, JSON.stringify(formData[stepId]));
-                  
-                  // Update the current files list in the DOM
-                  updateCurrentFilesList(field.fieldId, docs);
-                } else {
-                  console.warn(`   ❌ No documents found for portfolioItemType="${field.portfolioItemType}"`);
-                  console.warn(`   portfolioDocuments keys:`, Object.keys(portfolioDocuments));
-                }
+                });
               }
-            });
-          }
-          
-          // Validate and mark step as completed if all documents uploaded
-          const isValid = validateStepRequiredFields(stepId);
-          if (isValid) {
-            console.log(`✅ Document step "${stepId}" passes validation - marking as completed`);
-            markStepCompleted(stepId);
+              
+              // Validate and mark step as completed if all documents uploaded
+              const isValid = validateStepRequiredFields(stepId);
+              if (isValid) {
+                console.log(`✅ Document step "${stepId}" passes validation - marking as completed`);
+                markStepCompleted(stepId);
+              } else {
+                console.log(`⚠️ Document step "${stepId}" does not pass validation yet`);
+              }
+            } catch (error) {
+              console.error(`❌ Error loading portfolio documents for step "${stepId}":`, error);
+            }
+          } else {
+            console.warn(`⚠️ Step "${stepId}" is document-upload but has no portfolioChecklistId!`);
           }
         }
+      }
+      
+      if (documentStepsFound === 0) {
+        console.warn('⚠️ No document-upload steps found in stepConfigs!');
+      } else {
+        console.log(`✅ Processed ${documentStepsFound} document-upload step(s)`);
       }
       
     } catch (error) {
