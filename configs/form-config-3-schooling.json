@@ -18,7 +18,7 @@
       "required": true,
       "dataField": true,
       "syncToCustomField": false,
-      "mapsToContactField": "HIGHESTSCHOOLLEVEL",
+      "mapsToContactField": "HIGHESTSCHOOLLEVELID",
       "tooltip": "If you are currently enrolled in secondary education, the Highest school level completed refers to the highest school level you have actually completed and not the level you are currently undertaking. For example, if you are currently in Year 10 the Highest school level completed is Year 9.",
       "options": [
         { "display": "Did not attend school", "value": "2" },
@@ -43,7 +43,8 @@
       "type": "text",
       "required": false,
       "dataField": true,
-      "syncToCustomField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "HIGHESTSCHOOLLEVELYEAR",
       "tooltip": "The calendar year that the highest level of schooling was completed.",
       "hideInitially": "visible",
       "placeholder": "e.g., 2020"
@@ -55,7 +56,8 @@
       "type": "select",
       "required": false,
       "dataField": true,
-      "syncToCustomField": true,
+      "syncToCustomField": false,
+      "mapsToContactField": "ATSCHOOLFLAG",
       "hideInitially": "visible",
       "options": [
         { "display": "Not Specified", "value": "" },

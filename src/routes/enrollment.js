@@ -636,7 +636,7 @@ router.post('/save-step', async (req, res) => {
       'usi', 'uniquestudentidentifier', 'studentidentifier',
       'countryofbirth', 'birthplace', 'cityofbirth',
       'citizenshipstatus', 'countryofcitizenship', 'residencystatus',
-      'languagespoken', 'languageidentifier', 'englishproficiency', 'englishassistance', 'atschool',
+      'languagespoken', 'languageidentifier', 'englishproficiency', 'englishassistance', 'atschool', 'stillenrolledsecondary',
       'indigenousstatus', 'aboriginalortorresstraitislanderorigin',
       'employmentstatus', 'occupationidentifier', 'industryofemployment',
       'schoollevel', 'highestschoollevel', 'highestcompletedschoollevel', 'yearhighestschoolcompleted',
@@ -735,7 +735,13 @@ router.post('/save-step', async (req, res) => {
           // Value is numeric ID (1-4) or empty string
         }
         if (keyLower === 'englishassistance') axFieldName = 'ENGLISHASSISTANCEFLAG';
-        if (keyLower === 'atschool') axFieldName = 'ATSCHOOLFLAG';
+        if (keyLower === 'atschool' || keyLower === 'stillenrolledsecondary') {
+          axFieldName = 'ATSCHOOLFLAG';
+          // Convert string "true"/"false" to boolean if needed
+          if (value === 'true') value = true;
+          else if (value === 'false') value = false;
+          else if (value === '') value = null;
+        }
         
         // VET Related Details - Indigenous/Employment (use NAME fields for text values)
         if (keyLower === 'indigenousstatus' || keyLower === 'aboriginalortorresstraitislanderorigin') axFieldName = 'INDIGENOUSSTATUSNAME';
@@ -744,8 +750,14 @@ router.post('/save-step', async (req, res) => {
         if (keyLower === 'industryofemployment') axFieldName = 'INDUSTRYOFEMPLOYMENT';
         
         // VET Related Details - Education
-        if (keyLower === 'highestschoollevel' || keyLower === 'schoollevel' || keyLower === 'highestcompletedschoollevel') axFieldName = 'HIGHESTSCHOOLLEVEL';
-        if (keyLower === 'yearhighestschoolcompleted') axFieldName = 'YEARHIGHESTSCHOOLCOMPLETED';
+        if (keyLower === 'highestschoollevel' || keyLower === 'schoollevel' || keyLower === 'highestcompletedschoollevel') {
+          axFieldName = 'HIGHESTSCHOOLLEVELID';
+          // Value is already numeric (2, 8, 9, 10, 11, 12)
+        }
+        if (keyLower === 'yearhighestschoolcompleted') {
+          axFieldName = 'HIGHESTSCHOOLLEVELYEAR';
+          // Value is a year like "2020"
+        }
         if (keyLower === 'prioreducationstatus') axFieldName = 'PRIOREDUCATIONSTATUS';
         if (keyLower === 'prioreducation') axFieldName = 'PRIOREDUCATION';
         
