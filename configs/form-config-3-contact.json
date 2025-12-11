@@ -29,7 +29,7 @@
       "required": false,
       "dataField": true,
       "syncToCustomField": false,
-      "mapsToContactField": "ALTERNATIVEEMAILADDRESS",
+      "mapsToContactField": "EMAILADDRESSALTERNATIVE",
       "tooltip": "A contact email address",
       "validation": {
         "type": "email",

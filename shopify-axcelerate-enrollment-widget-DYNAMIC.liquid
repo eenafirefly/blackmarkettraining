@@ -3120,6 +3120,7 @@
       console.log('   EMAILADDRESS:', contact.EMAILADDRESS);
       console.log('   EMAIL:', contact.EMAIL);
       console.log('   EmailAddress:', contact.EmailAddress);
+      console.log('   EMAILADDRESSALTERNATIVE:', contact.EMAILADDRESSALTERNATIVE);
       console.log('   ALTERNATIVEEMAILADDRESS:', contact.ALTERNATIVEEMAILADDRESS);
       console.log('   MOBILE:', contact.MOBILE);
       console.log('   MOBILEPHONE:', contact.MOBILEPHONE);
@@ -3226,7 +3227,7 @@
           });
           return emailValue;
         })(),
-        alternativeemail: contact.ALTERNATIVEEMAILADDRESS || contact.AlternativeEmailAddress || contact.ALTERNATIVEEMAIL || contact.alternativeemailaddress || contact.alternativeemail || '',
+        alternativeemail: contact.EMAILADDRESSALTERNATIVE || contact.EmailAddressAlternative || contact.ALTERNATIVEEMAILADDRESS || contact.AlternativeEmailAddress || contact.ALTERNATIVEEMAIL || contact.alternativeemailaddress || contact.alternativeemail || '',
         organisation: contact.ORGANISATION || contact.organisation || contact.Organisation || '',
         position: contact.POSITION || contact.position || contact.Position || '',
         mobile: contact.MOBILE || contact.MOBILEPHONE || contact.mobile || contact.Mobile || '',
