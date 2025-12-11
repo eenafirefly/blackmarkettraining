@@ -3246,7 +3246,7 @@
           return 'No';
         })(),
         indigenousstatus: contact.INDIGENOUSSTATUSID || contact.INDIGENOUSSTATUSNAME || contact.INDIGENOUSSTATUS || '',
-        employmentstatus: contact.EMPLOYMENTSTATUSID || contact.EMPLOYMENTSTATUSNAME || contact.EMPLOYMENTSTATUS || '',
+        employmentstatus: contact.LABOURFORCEID || contact.EMPLOYMENTSTATUSID || contact.EMPLOYMENTSTATUSNAME || contact.EMPLOYMENTSTATUS || '',
         disabilityflag: (() => {
           // Convert boolean to Y/N for the select dropdown
           const flag = contact.DISABILITYFLAG;
@@ -3255,8 +3255,8 @@
           return '';
         })(),
         disabilitytypes: (() => {
-          // Parse DISABILITYTYPES from Axcelerate (format: "11,12" or array)
-          let types = contact.DISABILITYTYPES || '';
+          // Parse DISABILITYTYPEIDS from Axcelerate (format: "11,12" or array)
+          let types = contact.DISABILITYTYPEIDS || contact.DISABILITYTYPES || '';
           console.log('♿ Loading Disability Types from Axcelerate:', types, 'type:', typeof types);
           
           // Handle if it's already an array

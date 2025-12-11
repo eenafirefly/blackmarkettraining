@@ -782,7 +782,7 @@ router.post('/save-step', async (req, res) => {
         
         // VET Related Details - Indigenous/Employment
         if (keyLower === 'indigenousstatus' || keyLower === 'aboriginalortorresstraitislanderorigin') axFieldName = 'INDIGENOUSSTATUSID';
-        if (keyLower === 'employmentstatus') axFieldName = 'EMPLOYMENTSTATUSID';
+        if (keyLower === 'employmentstatus') axFieldName = 'LABOURFORCEID';
         if (keyLower === 'occupationidentifier') axFieldName = 'OCCUPATIONIDENTIFIER';
         if (keyLower === 'industryofemployment') axFieldName = 'INDUSTRYOFEMPLOYMENT';
         
@@ -825,7 +825,7 @@ router.post('/save-step', async (req, res) => {
           console.log(`   🔄 Converted DISABILITYFLAG to boolean: ${value}`);
         }
         if (keyLower === 'disabilitytypes') {
-          axFieldName = 'DISABILITYTYPES';
+          axFieldName = 'DISABILITYTYPEIDS';
           // DISABILITYTYPES expects comma-separated string like "11,12,13"
           if (Array.isArray(value)) {
             value = value.join(',');
