@@ -844,18 +844,22 @@ router.post('/save-step', async (req, res) => {
         updatePayload[axFieldName] = value;
         console.log(`   📝 Personal field: ${key} → ${axFieldName} = "${value}"`);
       } else {
-        // Custom field - send with CUSTOM_ prefix (not CUSTOMFIELD_)
-        // Axcelerate contact endpoint expects CUSTOM_ prefix for custom fields
-        const axcelerateFieldName = `CUSTOM_${key}`;
-        updatePayload[axcelerateFieldName] = value;
-        console.log(`   📝 Custom field: ${key} → ${axcelerateFieldName} = "${value}"`);
+        // Custom field - send with just the variable name (same format as background fields)
+        // Background custom fields work by sending just the variable name
+        updatePayload[key] = value;
+        console.log(`   📝 Custom field: ${key} = "${value}" (sent as-is, no prefix)`);
       }
     });
     
     if (Object.keys(updatePayload).length > 0) {
-      console.log('📝 Updating contact with step data (with CUSTOMFIELD_ prefix)...');
+      console.log('📝 Updating contact with step data...');
       console.log('📊 aXcelerate fields to save:', Object.keys(updatePayload));
       console.log('📋 Full payload:', JSON.stringify(updatePayload, null, 2));
+      
+      const requestBody = Object.keys(updatePayload)
+        .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(updatePayload[key])}`)
+        .join('&');
+      console.log('📋 Request body:', requestBody);
       
       const updateResponse = await fetch(
         `${process.env.AXCELERATE_API_URL}/contact/${contactId}`,
@@ -866,21 +870,27 @@ router.post('/save-step', async (req, res) => {
             'WSToken': process.env.AXCELERATE_WS_TOKEN,
             'Content-Type': 'application/x-www-form-urlencoded'
           },
-          body: Object.keys(updatePayload)
-            .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(updatePayload[key])}`)
-            .join('&')
+          body: requestBody
         }
       );
       
       if (updateResponse.ok) {
         const result = await updateResponse.json();
         console.log('✅ Contact updated successfully');
+        console.log('✅ Axcelerate response:', result);
         console.log(`✅ Saved ${Object.keys(updatePayload).length} fields to aXcelerate`);
         console.log('📋 Fields saved:', Object.keys(updatePayload).join(', '));
       } else {
         const errorText = await updateResponse.text();
         console.error('❌ Failed to update contact:', updateResponse.status, errorText);
         console.error('📋 Attempted to save:', updatePayload);
+        // Try to parse error as JSON for more details
+        try {
+          const errorJson = JSON.parse(errorText);
+          console.error('📋 Error details:', errorJson);
+        } catch (e) {
+          console.error('📋 Raw error:', errorText);
+        }
       }
     } else {
       console.log('⚠️ No step data to save');
