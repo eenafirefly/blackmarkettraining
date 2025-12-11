@@ -2986,6 +2986,21 @@
         console.log(`   Current input value: "${emailInput.value}"`);
         console.log(`   Input type: ${emailInput.type}`);
         console.log(`   Input name: ${emailInput.name}`);
+        
+        // Add watcher to detect if value gets cleared
+        setTimeout(() => {
+          console.log(`   📧 Email value after 500ms: "${emailInput.value}"`);
+          if (!emailInput.value && data.email) {
+            console.error(`   ❌ EMAIL WAS CLEARED! Original: "${data.email}", Current: "${emailInput.value}"`);
+          }
+        }, 500);
+        
+        setTimeout(() => {
+          console.log(`   📧 Email value after 2000ms: "${emailInput.value}"`);
+          if (!emailInput.value && data.email) {
+            console.error(`   ❌ EMAIL STILL CLEARED! Original: "${data.email}", Current: "${emailInput.value}"`);
+          }
+        }, 2000);
       }
     }
     
@@ -3125,6 +3140,16 @@
     });
     
     console.log(`✅ Finished populating form data for step "${stepId}"`);
+    
+    // Check if email field still has value after population completes
+    if (stepId === 'contact') {
+      setTimeout(() => {
+        const emailInput = document.getElementById(`ax-email-${widgetId}`);
+        if (emailInput) {
+          console.log(`📧 Email field check after populateFormData complete: "${emailInput.value}"`);
+        }
+      }, 100);
+    }
   }
   
   async function fetchContactDetailsForPrefill(contactIdToFetch) {
