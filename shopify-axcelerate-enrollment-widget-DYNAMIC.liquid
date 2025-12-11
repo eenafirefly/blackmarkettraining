@@ -2728,54 +2728,52 @@
     
     // Restore saved data for this step if available (with delay for DOM update)
     setTimeout(() => {
+      // First, try to populate from formData or sessionStorage
+      const formDataForStep = formData[stepId];
       const saved = sessionStorage.getItem(`ax_form_${stepId}`);
-      if (saved) {
+      let dataToRestore = null;
+      
+      if (formDataForStep && Object.keys(formDataForStep).length > 0) {
+        dataToRestore = formDataForStep;
+        console.log(`🔄 Restoring data for step "${stepId}" from formData:`, dataToRestore);
+      } else if (saved) {
         try {
-          const data = JSON.parse(saved);
-          console.log(`🔄 Restoring data for step "${stepId}":`, data);
-          
-          // Only mark as completed if step has actual data
-          const hasData = data && typeof data === 'object' && Object.keys(data).length > 0;
-          
-          if (hasData) {
-            populateFormData(stepId, data);
-            
-            // Auto-mark as completed if step has saved data
-            if (stepId !== 'login') {
-              console.log(`✅ Auto-marking step "${stepId}" as completed (has ${Object.keys(data).length} saved fields)`);
-              markStepCompleted(stepId);
-            }
-          } else {
-            console.log(`⏭️ Skipping restore for "${stepId}" - no data or empty`);
-          }
+          dataToRestore = JSON.parse(saved);
+          console.log(`🔄 Restoring data for step "${stepId}" from sessionStorage:`, dataToRestore);
         } catch (e) {
-          console.error('Error restoring step data:', e);
+          console.error('Error parsing saved data:', e);
+        }
+      }
+      
+      if (dataToRestore && Object.keys(dataToRestore).length > 0) {
+        populateFormData(stepId, dataToRestore);
+        
+        // Auto-mark as completed if step has saved data and passes validation
+        if (stepId !== 'login') {
+          const isValid = validateStepRequiredFields(stepId);
+          if (isValid) {
+            console.log(`✅ Auto-marking step "${stepId}" as completed (has ${Object.keys(dataToRestore).length} saved fields)`);
+            markStepCompleted(stepId);
+          } else {
+            console.log(`⚠️ Step "${stepId}" has data but missing required fields`);
+          }
         }
       } else {
         console.log(`ℹ️ No saved data found for step "${stepId}"`);
+        
+        // If no saved data, but we have contact details, pre-fill them immediately
+        const isContactStep = stepId.toLowerCase().includes('contact') || 
+                             stepId.toLowerCase().includes('personal');
+        
+        if (isContactStep && (contactDetails.givenName || contactDetails.email || contactDetails.mobile)) {
+          console.log(`👤 Pre-filling contact details for empty step "${stepId}"`);
+          // Shorter delay since there's no other data to populate
+          setTimeout(() => {
+            prefillContactDetails(stepId);
+          }, 200);
+        }
       }
-      
-      // Always try to pre-fill contact details for contact or personal steps
-      // This ensures email/mobile are filled even if there's partial saved data
-      const isContactStep = stepId.toLowerCase().includes('contact') || 
-                           stepId.toLowerCase().includes('personal');
-      
-      console.log(`🔍 Checking pre-fill for step "${stepId}":`, {
-        isContactStep,
-        hasContactDetails: !!(contactDetails.givenName || contactDetails.email || contactDetails.mobile),
-        contactDetails
-      });
-      
-      if (isContactStep && (contactDetails.givenName || contactDetails.email || contactDetails.mobile)) {
-        console.log(`👤 Pre-filling contact details for step "${stepId}"`);
-        console.log(`   Contact details available:`, contactDetails);
-        // Increased timeout to ensure DOM is fully rendered
-        setTimeout(() => {
-          console.log(`   ⏰ Pre-fill timeout triggered for "${stepId}"`);
-          prefillContactDetails(stepId);
-        }, 1000);
-      }
-    }, 100);
+    }, 150);
     
     // Save progress
     saveProgress();
