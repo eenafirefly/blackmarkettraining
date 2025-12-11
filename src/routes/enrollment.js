@@ -845,7 +845,8 @@ router.post('/save-step', async (req, res) => {
         console.log(`   📝 Personal field: ${key} → ${axFieldName} = "${value}"`);
       } else {
         // Custom field - send with CUSTOMFIELD_ prefix
-        const axcelerateFieldName = `CUSTOMFIELD_${key.toUpperCase()}`;
+        // Preserve original case for variable name (Axcelerate might be case-sensitive)
+        const axcelerateFieldName = `CUSTOMFIELD_${key}`;
         updatePayload[axcelerateFieldName] = value;
         console.log(`   📝 Custom field: ${key} → ${axcelerateFieldName} = "${value}"`);
       }
