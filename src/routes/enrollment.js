@@ -679,7 +679,7 @@ router.post('/save-step', async (req, res) => {
       'schoollevel', 'highestschoollevel', 'highestcompletedschoollevel', 'yearhighestschoolcompleted',
       'prioreducationstatus', 'prioreducation', 'prioreducationids',
       'disabilities', 'disabilitytypes', 'disabilityflag', 'hasdisability',
-      'surveycontactstatus', 'studyreason'
+      'surveycontactstatus'
     ];
     
     // Separate fields into personal details and custom fields
@@ -839,9 +839,6 @@ router.post('/save-step', async (req, res) => {
         
         // VET Related Details - Survey
         if (keyLower === 'surveycontactstatus') axFieldName = 'SURVEYCONTACTSTATUS';
-        
-        // VET Related Details - Study Reason
-        if (keyLower === 'studyreason') axFieldName = 'STUDYREASONID';
         
         // Personal detail - send with mapped field name
         updatePayload[axFieldName] = value;

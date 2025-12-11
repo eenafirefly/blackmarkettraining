@@ -14,8 +14,7 @@
       "type": "select",
       "required": true,
       "dataField": true,
-      "syncToCustomField": false,
-      "mapsToContactField": "STUDYREASONID",
+      "syncToCustomField": true,
       "tooltip": "Select the value that best represents the reason for study.",
       "options": [
         { "display": "To get a job", "value": "1" },
