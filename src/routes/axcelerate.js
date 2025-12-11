@@ -1032,6 +1032,78 @@ router.get('/form-config/:configId/:step?', async (req, res) => {
 });
 
 /**
+ * Check if contact is already enrolled in a course instance
+ * GET /api/axcelerate/enrollment-check/:contactId/:instanceId
+ * 
+ * Returns enrollment status to prevent duplicate enrollments
+ */
+router.get('/enrollment-check/:contactId/:instanceId', async (req, res) => {
+  try {
+    const { contactId, instanceId } = req.params;
+    
+    console.log('🔍 Checking for existing enrollment:', { contactId, instanceId });
+    
+    // Fetch all enrollments for this contact
+    const response = await fetch(
+      `${process.env.AXCELERATE_API_URL}/enrolment/contact/${contactId}`,
+      {
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN
+        }
+      }
+    );
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ aXcelerate error:', errorText);
+      throw new Error(`aXcelerate API returned ${response.status}: ${errorText}`);
+    }
+    
+    const enrollments = await response.json();
+    console.log(`📋 Found ${enrollments.length} total enrollments for contact ${contactId}`);
+    
+    // Check if any enrollment matches this instance
+    let alreadyEnrolled = false;
+    let existingEnrollment = null;
+    
+    if (Array.isArray(enrollments)) {
+      for (const enrolment of enrollments) {
+        if (enrolment.INSTANCEID == instanceId) {
+          const status = (enrolment.STATUS || '').toLowerCase();
+          console.log(`   Found matching enrollment: Status="${status}"`);
+          
+          // Consider enrolled if status is not "tentative"
+          if (status !== 'tentative') {
+            alreadyEnrolled = true;
+            existingEnrollment = {
+              instanceId: enrolment.INSTANCEID,
+              status: enrolment.STATUS,
+              courseName: enrolment.COURSENAME || 'Unknown Course'
+            };
+            break;
+          }
+        }
+      }
+    }
+    
+    console.log(`✅ Enrollment check result: ${alreadyEnrolled ? 'ALREADY ENROLLED' : 'NOT ENROLLED'}`);
+    
+    res.json({
+      alreadyEnrolled,
+      enrollment: existingEnrollment
+    });
+    
+  } catch (error) {
+    console.error('❌ Error checking enrollment:', error);
+    res.status(500).json({
+      error: 'Failed to check enrollment status',
+      message: error.message
+    });
+  }
+});
+
+/**
  * Get course instance details
  * GET /api/axcelerate/instance/:instanceId
  * 

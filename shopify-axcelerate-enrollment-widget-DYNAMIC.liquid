@@ -1976,6 +1976,8 @@
       
       return {
         courseName: data.courseName || data.name || 'Course',
+        courseCode: data.courseCode || '',
+        description: data.description || data.courseDescription || '',
         startDate: data.startDate || data.start || '',
         location: data.location || data.venue || '',
         fee: data.fee || data.price || '',
@@ -1985,6 +1987,109 @@
       console.error('❌ Failed to fetch course instance data:', error);
       return null;
     }
+  }
+  
+  /**
+   * Check if student is already enrolled in the current course instance
+   * Returns true if already enrolled (and shows warning modal)
+   */
+  async function checkExistingEnrollment() {
+    if (!contactId || !instanceId) {
+      console.warn('⚠️ Missing contactId or instanceId for enrollment check');
+      return false;
+    }
+    
+    try {
+      console.log('🔍 Checking enrollment status:', { contactId, instanceId });
+      
+      const response = await fetch(
+        `${RENDER_APP_URL}/api/axcelerate/enrollment-check/${contactId}/${instanceId}`
+      );
+      
+      if (!response.ok) {
+        console.error('❌ Enrollment check failed with status:', response.status);
+        return false; // Allow to proceed if check fails
+      }
+      
+      const data = await response.json();
+      console.log('✅ Enrollment check result:', data);
+      
+      if (data.alreadyEnrolled) {
+        // Show warning modal
+        const courseName = data.enrollment?.courseName || courseData?.courseName || 'this course';
+        showWarningModal(
+          'Already Enrolled',
+          `Student is already enrolled in ${courseName}.`
+        );
+        return true;
+      }
+      
+      return false;
+      
+    } catch (error) {
+      console.error('❌ Error checking enrollment:', error);
+      return false; // Allow to proceed if check fails
+    }
+  }
+  
+  /**
+   * Show warning modal for enrollment issues
+   */
+  function showWarningModal(title, message) {
+    // Create warning modal if it doesn't exist
+    let warningModal = document.getElementById('ax-warning-modal-' + widgetId);
+    
+    if (!warningModal) {
+      warningModal = document.createElement('div');
+      warningModal.id = 'ax-warning-modal-' + widgetId;
+      warningModal.className = 'ax-modal';
+      warningModal.innerHTML = `
+        <div class="ax-modal-overlay"></div>
+        <div class="ax-modal-content">
+          <div class="ax-modal-header">
+            <h3 class="ax-modal-title" id="ax-warning-title-${widgetId}">${title}</h3>
+            <button class="ax-modal-close" aria-label="Close">&times;</button>
+          </div>
+          <div class="ax-modal-body">
+            <div style="display: flex; align-items: flex-start; gap: 15px;">
+              <div style="font-size: 40px; color: #f59e0b; flex-shrink: 0;">⚠️</div>
+              <p id="ax-warning-message-${widgetId}" style="margin: 0; padding-top: 8px;">${message}</p>
+            </div>
+          </div>
+          <div class="ax-modal-footer">
+            <button class="push-btn inline-block ax-btn ax-btn-secondary ax-warning-ok">
+              <span class="push-btn__surface">OK</span>
+            </button>
+          </div>
+        </div>
+      `;
+      widget.appendChild(warningModal);
+      
+      // Add event listeners
+      const closeBtn = warningModal.querySelector('.ax-modal-close');
+      const okBtn = warningModal.querySelector('.ax-warning-ok');
+      
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          warningModal.style.display = 'none';
+        });
+      }
+      
+      if (okBtn) {
+        okBtn.addEventListener('click', () => {
+          warningModal.style.display = 'none';
+        });
+      }
+    } else {
+      // Update existing modal
+      const titleEl = document.getElementById('ax-warning-title-' + widgetId);
+      const messageEl = document.getElementById('ax-warning-message-' + widgetId);
+      if (titleEl) titleEl.textContent = title;
+      if (messageEl) messageEl.textContent = message;
+    }
+    
+    // Show the modal
+    warningModal.style.display = 'flex';
   }
   
   async function createEnrollmentSummary(config) {
@@ -2924,12 +3029,30 @@
     
     // Handle based on step type
     if (config.stepType === 'enrollment-summary') {
+      // Check for existing enrollment before proceeding
+      console.log('🔍 Checking for existing enrollment...');
+      const alreadyEnrolled = await checkExistingEnrollment();
+      
+      if (alreadyEnrolled) {
+        console.warn('⚠️ Student is already enrolled in this course');
+        return; // Stop here, warning has been shown
+      }
+      
       // Enrollment summary - move to declaration
       const nextStep = formSteps.find(s => s.id === 'declaration');
       if (nextStep) {
         showStep(nextStep.id);
       }
     } else if (config.stepType === 'review') {
+      // Check for existing enrollment before proceeding
+      console.log('🔍 Checking for existing enrollment...');
+      const alreadyEnrolled = await checkExistingEnrollment();
+      
+      if (alreadyEnrolled) {
+        console.warn('⚠️ Student is already enrolled in this course');
+        return; // Stop here, warning has been shown
+      }
+      
       // Review step - move to declaration
       const nextStep = formSteps.find(s => s.id === 'declaration');
       if (nextStep) {
