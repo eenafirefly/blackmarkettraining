@@ -5,6 +5,7 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { convertISOtoSACC } from '../utils/country-codes.js';
 
 const router = express.Router();
 
@@ -712,8 +713,8 @@ router.post('/save-step', async (req, res) => {
         // VET Related Details - Nationality/Citizenship
         if (keyLower === 'countryofbirth') {
           axFieldName = 'COUNTRYOFBIRTHID';
-          // Keep the 2-letter ISO country code as-is for Axcelerate
-          // Axcelerate will handle the conversion to display name
+          // Convert ISO code to 4-digit SACC code (e.g., AU → 1101)
+          value = convertISOtoSACC(value);
         }
         if (keyLower === 'birthplace' || keyLower === 'cityofbirth') axFieldName = 'CITYOFBIRTH';
         if (keyLower === 'citizenshipstatus') axFieldName = 'CITIZENSTATUSID'; // This uses numeric IDs (1-8)

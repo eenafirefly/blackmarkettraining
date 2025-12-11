@@ -3491,15 +3491,25 @@
   }
   
   function showExistingRecordModal(email) {
+    if (!elements.modal) {
+      console.error('❌ Modal element not found!');
+      return;
+    }
+    
     const emailEl = elements.modal.querySelector('#ax-modal-email');
     if (emailEl) {
       const masked = email.substring(0, 1) + '****' + email.substring(email.indexOf('@'));
       emailEl.textContent = masked;
     }
     elements.modal.style.display = 'block';
+    console.log('📧 Showing existing record modal for:', masked);
   }
   
   function closeModal() {
+    if (!elements.modal) {
+      console.error('❌ Modal element not found!');
+      return;
+    }
     elements.modal.style.display = 'none';
   }
   
