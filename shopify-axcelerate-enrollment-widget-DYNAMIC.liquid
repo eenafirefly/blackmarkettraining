@@ -1071,8 +1071,8 @@
   let contactId = null;
   let courseName = '';
   let formSteps = [];
+  let stepConfigs = {}; // Stores step configurations with fields
   let formData = {}; // Stores data from all steps
-  let stepConfigs = {}; // Stores fetched configurations
   let contactDetails = { // Stores logged-in user's details for pre-filling
     givenName: '',
     surname: '',
@@ -2250,12 +2250,18 @@
   
   function validateStepRequiredFields(stepId) {
     const config = stepConfigs[stepId];
-    if (!config || !config.fields) return true;
+    if (!config || !config.fields) {
+      console.log(`   ⚠️ No config found for step "${stepId}" - returning true (config exists: ${!!config}, has fields: ${!!config?.fields})`);
+      return true;
+    }
     
     const requiredFields = config.fields.filter(f => f.required && f.type !== 'information' && f.type !== 'button' && f.type !== 'information-header');
-    if (requiredFields.length === 0) return true; // No required fields
+    if (requiredFields.length === 0) {
+      console.log(`   ℹ️ Step "${stepId}" has no required fields - marking as valid`);
+      return true; // No required fields
+    }
     
-    console.log(`🔍 Validating ${requiredFields.length} required fields for step "${stepId}"`);
+    console.log(`🔍 Validating ${requiredFields.length} required fields for step "${stepId}":`, requiredFields.map(f => f.fieldId));
     
     // Get saved data for this step
     const stepData = formData[stepId] || {};
@@ -3235,8 +3241,19 @@
         // Parse PRIOREDUCATIONIDS (format: "410A,511E") into codes and recognition letters
         ...(() => {
           const result = {};
-          const priorEdIds = contact.PRIOREDUCATIONIDS || contact.PRIOREDUCATION || '';
-          console.log('📚 Loading Prior Education from Axcelerate:', priorEdIds);
+          let priorEdIds = contact.PRIOREDUCATIONIDS || contact.PRIOREDUCATION || '';
+          console.log('📚 Loading Prior Education from Axcelerate (raw):', priorEdIds, 'type:', typeof priorEdIds);
+          
+          // Handle if it's already an array
+          if (Array.isArray(priorEdIds)) {
+            priorEdIds = priorEdIds.join(',');
+            console.log('📚 Converted array to string:', priorEdIds);
+          }
+          // Ensure it's a string
+          if (typeof priorEdIds !== 'string') {
+            console.warn('⚠️ priorEdIds is not a string or array:', priorEdIds);
+            priorEdIds = '';
+          }
           
           if (priorEdIds) {
             // Split by comma: "410A,511E" → ["410A", "511E"]
@@ -3296,8 +3313,8 @@
           'computerskills', 'computerSkills', 'medicalissues', 'previousexperience', 'fourcommunication', 'threecontamination',
           'fivemilk'
         ],
-        'nationality': ['countryofbirth', 'birthplace', 'citizenshipstatus', 'languagespoken', 'englishproficiency', 'indigenousstatus', 'speakotherlanguage', 'languagespokenmostoften'],
-        'schooling': ['highestschoollevel', 'prioreducation', 'prioreducationstatus', 'yearhighestschoolcompleted', 'stillenrolledsecondary'],
+        'nationality': ['countryofbirth', 'birthplace', 'citizenshipstatus', 'countryofcitizenship', 'languagespoken', 'englishproficiency', 'indigenousstatus', 'speakotherlanguage', 'languagespokenmostoften'],
+        'schooling': ['highestschoollevel', 'prioreducation', 'prioreducationstatus', 'yearhighestschoolcompleted', 'stillenrolledsecondary', 'prioreducation_008_recognition', 'prioreducation_410_recognition', 'prioreducation_420_recognition', 'prioreducation_511_recognition', 'prioreducation_514_recognition', 'prioreducation_521_recognition', 'prioreducation_524_recognition', 'prioreducation_990_recognition'],
         'additional': ['employmentstatus', 'disabilitytypes', 'hasdisability', 'indigenousstatus'],
         'studyreason': ['studyreason'],
         'emergency': ['emergencycontact', 'emergencycontactrelation', 'emergencycontactphone']
@@ -3335,8 +3352,14 @@
           console.log(`   📝 Now populating DOM fields for step "${stepId}"...`);
           populateFormData(stepId, stepData);
           
-          // Mark step as completed if it has data
-          markStepCompleted(stepId);
+          // Validate and mark step as completed if all required fields are filled
+          const isValid = validateStepRequiredFields(stepId);
+          if (isValid) {
+            console.log(`✅ Step "${stepId}" passes validation - marking as completed`);
+            markStepCompleted(stepId);
+          } else {
+            console.log(`⚠️ Step "${stepId}" has data but missing required fields - not marking as completed yet`);
+          }
         }
       });
       
@@ -3557,14 +3580,20 @@
         }
         
         // Auto-mark completed steps based on saved data
-        // Only mark as completed if step has actual field data
+        // Only mark as completed if step has actual field data AND passes validation
         Object.keys(formData).forEach(stepId => {
           if (stepId !== 'login') {
             const stepData = formData[stepId];
             const hasData = stepData && typeof stepData === 'object' && Object.keys(stepData).length > 0;
             if (hasData) {
-              console.log(`✅ Auto-marking "${stepId}" as completed (has ${Object.keys(stepData).length} fields)`);
-              markStepCompleted(stepId);
+              // Validate step before marking as complete
+              const isValid = validateStepRequiredFields(stepId);
+              if (isValid) {
+                console.log(`✅ Auto-marking "${stepId}" as completed (has ${Object.keys(stepData).length} fields and passes validation)`);
+                markStepCompleted(stepId);
+              } else {
+                console.log(`⚠️ "${stepId}" has data but missing required fields - not marking as completed yet`);
+              }
             } else {
               console.log(`⏭️ Skipping "${stepId}" - no data or empty`);
             }
