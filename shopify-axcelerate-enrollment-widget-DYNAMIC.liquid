@@ -2114,12 +2114,18 @@
       });
       
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to upload files');
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        console.error('❌ Upload failed:', response.status, errorData);
+        throw new Error(errorData.message || `Upload failed with status ${response.status}`);
       }
       
       const result = await response.json();
-      console.log('✅ Files uploaded successfully:', result);
+      
+      if (!result.success) {
+        throw new Error(result.message || 'Upload failed');
+      }
+      
+      console.log('✅ Files uploaded successfully to Axcelerate Portfolio:', result);
       
       // Update current files list
       updateCurrentFilesList(fieldId, result.files || []);
@@ -2127,18 +2133,22 @@
       // Clear file input
       fileInput.value = '';
       
-      alert(`✓ ${result.files.length} file(s) uploaded successfully`);
+      alert(`✅ Success! ${result.files.length} file(s) uploaded to Axcelerate Portfolio`);
       
-      // Save progress
+      // Save progress - IMPORTANT: Only save if upload succeeded
       if (!formData[stepId]) {
         formData[stepId] = {};
       }
       formData[stepId][fieldId] = result.files;
+      sessionStorage.setItem(`ax_form_${stepId}`, JSON.stringify(formData[stepId]));
       saveProgress();
       
     } catch (error) {
       console.error('❌ File upload error:', error);
-      alert(`Failed to upload files: ${error.message}`);
+      alert(`❌ Failed to upload files to Axcelerate: ${error.message}\n\nPlease try again.`);
+      
+      // Don't save to formData if upload failed - this prevents step from being marked complete
+      console.warn('⚠️ Upload failed - files not added to formData');
     }
   }
   

@@ -1308,7 +1308,6 @@ router.post('/upload-documents', upload.array('files', 10), async (req, res) => 
     console.log(`   Files to upload: ${req.files.length}`);
     
     const uploadedFiles = [];
-    const fs = require('fs');
     
     // Process each file
     for (const file of req.files) {
