@@ -2006,7 +2006,7 @@
     }
     
     // Get course and contact information
-    const courseName = courseData?.courseName || courseName || 'Course';
+    const courseNameDisplay = courseData?.courseName || 'Course';
     const courseDescription = courseData?.description || courseData?.courseDescription || '';
     const courseCode = courseData?.courseCode || '';
     
@@ -2015,7 +2015,7 @@
       : 'Student';
     
     console.log('   Display values:', {
-      courseName,
+      courseNameDisplay,
       studentName,
       courseCode
     });
@@ -2084,7 +2084,7 @@
       <h4 class="ax-summary-subtitle">Enrolment Details</h4>
       <div class="ax-summary-row">
         <div class="ax-summary-label">Course Instance:</div>
-        <div class="ax-summary-value">${courseName}</div>
+        <div class="ax-summary-value">${courseNameDisplay}</div>
       </div>
       <div class="ax-summary-row">
         <div class="ax-summary-label">Student:</div>
