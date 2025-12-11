@@ -1314,8 +1314,20 @@ router.post('/upload-documents', upload.array('files', 10), async (req, res) => 
       try {
         console.log(`\n📄 Processing file: ${file.originalname}`);
         
-        // Step 1: Create portfolio record FIRST (to get certificationID)
+        // Step 1: Create minimal portfolio record to get certificationID
         console.log('   ⏳ Creating portfolio record...');
+        
+        // Portfolio creation requires specific fields - match the plugin approach
+        const portfolioParams = new URLSearchParams({
+          contactID: contactId,
+          checklistID: portfolioChecklistId, // Use checklistID, not portfolioTypeID
+          TYPE: portfolioItemType || 'Document', // Item type (Photo ID, etc.)
+          NAME: file.originalname,
+          DETAILS: `Uploaded via enrollment form`
+        });
+        
+        console.log('   Portfolio params:', Object.fromEntries(portfolioParams));
+        
         const portfolioResponse = await fetch(
           `${process.env.AXCELERATE_API_URL}/contact/portfolio/`,
           {
@@ -1325,25 +1337,22 @@ router.post('/upload-documents', upload.array('files', 10), async (req, res) => 
               'WSToken': process.env.AXCELERATE_WS_TOKEN,
               'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: new URLSearchParams({
-              contactID: contactId,
-              portfolioTypeID: portfolioChecklistId,
-              itemType: portfolioItemType || fieldId,
-              name: file.originalname,
-              description: `Uploaded via enrollment form - ${stepId}`
-            })
+            body: portfolioParams
           }
         );
         
         if (!portfolioResponse.ok) {
           const errorText = await portfolioResponse.text();
-          console.error('   ❌ Portfolio creation failed:', errorText);
+          console.error('   ❌ Portfolio creation failed:', portfolioResponse.status);
+          console.error('   Response:', errorText);
           throw new Error(`Failed to create portfolio record: ${portfolioResponse.status} - ${errorText}`);
         }
         
         const portfolioData = await portfolioResponse.json();
-        const certificationID = portfolioData.certificationID || portfolioData.CERTIFICATIONID || portfolioData.portfolioID;
-        console.log('   ✅ Portfolio record created. Certification ID:', certificationID);
+        const certificationID = portfolioData.PORTFOLIOID || portfolioData.certificationID || portfolioData.CERTIFICATIONID || portfolioData.portfolioID;
+        console.log('   ✅ Portfolio record created');
+        console.log('   Certification/Portfolio ID:', certificationID);
+        console.log('   Full response:', JSON.stringify(portfolioData, null, 2));
         
         // Step 2: Get presigned upload URL with certificationID
         console.log('   ⏳ Getting presigned upload URL...');
