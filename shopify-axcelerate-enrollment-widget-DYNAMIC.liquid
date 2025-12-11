@@ -3503,12 +3503,22 @@
       
       const portfolioData = await response.json();
       console.log('📋 Portfolio data from Axcelerate:', portfolioData);
+      console.log('📋 Total portfolio items:', Array.isArray(portfolioData) ? portfolioData.length : 0);
       
       // Group documents by portfolio type
       const documentsByType = {};
       
       if (portfolioData && Array.isArray(portfolioData)) {
-        portfolioData.forEach(item => {
+        portfolioData.forEach((item, index) => {
+          console.log(`   Item ${index + 1}:`, {
+            PORTFOLIOTYPENAME: item.PORTFOLIOTYPENAME,
+            portfolioTypeName: item.portfolioTypeName,
+            FILENAME: item.FILENAME,
+            fileName: item.fileName,
+            PORTFOLIONAME: item.PORTFOLIONAME,
+            PORTFOLIOID: item.PORTFOLIOID
+          });
+          
           const typeName = item.PORTFOLIOTYPENAME || item.portfolioTypeName || '';
           const fileName = item.FILENAME || item.fileName || item.PORTFOLIONAME || '';
           const portfolioId = item.PORTFOLIOID || item.portfolioID || '';
@@ -3523,10 +3533,17 @@
               portfolioID: portfolioId,
               uploadedAt: item.DATECREATED || item.dateCreated || new Date().toISOString()
             });
-            console.log(`   📎 Found ${typeName}: ${fileName}`);
+            console.log(`   ✅ Grouped: ${typeName} → ${fileName}`);
+          } else {
+            console.warn(`   ⚠️ Skipped item ${index + 1}: typeName="${typeName}", fileName="${fileName}"`);
           }
         });
       }
+      
+      console.log('📦 Documents grouped by type:', Object.keys(documentsByType));
+      Object.entries(documentsByType).forEach(([type, docs]) => {
+        console.log(`   "${type}": ${docs.length} file(s) - ${docs.map(d => d.name).join(', ')}`);
+      });
       
       return documentsByType;
       
@@ -3902,13 +3919,18 @@
           console.log(`📄 Loading portfolio documents for step "${stepId}"...`);
           const portfolioDocuments = await fetchPortfolioDocuments(contactIdToFetch, config.portfolioChecklistId);
           
+          console.log(`📦 Portfolio documents received:`, Object.keys(portfolioDocuments));
+          
           // Map documents to their field IDs
           if (config.fields) {
             config.fields.forEach(field => {
               if (field.type === 'file-upload' && field.portfolioItemType) {
+                console.log(`   🔍 Looking for field "${field.fieldId}" with portfolioItemType="${field.portfolioItemType}"`);
+                console.log(`   Available types in portfolioDocuments:`, Object.keys(portfolioDocuments));
+                
                 const docs = portfolioDocuments[field.portfolioItemType];
                 if (docs && docs.length > 0) {
-                  console.log(`   📎 Found ${docs.length} document(s) for ${field.portfolioItemType}`);
+                  console.log(`   ✅ Found ${docs.length} document(s) for ${field.portfolioItemType}:`, docs.map(d => d.name));
                   
                   // Save to formData
                   if (!formData[stepId]) {
@@ -3920,7 +3942,8 @@
                   // Update the current files list in the DOM
                   updateCurrentFilesList(field.fieldId, docs);
                 } else {
-                  console.log(`   ⚠️ No documents found for ${field.portfolioItemType}`);
+                  console.warn(`   ❌ No documents found for portfolioItemType="${field.portfolioItemType}"`);
+                  console.warn(`   portfolioDocuments keys:`, Object.keys(portfolioDocuments));
                 }
               }
             });
