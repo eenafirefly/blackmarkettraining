@@ -2935,11 +2935,12 @@
       if (input) {
         if (Array.isArray(value)) {
           // Checkbox group
-          console.log(`     ✅ Found (checkbox group), setting values:`, value);
+          console.log(`     ✅ Found input element (checkbox group), setting values:`, value);
           value.forEach(v => {
             const checkbox = widget.querySelector(`input[name="${fieldId}"][value="${v}"]`);
             if (checkbox) {
               checkbox.checked = true;
+              console.log(`     ✅ Checked checkbox: ${fieldId}[${v}]`);
               
               // For checkbox-with-recognition fields, also enable recognition dropdown
               const recognitionFieldName = `${fieldId}_${v}_recognition`;
@@ -2951,6 +2952,8 @@
                   console.log(`     ✅ Set recognition ID for ${fieldId}[${v}] = "${data[recognitionFieldName]}"`);
                 }
               }
+            } else {
+              console.warn(`     ❌ Checkbox not found: ${fieldId}[${v}]`);
             }
           });
         } else if (input.type === 'radio') {
@@ -3004,8 +3007,17 @@
           // Try to find checkboxes by name (might be comma-separated values from aXcelerate)
           const checkboxes = widget.querySelectorAll(`input[name="${fieldId}"][type="checkbox"]`);
           if (checkboxes.length > 0) {
-            console.log(`     ✅ Found ${checkboxes.length} checkboxes for "${fieldId}"`);
-            const values = typeof value === 'string' ? value.split(',').map(v => v.trim()) : [value];
+            console.log(`     ✅ Found ${checkboxes.length} checkboxes for "${fieldId}"`, 'value type:', typeof value, 'value:', value);
+            // Handle string, array, or single value
+            let values;
+            if (Array.isArray(value)) {
+              values = value; // Already an array like ["410", "511"]
+            } else if (typeof value === 'string') {
+              values = value.split(',').map(v => v.trim()); // "410, 511" -> ["410", "511"]
+            } else {
+              values = [value]; // Single value
+            }
+            console.log(`     📋 Processing checkbox values:`, values);
             values.forEach(v => {
               const checkbox = Array.from(checkboxes).find(cb => cb.value === String(v));
               if (checkbox) {
