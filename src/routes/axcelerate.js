@@ -640,6 +640,13 @@ router.get('/contact/:contactId', async (req, res) => {
     
     const contact = await response.json();
     console.log('✅ Contact fetched:', contact.CONTACTID || contact.contactId);
+    console.log('📧 Email field debug:');
+    console.log('   EMAIL:', contact.EMAIL);
+    console.log('   email:', contact.email);
+    console.log('   EMAILADDRESS:', contact.EMAILADDRESS);
+    console.log('   emailAddress:', contact.emailAddress);
+    console.log('   EmailAddress:', contact.EmailAddress);
+    console.log('   All contact keys:', Object.keys(contact).filter(k => k.toLowerCase().includes('email')));
     
     res.json(contact);
     
