@@ -815,7 +815,18 @@ router.post('/save-step', async (req, res) => {
         
         // VET Related Details - Disability
         if (keyLower === 'disabilities' || keyLower === 'disabilityflag' || keyLower === 'hasdisability') axFieldName = 'DISABILITYFLAG';
-        if (keyLower === 'disabilitytypes') axFieldName = 'DISABILITYTYPES';
+        if (keyLower === 'disabilitytypes') {
+          axFieldName = 'DISABILITYTYPES';
+          // DISABILITYTYPES expects comma-separated string like "11,12,13"
+          if (Array.isArray(value)) {
+            value = value.join(',');
+            console.log(`   🔄 Converted array to comma-separated string: ${value}`);
+          } else if (typeof value === 'string' && value.includes(', ')) {
+            // Remove spaces after commas: "11, 12" → "11,12"
+            value = value.split(',').map(v => v.trim()).join(',');
+            console.log(`   🔄 Cleaned comma-separated string: ${value}`);
+          }
+        }
         
         // VET Related Details - Survey
         if (keyLower === 'surveycontactstatus') axFieldName = 'SURVEYCONTACTSTATUS';

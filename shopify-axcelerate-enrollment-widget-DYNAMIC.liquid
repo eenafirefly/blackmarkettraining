@@ -2535,7 +2535,9 @@
           checked.push(cb.value);
         });
         if (checked.length > 0) {
-          stepData[field.fieldId] = checked.join(', '); // Join for aXcelerate
+          // Keep as array for backend processing (backend will join with commas)
+          stepData[field.fieldId] = checked;
+          console.log(`✅ Captured checkbox ${field.fieldId}:`, checked);
         }
       } else if (field.type !== 'information' && field.type !== 'info_expandable' && field.type !== 'button') {
         const value = formDataObj.get(field.fieldId);
@@ -3246,7 +3248,21 @@
         indigenousstatus: contact.INDIGENOUSSTATUSNAME || contact.INDIGENOUSSTATUSID || contact.INDIGENOUSSTATUS || '',
         employmentstatus: contact.EMPLOYMENTSTATUSNAME || contact.EMPLOYMENTSTATUSID || contact.EMPLOYMENTSTATUS || '',
         disabilityflag: contact.DISABILITYFLAG || '',
-        disabilitytypes: contact.DISABILITYTYPES || '',
+        disabilitytypes: (() => {
+          // Parse DISABILITYTYPES from Axcelerate (format: "11,12" or array)
+          let types = contact.DISABILITYTYPES || '';
+          console.log('♿ Loading Disability Types from Axcelerate:', types, 'type:', typeof types);
+          
+          // Handle if it's already an array
+          if (Array.isArray(types)) {
+            return types;
+          }
+          // Handle comma-separated string: "11,12" -> ["11", "12"]
+          if (typeof types === 'string' && types) {
+            return types.split(',').map(v => v.trim()).filter(Boolean);
+          }
+          return '';
+        })(),
         highestschoollevel: contact.HIGHESTSCHOOLLEVELID || contact.HIGHESTSCHOOLLEVEL || '',
         yearhighestschoolcompleted: contact.HIGHESTSCHOOLLEVELYEAR || '',
         stillenrolledsecondary: contact.ATSCHOOLFLAG !== undefined ? String(contact.ATSCHOOLFLAG) : '',
@@ -3299,7 +3315,6 @@
           
           return result;
         })(),
-        disabilitytypes: contact.DISABILITYTYPES || '',
         studyreason: contact.STUDYREASON || '',
         emergencycontact: contact.EMERGENCYCONTACT || contact.emergencycontact || '',
         emergencycontactrelation: contact.EMERGENCYCONTACTRELATION || contact.emergencycontactrelation || '',
