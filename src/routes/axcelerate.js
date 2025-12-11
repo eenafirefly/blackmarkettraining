@@ -1093,4 +1093,60 @@ router.get('/instance/:instanceId', async (req, res) => {
   }
 });
 
+/**
+ * Get portfolio documents for a contact
+ * GET /api/axcelerate/portfolio/:contactId
+ */
+router.get('/portfolio/:contactId', async (req, res) => {
+  try {
+    const { contactId } = req.params;
+    const { checklistId } = req.query;
+    
+    if (!contactId) {
+      return res.status(400).json({ 
+        error: 'Missing required parameter: contactId' 
+      });
+    }
+    
+    console.log('📄 Fetching portfolio documents for contact:', contactId);
+    if (checklistId) {
+      console.log('   Filtering by checklist ID:', checklistId);
+    }
+    
+    // Fetch portfolio documents from Axcelerate
+    let url = `${process.env.AXCELERATE_API_URL}/contact/portfolio/?contactID=${contactId}`;
+    if (checklistId) {
+      url += `&portfolioChecklistID=${checklistId}`;
+    }
+    
+    const response = await fetch(url, {
+      headers: {
+        'APIToken': process.env.AXCELERATE_API_TOKEN,
+        'WSToken': process.env.AXCELERATE_WS_TOKEN
+      }
+    });
+    
+    if (!response.ok) {
+      console.error('❌ Failed to fetch portfolio:', response.status);
+      const errorText = await response.text();
+      console.error('   Response:', errorText);
+      return res.status(response.status).json({
+        error: 'Failed to fetch portfolio documents from Axcelerate'
+      });
+    }
+    
+    const portfolioData = await response.json();
+    console.log(`✅ Retrieved ${Array.isArray(portfolioData) ? portfolioData.length : 0} portfolio item(s)`);
+    
+    res.json(portfolioData);
+    
+  } catch (error) {
+    console.error('❌ Error fetching portfolio documents:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
+});
+
 export default router;

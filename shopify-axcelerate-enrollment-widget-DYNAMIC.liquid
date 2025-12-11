@@ -2229,33 +2229,33 @@
     const config = stepConfigs[stepId];
     const fieldConfig = config?.fields?.find(f => f.fieldId === fieldId);
     
-    const formData = new FormData();
-    formData.append('contactId', contactId);
-    formData.append('fieldId', fieldId);
-    formData.append('stepId', stepId);
+    const uploadFormData = new FormData();  // Renamed to avoid shadowing global formData
+    uploadFormData.append('contactId', contactId);
+    uploadFormData.append('fieldId', fieldId);
+    uploadFormData.append('stepId', stepId);
     
     // Add portfolio parameters for Axcelerate
     if (fieldConfig) {
       if (fieldConfig.portfolioChecklistId) {
-        formData.append('portfolioChecklistId', fieldConfig.portfolioChecklistId);
+        uploadFormData.append('portfolioChecklistId', fieldConfig.portfolioChecklistId);
         console.log(`   🎫 Portfolio Checklist ID: ${fieldConfig.portfolioChecklistId}`);
       }
       if (fieldConfig.portfolioItemType) {
-        formData.append('portfolioItemType', fieldConfig.portfolioItemType);
+        uploadFormData.append('portfolioItemType', fieldConfig.portfolioItemType);
         console.log(`   📋 Portfolio Item Type: ${fieldConfig.portfolioItemType}`);
       }
     }
     
     // Add all selected files
     Array.from(fileInput.files).forEach((file, index) => {
-      formData.append('files', file);
+      uploadFormData.append('files', file);
       console.log(`   📄 File ${index + 1}: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
     });
     
     try {
       const response = await fetch(`${RENDER_APP_URL}/api/enrollment/upload-documents`, {
         method: 'POST',
-        body: formData
+        body: uploadFormData
       });
       
       if (!response.ok) {
@@ -3457,6 +3457,53 @@
     }
   }
   
+  async function fetchPortfolioDocuments(contactIdToFetch, portfolioChecklistId) {
+    try {
+      console.log('📄 Fetching portfolio documents for contact:', contactIdToFetch, 'checklist:', portfolioChecklistId);
+      
+      // Fetch portfolio documents from backend (which calls Axcelerate)
+      const response = await fetch(`${RENDER_APP_URL}/api/axcelerate/portfolio/${contactIdToFetch}?checklistId=${portfolioChecklistId}`);
+      
+      if (!response.ok) {
+        console.log('⚠️ Failed to fetch portfolio documents:', response.status);
+        return {};
+      }
+      
+      const portfolioData = await response.json();
+      console.log('📋 Portfolio data from Axcelerate:', portfolioData);
+      
+      // Group documents by portfolio type
+      const documentsByType = {};
+      
+      if (portfolioData && Array.isArray(portfolioData)) {
+        portfolioData.forEach(item => {
+          const typeName = item.PORTFOLIOTYPENAME || item.portfolioTypeName || '';
+          const fileName = item.FILENAME || item.fileName || item.PORTFOLIONAME || '';
+          const portfolioId = item.PORTFOLIOID || item.portfolioID || '';
+          
+          if (typeName && fileName) {
+            if (!documentsByType[typeName]) {
+              documentsByType[typeName] = [];
+            }
+            documentsByType[typeName].push({
+              id: portfolioId,
+              name: fileName,
+              portfolioID: portfolioId,
+              uploadedAt: item.DATECREATED || item.dateCreated || new Date().toISOString()
+            });
+            console.log(`   📎 Found ${typeName}: ${fileName}`);
+          }
+        });
+      }
+      
+      return documentsByType;
+      
+    } catch (error) {
+      console.error('❌ Error fetching portfolio documents:', error);
+      return {};
+    }
+  }
+  
   async function fetchSavedFormData(contactIdToFetch) {
     try {
       console.log('📊 Fetching ALL saved form data for contact:', contactIdToFetch);
@@ -3816,6 +3863,45 @@
       
       console.log('✅ Finished loading saved form data from aXcelerate');
       console.log('📦 Total steps populated:', Object.keys(formData).length);
+      
+      // Load portfolio documents for document-upload steps
+      for (const [stepId, config] of Object.entries(stepConfigs)) {
+        if (config.stepType === 'document-upload' && config.portfolioChecklistId) {
+          console.log(`📄 Loading portfolio documents for step "${stepId}"...`);
+          const portfolioDocuments = await fetchPortfolioDocuments(contactIdToFetch, config.portfolioChecklistId);
+          
+          // Map documents to their field IDs
+          if (config.fields) {
+            config.fields.forEach(field => {
+              if (field.type === 'file-upload' && field.portfolioItemType) {
+                const docs = portfolioDocuments[field.portfolioItemType];
+                if (docs && docs.length > 0) {
+                  console.log(`   📎 Found ${docs.length} document(s) for ${field.portfolioItemType}`);
+                  
+                  // Save to formData
+                  if (!formData[stepId]) {
+                    formData[stepId] = {};
+                  }
+                  formData[stepId][field.fieldId] = docs;
+                  sessionStorage.setItem(`ax_form_${stepId}`, JSON.stringify(formData[stepId]));
+                  
+                  // Update the current files list in the DOM
+                  updateCurrentFilesList(field.fieldId, docs);
+                } else {
+                  console.log(`   ⚠️ No documents found for ${field.portfolioItemType}`);
+                }
+              }
+            });
+          }
+          
+          // Validate and mark step as completed if all documents uploaded
+          const isValid = validateStepRequiredFields(stepId);
+          if (isValid) {
+            console.log(`✅ Document step "${stepId}" passes validation - marking as completed`);
+            markStepCompleted(stepId);
+          }
+        }
+      }
       
     } catch (error) {
       console.error('❌ Error fetching saved form data:', error);
