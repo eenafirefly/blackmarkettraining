@@ -1010,6 +1010,46 @@
   
   console.log('Widget initialized:', { widgetId, courseId, courseType, instanceId, configId });
   
+  // Country name to SACC code mapping
+  const COUNTRY_NAME_TO_SACC = {
+    'Afghanistan': '7201', 'Albania': '3201', 'Algeria': '4101', 'Argentina': '8201',
+    'Australia': '1101', 'Austria': '2301', 'Bangladesh': '7101', 'Belgium': '2302',
+    'Brazil': '8203', 'Bulgaria': '3203', 'Canada': '8102', 'Chile': '8204',
+    'China': '6101', 'Colombia': '8205', 'Croatia': '3204', 'Cyprus': '3205',
+    'Czech Republic': '3302', 'Denmark': '2401', 'Egypt': '4102', 'Estonia': '3303',
+    'Fiji': '1502', 'Finland': '2403', 'France': '2303', 'Germany': '2304',
+    'Greece': '3207', 'Hong Kong': '6102', 'Hungary': '3304', 'Iceland': '2405',
+    'India': '7103', 'Indonesia': '5202', 'Iran': '4203', 'Iraq': '4204',
+    'Ireland': '2201', 'Israel': '4205', 'Italy': '3104', 'Japan': '6201',
+    'Jordan': '4206', 'Kenya': '9208', 'Korea, South': '6203', 'Lebanon': '4208',
+    'Malaysia': '5203', 'Mexico': '8306', 'Nepal': '7105', 'Netherlands': '2308',
+    'New Zealand': '1201', 'Nigeria': '9124', 'Norway': '2406', 'Pakistan': '7106',
+    'Philippines': '5204', 'Poland': '3307', 'Portugal': '3106', 'Romania': '3211',
+    'Russia': '3308', 'Russian Federation': '3308', 'Saudi Arabia': '4213',
+    'Singapore': '5205', 'South Africa': '9225', 'Spain': '3108', 'Sri Lanka': '7107',
+    'Sweden': '2407', 'Switzerland': '2311', 'Syria': '4214', 'Taiwan': '6105',
+    'Thailand': '5104', 'Turkey': '4215', 'Ukraine': '3312',
+    'United Arab Emirates': '4216', 'United Kingdom': '2101', 'England': '2102',
+    'Scotland': '2105', 'Wales': '2106', 'Northern Ireland': '2104',
+    'United States': '8104', 'USA': '8104', 'United States of America': '8104',
+    'Vietnam': '6302'
+  };
+  
+  // Convert country name to SACC code (or return as-is if already a code)
+  function convertCountryNameToSACC(value) {
+    if (!value) return value;
+    // If it's already a 4-digit code, return it
+    if (/^\d{4}$/.test(value)) return value;
+    // Look up the SACC code for this country name
+    const saccCode = COUNTRY_NAME_TO_SACC[value];
+    if (saccCode) {
+      console.log(`🗺️  Converted country name to SACC: "${value}" → "${saccCode}"`);
+      return saccCode;
+    }
+    console.warn(`⚠️  No SACC mapping for country: "${value}"`);
+    return value;
+  }
+  
   // Course data for enrollment summary (will be fetched dynamically)
   let courseData = null;
   
@@ -3130,19 +3170,38 @@
         postalstate: contact.SSTATE || contact.postalstate || '',
         postalcountry: contact.SCOUNTRYNAME || contact.SCOUNTRY || contact.postalcountry || '',
         countryofbirth: (() => {
-          const value = contact.COUNTRYOFBIRTHID || contact.COUNTRYOFBIRTHNAME || contact.COUNTRYOFBIRTH || '';
-          console.log('🌍 Loading Country of Birth:', value);
+          let value = contact.COUNTRYOFBIRTHID || contact.COUNTRYOFBIRTHNAME || contact.COUNTRYOFBIRTH || '';
+          console.log('🌍 Loading Country of Birth (raw):', value);
+          // Convert country name to SACC code if needed
+          if (value && typeof convertCountryNameToSACC === 'function') {
+            value = convertCountryNameToSACC(value);
+            console.log('🌍 Country of Birth (after conversion):', value);
+          }
           return value;
         })(),
         birthplace: contact.CITYOFBIRTH || contact.BIRTHPLACE || '',
         citizenshipstatus: contact.CITIZENSTATUSID || contact.CITIZENSTATUSNAME || contact.CITIZENSHIPSTATUS || '',
         countryofcitizenship: (() => {
-          const value = contact.COUNTRYOFCITIZENID || contact.COUNTRYOFCITIZENNAME || contact.COUNTRYOFCITIZENSHIP || '';
-          console.log('🌍 Loading Country of Citizenship:', value, 'from contact:', {
+          // Check all possible variations (Axcelerate may return different field names)
+          let value = contact.COUNTRYOFCITIZENID || 
+                       contact.CountryofCitizenID || 
+                       contact.COUNTRYOFCITIZENNAME || 
+                       contact.CountryofCitizenName ||
+                       contact.COUNTRYOFCITIZENSHIP || '';
+          console.log('🌍 Loading Country of Citizenship (raw):', value, 'from contact:', {
             COUNTRYOFCITIZENID: contact.COUNTRYOFCITIZENID,
+            CountryofCitizenID: contact.CountryofCitizenID,
             COUNTRYOFCITIZENNAME: contact.COUNTRYOFCITIZENNAME,
+            CountryofCitizenName: contact.CountryofCitizenName,
             COUNTRYOFCITIZENSHIP: contact.COUNTRYOFCITIZENSHIP
           });
+          
+          // Convert country name to SACC code if needed
+          if (value && typeof convertCountryNameToSACC === 'function') {
+            value = convertCountryNameToSACC(value);
+            console.log('🌍 Country of Citizenship (after conversion):', value);
+          }
+          
           return value;
         })(),
         languagespoken: contact.MAINLANGUAGEID || contact.MAINLANGUAGENAME || contact.LANGUAGESPOKEN || '',
@@ -3167,12 +3226,43 @@
         highestschoollevel: contact.HIGHESTSCHOOLLEVELID || contact.HIGHESTSCHOOLLEVEL || '',
         yearhighestschoolcompleted: contact.HIGHESTSCHOOLLEVELYEAR || '',
         stillenrolledsecondary: contact.ATSCHOOLFLAG !== undefined ? String(contact.ATSCHOOLFLAG) : '',
-        prioreducation: contact.PRIOREDUCATION || '',
         prioreducationstatus: (() => {
           // Convert boolean to string for the select field
           if (contact.PRIOREDUCATIONSTATUS === true || contact.PRIOREDUCATIONSTATUS === 'true') return 'true';
           if (contact.PRIOREDUCATIONSTATUS === false || contact.PRIOREDUCATIONSTATUS === 'false') return 'false';
           return '';
+        })(),
+        // Parse PRIOREDUCATIONIDS (format: "410A,511E") into codes and recognition letters
+        ...(() => {
+          const result = {};
+          const priorEdIds = contact.PRIOREDUCATIONIDS || contact.PRIOREDUCATION || '';
+          console.log('📚 Loading Prior Education from Axcelerate:', priorEdIds);
+          
+          if (priorEdIds) {
+            // Split by comma: "410A,511E" → ["410A", "511E"]
+            const items = priorEdIds.split(',').map(s => s.trim()).filter(Boolean);
+            const codes = [];
+            
+            items.forEach(item => {
+              // Each item is like "410A" - code (3 digits) + recognition letter
+              const match = item.match(/^(\d{3})([AEI]?)$/);
+              if (match) {
+                const code = match[1]; // "410"
+                const recognition = match[2] || ''; // "A"
+                codes.push(code);
+                result[`prioreducation_${code}_recognition`] = recognition;
+                console.log(`  - Parsed: code=${code}, recognition=${recognition}`);
+              } else {
+                console.warn(`  - Could not parse prior education item: ${item}`);
+              }
+            });
+            
+            result.prioreducation = codes;
+          } else {
+            result.prioreducation = '';
+          }
+          
+          return result;
         })(),
         disabilitytypes: contact.DISABILITYTYPES || '',
         studyreason: contact.STUDYREASON || '',

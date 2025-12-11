@@ -624,13 +624,25 @@ router.post('/save-step', async (req, res) => {
     // Special handling for prior education with recognition
     // If prioreducation exists, combine it with recognition fields
     if (stepData.prioreducation && Array.isArray(stepData.prioreducation)) {
+      console.log('📚 Processing Prior Education:', stepData.prioreducation);
+      console.log('📚 All stepData keys:', Object.keys(stepData));
+      
       const priorEdWithRecognition = stepData.prioreducation.map(code => {
         const recognitionField = `prioreducation_${code}_recognition`;
         const recognition = stepData[recognitionField] || '';
+        console.log(`  - ${code} → recognition field: ${recognitionField} = "${recognition}"`);
         return `${code}${recognition}`; // e.g., "008A" or "410E"
       });
       stepData.prioreducationids = priorEdWithRecognition.join(','); // e.g., "008A,410E"
       console.log('✅ Built PRIOREDUCATIONIDS:', stepData.prioreducationids);
+      
+      // Remove individual recognition fields from stepData so they don't get treated as custom fields
+      Object.keys(stepData).forEach(key => {
+        if (key.match(/^prioreducation_\d+_recognition$/)) {
+          delete stepData[key];
+          console.log(`  ✂️ Removed recognition field: ${key}`);
+        }
+      });
     }
     
     // Personal detail fields that update the contact record directly (not custom fields)
