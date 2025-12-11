@@ -623,6 +623,19 @@ router.post('/save-step', async (req, res) => {
     
     // Special handling for prior education with recognition
     // If prioreducation exists, combine it with recognition fields
+    console.log('📚 Checking prioreducation field:', {
+      exists: !!stepData.prioreducation,
+      value: stepData.prioreducation,
+      type: typeof stepData.prioreducation,
+      isArray: Array.isArray(stepData.prioreducation)
+    });
+    
+    // Convert string to array if needed (e.g., "420, 511" -> ["420", "511"])
+    if (stepData.prioreducation && typeof stepData.prioreducation === 'string') {
+      stepData.prioreducation = stepData.prioreducation.split(',').map(s => s.trim()).filter(Boolean);
+      console.log('📚 Converted string to array:', stepData.prioreducation);
+    }
+    
     if (stepData.prioreducation && Array.isArray(stepData.prioreducation)) {
       console.log('📚 Processing Prior Education:', stepData.prioreducation);
       console.log('📚 All stepData keys:', Object.keys(stepData));

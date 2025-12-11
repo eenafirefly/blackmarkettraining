@@ -2514,13 +2514,19 @@
                 recognitions[opt.recognitionField] = recognitionSelect.value;
                 // Store recognition ID separately for each qualification
                 stepData[opt.recognitionField] = recognitionSelect.value;
+                console.log(`✅ Captured recognition: ${opt.recognitionField} = "${recognitionSelect.value}"`);
+              } else {
+                console.log(`⚠️ No recognition value for ${opt.recognitionField}`);
               }
             }
           }
         });
         
         if (checked.length > 0) {
-          stepData[field.fieldId] = checked.join(', '); // Join for aXcelerate
+          // IMPORTANT: Keep as ARRAY for backend processing, not string!
+          stepData[field.fieldId] = checked;
+          console.log(`✅ Captured ${field.fieldId}:`, checked);
+          console.log(`✅ With recognitions:`, Object.keys(recognitions).map(k => `${k}=${stepData[k]}`));
         }
       } else if (field.type === 'checkbox') {
         // Collect all checked values
