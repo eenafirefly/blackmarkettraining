@@ -711,8 +711,9 @@ router.post('/save-step', async (req, res) => {
         
         // VET Related Details - Nationality/Citizenship
         if (keyLower === 'countryofbirth') {
-          axFieldName = 'COUNTRYOFBIRTHNAME';
-          value = getCountryName(value); // Convert country code to full name
+          axFieldName = 'COUNTRYOFBIRTHID';
+          // Keep the 2-letter ISO country code as-is for Axcelerate
+          // Axcelerate will handle the conversion to display name
         }
         if (keyLower === 'birthplace' || keyLower === 'cityofbirth') axFieldName = 'CITYOFBIRTH';
         if (keyLower === 'citizenshipstatus') axFieldName = 'CITIZENSTATUSID'; // This uses numeric IDs (1-8)

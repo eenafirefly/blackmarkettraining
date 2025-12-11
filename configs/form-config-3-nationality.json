@@ -18,7 +18,7 @@
       "required": false,
       "dataField": true,
       "syncToCustomField": false,
-      "mapsToContactField": "COUNTRYOFBIRTHNAME",
+      "mapsToContactField": "COUNTRYOFBIRTHID",
       "options": [
         { "display": "Afghanistan", "value": "AF" },
         { "display": "Albania", "value": "AL" },
