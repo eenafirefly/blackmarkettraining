@@ -1984,11 +1984,19 @@
     
     try {
       console.log('📚 Fetching course instance data for:', instanceId);
+      console.log('   courseType:', courseType);
       
-      const response = await fetch(`${RENDER_APP_URL}/api/axcelerate/instance/${instanceId}`);
+      // Use courseType if available, default to 'w'
+      const type = courseType || 'w';
+      const url = `${RENDER_APP_URL}/api/axcelerate/instance/${instanceId}/${type}`;
+      console.log('   Fetching from URL:', url);
+      
+      const response = await fetch(url);
       
       if (!response.ok) {
-        throw new Error('Failed to fetch course instance');
+        const errorText = await response.text();
+        console.error('   Response not OK:', response.status, errorText);
+        throw new Error(`Failed to fetch course instance: ${response.status}`);
       }
       
       const data = await response.json();
@@ -2005,6 +2013,7 @@
       };
     } catch (error) {
       console.error('❌ Failed to fetch course instance data:', error);
+      console.error('   Error details:', error.message);
       return null;
     }
   }
@@ -2021,14 +2030,18 @@
     }
     
     try {
-      console.log('🔍 Checking enrollment status:', { contactId, instanceId, showModal });
+      console.log('🔍 Checking enrollment status:', { contactId, instanceId, courseType, showModal });
       
-      const response = await fetch(
-        `${RENDER_APP_URL}/api/axcelerate/enrollment-check/${contactId}/${instanceId}`
-      );
+      // Use courseType if available, default to 'w'
+      const type = courseType || 'w';
+      const url = `${RENDER_APP_URL}/api/axcelerate/enrollment-check/${contactId}/${instanceId}/${type}`;
+      console.log('   Checking enrollment at URL:', url);
+      
+      const response = await fetch(url);
       
       if (!response.ok) {
-        console.error('❌ Enrollment check failed with status:', response.status);
+        const errorText = await response.text();
+        console.error('❌ Enrollment check failed with status:', response.status, errorText);
         return false; // Allow to proceed if check fails
       }
       
@@ -2051,6 +2064,7 @@
       
     } catch (error) {
       console.error('❌ Error checking enrollment:', error);
+      console.error('   Error details:', error.message);
       return false; // Allow to proceed if check fails
     }
   }

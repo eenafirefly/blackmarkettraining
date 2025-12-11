@@ -1033,19 +1033,26 @@ router.get('/form-config/:configId/:step?', async (req, res) => {
 
 /**
  * Check if contact is already enrolled in a course instance
- * GET /api/axcelerate/enrollment-check/:contactId/:instanceId
+ * GET /api/axcelerate/enrollment-check/:contactId/:instanceId/:courseType
  * 
  * Returns enrollment status to prevent duplicate enrollments
  */
-router.get('/enrollment-check/:contactId/:instanceId', async (req, res) => {
+router.get('/enrollment-check/:contactId/:instanceId/:courseType?', async (req, res) => {
   try {
-    const { contactId, instanceId } = req.params;
+    const { contactId, instanceId, courseType = 'w' } = req.params;
     
-    console.log('🔍 Checking for existing enrollment:', { contactId, instanceId });
+    console.log('🔍 Checking for existing enrollment:', { contactId, instanceId, courseType });
     
-    // Fetch all enrollments for this contact
+    // Build query parameters for Axcelerate API
+    const params = new URLSearchParams({
+      instanceID: instanceId,
+      type: courseType,
+      contactID: contactId
+    });
+    
+    // Check enrollments using correct Axcelerate endpoint
     const response = await fetch(
-      `${process.env.AXCELERATE_API_URL}/enrolment/contact/${contactId}`,
+      `${process.env.AXCELERATE_API_URL}/course/enrolments?${params}`,
       {
         headers: {
           'APIToken': process.env.AXCELERATE_API_TOKEN,
@@ -1054,36 +1061,37 @@ router.get('/enrollment-check/:contactId/:instanceId', async (req, res) => {
       }
     );
     
+    console.log('📥 Axcelerate enrollment check response status:', response.status);
+    
     if (!response.ok) {
       const errorText = await response.text();
       console.error('❌ aXcelerate error:', errorText);
       throw new Error(`aXcelerate API returned ${response.status}: ${errorText}`);
     }
     
-    const enrollments = await response.json();
-    console.log(`📋 Found ${enrollments.length} total enrollments for contact ${contactId}`);
+    const result = await response.json();
+    console.log('📋 Enrollment check result from Axcelerate:', result);
     
     // Check if any enrollment matches this instance
     let alreadyEnrolled = false;
     let existingEnrollment = null;
     
-    if (Array.isArray(enrollments)) {
-      for (const enrolment of enrollments) {
-        if (enrolment.INSTANCEID == instanceId) {
-          const status = (enrolment.STATUS || '').toLowerCase();
-          console.log(`   Found matching enrollment: Status="${status}"`);
-          
-          // Consider enrolled if status is not "tentative"
-          if (status !== 'tentative') {
-            alreadyEnrolled = true;
-            existingEnrollment = {
-              instanceId: enrolment.INSTANCEID,
-              status: enrolment.STATUS,
-              courseName: enrolment.COURSENAME || 'Unknown Course'
-            };
-            break;
-          }
-        }
+    // Result can be array or single object
+    const enrollments = Array.isArray(result) ? result : (result ? [result] : []);
+    
+    if (enrollments.length > 0 && enrollments[0].CONTACTID) {
+      const enrolment = enrollments[0];
+      const status = (enrolment.STATUS || '').toLowerCase();
+      console.log(`   Found enrollment: Status="${status}", ContactID="${enrolment.CONTACTID}"`);
+      
+      // Consider enrolled if status is not "tentative"
+      if (status !== 'tentative') {
+        alreadyEnrolled = true;
+        existingEnrollment = {
+          instanceId: enrolment.INSTANCEID,
+          status: enrolment.STATUS,
+          courseName: enrolment.COURSENAME || 'Unknown Course'
+        };
       }
     }
     
@@ -1105,28 +1113,33 @@ router.get('/enrollment-check/:contactId/:instanceId', async (req, res) => {
 
 /**
  * Get course instance details
- * GET /api/axcelerate/instance/:instanceId
+ * GET /api/axcelerate/instance/:instanceId/:courseType?
  * 
  * Fetches course instance information from aXcelerate for enrollment summary
  */
-router.get('/instance/:instanceId', async (req, res) => {
+router.get('/instance/:instanceId/:courseType?', async (req, res) => {
   try {
-    const { instanceId } = req.params;
+    const { instanceId, courseType = 'w' } = req.params;
     
-    console.log('📚 Fetching course instance details:', instanceId);
+    console.log('📚 Fetching course instance details:', { instanceId, courseType });
     console.log('   API URL:', process.env.AXCELERATE_API_URL);
-    console.log('   Full URL:', `${process.env.AXCELERATE_API_URL}/course/instance/${instanceId}`);
     
-    // Fetch instance details from aXcelerate
-    const response = await fetch(
-      `${process.env.AXCELERATE_API_URL}/course/instance/${instanceId}`,
-      {
-        headers: {
-          'APIToken': process.env.AXCELERATE_API_TOKEN,
-          'WSToken': process.env.AXCELERATE_WS_TOKEN
-        }
+    // Build query parameters for Axcelerate API
+    const params = new URLSearchParams({
+      instanceID: instanceId,
+      type: courseType
+    });
+    
+    const fullUrl = `${process.env.AXCELERATE_API_URL}/course/instance/detail?${params}`;
+    console.log('   Full URL:', fullUrl);
+    
+    // Fetch instance details from aXcelerate using correct endpoint
+    const response = await fetch(fullUrl, {
+      headers: {
+        'APIToken': process.env.AXCELERATE_API_TOKEN,
+        'WSToken': process.env.AXCELERATE_WS_TOKEN
       }
-    );
+    });
     
     console.log('📥 aXcelerate response status:', response.status);
     
