@@ -1304,8 +1304,44 @@ router.post('/upload-documents', upload.array('files', 10), async (req, res) => 
     console.log(`   Contact ID: ${contactId}`);
     console.log(`   Field ID: ${fieldId}`);
     console.log(`   Portfolio Checklist ID: ${portfolioChecklistId}`);
-    console.log(`   Portfolio Item Type: ${portfolioItemType}`);
+    console.log(`   Portfolio Item Type Name: ${portfolioItemType}`);
     console.log(`   Files to upload: ${req.files.length}`);
+    
+    // Step 0: Fetch the checklist to get portfolio type IDs
+    console.log('\n🔍 Fetching portfolio checklist to get type IDs...');
+    const checklistResponse = await fetch(
+      `${process.env.AXCELERATE_API_URL}/portfolio/checklist/?portfolioChecklistID=${portfolioChecklistId}`,
+      {
+        method: 'GET',
+        headers: {
+          'APIToken': process.env.AXCELERATE_API_TOKEN,
+          'WSToken': process.env.AXCELERATE_WS_TOKEN
+        }
+      }
+    );
+    
+    if (!checklistResponse.ok) {
+      const errorText = await checklistResponse.text();
+      console.error('   ❌ Failed to fetch checklist:', checklistResponse.status, errorText);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch portfolio checklist'
+      });
+    }
+    
+    const checklistData = await checklistResponse.json();
+    console.log('   ✅ Checklist loaded');
+    console.log('   Available types:', checklistData.TYPES?.map(t => `${t.NAME} (ID: ${t.PORTFOLIOTYPEID})`).join(', ') || 'None');
+    
+    // Create a map of item names to their IDs
+    const typeMap = {};
+    if (checklistData.TYPES && Array.isArray(checklistData.TYPES)) {
+      checklistData.TYPES.forEach(type => {
+        typeMap[type.NAME] = type.PORTFOLIOTYPEID;
+        typeMap[type.PORTFOLIOTYPENAME] = type.PORTFOLIOTYPEID;
+      });
+    }
+    console.log('   Type mapping:', JSON.stringify(typeMap, null, 2));
     
     const uploadedFiles = [];
     
@@ -1314,16 +1350,21 @@ router.post('/upload-documents', upload.array('files', 10), async (req, res) => 
       try {
         console.log(`\n📄 Processing file: ${file.originalname}`);
         
-        // Step 1: Create minimal portfolio record to get certificationID
+        // Get the numeric portfolio type ID
+        const portfolioTypeID = typeMap[portfolioItemType];
+        if (!portfolioTypeID) {
+          console.error(`   ❌ Portfolio type "${portfolioItemType}" not found in checklist`);
+          console.error(`   Available types: ${Object.keys(typeMap).join(', ')}`);
+          throw new Error(`Portfolio type "${portfolioItemType}" not found in checklist`);
+        }
+        console.log(`   ✅ Found portfolio type ID: ${portfolioTypeID}`);
+        
+        // Step 1: Create portfolio record with correct portfolioTypeID
         console.log('   ⏳ Creating portfolio record...');
         
-        // Portfolio creation requires specific fields - match the plugin approach
         const portfolioParams = new URLSearchParams({
           contactID: contactId,
-          checklistID: portfolioChecklistId, // Use checklistID, not portfolioTypeID
-          TYPE: portfolioItemType || 'Document', // Item type (Photo ID, etc.)
-          NAME: file.originalname,
-          DETAILS: `Uploaded via enrollment form`
+          portfolioTypeID: portfolioTypeID // Numeric ID from checklist
         });
         
         console.log('   Portfolio params:', Object.fromEntries(portfolioParams));
