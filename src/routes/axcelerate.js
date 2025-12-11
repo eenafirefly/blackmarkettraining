@@ -1065,18 +1065,28 @@ router.get('/instance/:instanceId', async (req, res) => {
     }
     
     const instance = await response.json();
-    console.log('✅ Course instance fetched:', instance);
+    console.log('✅ Course instance fetched');
+    console.log('   Available fields:', Object.keys(instance));
+    console.log('   COURSENAME:', instance.COURSENAME);
+    console.log('   STARTDATE:', instance.STARTDATE);
+    console.log('   LOCATION:', instance.LOCATION);
+    console.log('   FEE:', instance.FEE);
+    console.log('   DESCRIPTION:', instance.DESCRIPTION);
+    console.log('   COURSEOUTLINE:', instance.COURSEOUTLINE);
     
     // Format the response
     const formattedData = {
       courseName: instance.COURSENAME || instance.courseName || instance.name || 'Course',
+      courseCode: instance.COURSECODE || instance.courseCode || '',
+      description: instance.DESCRIPTION || instance.description || instance.COURSEOUTLINE || instance.courseOutline || '',
       startDate: instance.STARTDATE || instance.startDate || instance.start || '',
       endDate: instance.ENDDATE || instance.endDate || instance.end || '',
       location: instance.LOCATION || instance.location || instance.venue || instance.VENUENAME || '',
       fee: instance.FEE || instance.fee || instance.price || instance.COURSEFEE || '',
-      status: instance.STATUS || instance.status || '',
-      courseCode: instance.COURSECODE || instance.courseCode || ''
+      status: instance.STATUS || instance.status || ''
     };
+    
+    console.log('📦 Formatted data:', formattedData);
     
     console.log('📤 Sending formatted data:', formattedData);
     res.json(formattedData);

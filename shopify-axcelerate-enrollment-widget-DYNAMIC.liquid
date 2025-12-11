@@ -1994,16 +1994,31 @@
     // Show loading state
     summaryContainer.innerHTML = '<div class="ax-loading">Loading enrollment details...</div>';
     
+    console.log('📊 Creating enrollment summary...');
+    console.log('   Current contactDetails:', contactDetails);
+    console.log('   Current courseData:', courseData);
+    
     // Fetch course data if not already loaded
     if (!courseData) {
+      console.log('   Fetching course instance data...');
       courseData = await fetchCourseInstanceData();
+      console.log('   Course data fetched:', courseData);
     }
     
     // Get course and contact information
-    const courseName = courseData?.courseName || 'Course';
+    const courseName = courseData?.courseName || courseName || 'Course';
+    const courseDescription = courseData?.description || courseData?.courseDescription || '';
+    const courseCode = courseData?.courseCode || '';
+    
     const studentName = contactDetails.givenName && contactDetails.surname 
       ? `${contactDetails.givenName} ${contactDetails.surname}`
       : 'Student';
+    
+    console.log('   Display values:', {
+      courseName,
+      studentName,
+      courseCode
+    });
     
     // Format date nicely
     let instanceDate = '';
@@ -2015,6 +2030,14 @@
           month: 'long', 
           year: 'numeric' 
         });
+        if (courseData?.endDate) {
+          const endDate = new Date(courseData.endDate);
+          instanceDate += ' - ' + endDate.toLocaleDateString('en-AU', { 
+            day: 'numeric', 
+            month: 'long', 
+            year: 'numeric' 
+          });
+        }
       } catch (e) {
         instanceDate = courseData.startDate;
       }
@@ -2023,14 +2046,36 @@
     }
     
     const location = courseData?.location || 'To be confirmed';
-    const fee = courseData?.fee || '$0.00';
+    const fee = courseData?.fee ? `$${courseData.fee}` : '$0.00';
+    
+    // Clear loading and build summary
+    summaryContainer.innerHTML = '';
     
     // Course Outline Section
     const courseOutlineSection = document.createElement('div');
     courseOutlineSection.className = 'ax-summary-section';
-    courseOutlineSection.innerHTML = `
-      <h3 class="ax-summary-section-title">Course Outline</h3>
-    `;
+    
+    let outlineHTML = '<h3 class="ax-summary-section-title">Course Outline</h3>';
+    
+    if (courseCode) {
+      outlineHTML += `<div class="ax-summary-row">
+        <div class="ax-summary-label">Course Code:</div>
+        <div class="ax-summary-value">${courseCode}</div>
+      </div>`;
+    }
+    
+    if (courseDescription) {
+      outlineHTML += `<div class="ax-summary-row">
+        <div class="ax-summary-label">Description:</div>
+        <div class="ax-summary-value">${courseDescription}</div>
+      </div>`;
+    }
+    
+    if (!courseCode && !courseDescription) {
+      outlineHTML += '<p class="ax-summary-placeholder">Course outline will be provided</p>';
+    }
+    
+    courseOutlineSection.innerHTML = outlineHTML;
     
     // Enrollment Details Section
     const enrollmentSection = document.createElement('div');
@@ -2069,6 +2114,8 @@
     summaryContainer.appendChild(courseOutlineSection);
     summaryContainer.appendChild(enrollmentSection);
     summaryContainer.appendChild(feesSection);
+    
+    console.log('✅ Enrollment summary created');
     
     return summaryContainer;
   }
