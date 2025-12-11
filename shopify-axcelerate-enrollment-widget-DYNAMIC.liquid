@@ -2971,9 +2971,12 @@
   }
   
   function populateFormData(stepId, data) {
+    // Track function calls to detect multiple invocations
+    const callStack = new Error().stack;
     console.log(`📝 Populating form data for step "${stepId}":`, data);
     console.log(`   Widget ID: ${widgetId}`);
     console.log(`   Fields to populate: ${Object.keys(data).length}`);
+    console.log(`   📞 Called from:`, callStack.split('\n')[2]); // Show caller
     
     // Special debug for email field
     if (stepId === 'contact' && data.email) {
@@ -2983,9 +2986,28 @@
       const emailInput = document.getElementById(`ax-email-${widgetId}`);
       console.log(`   Email input found:`, emailInput ? 'YES' : 'NO');
       if (emailInput) {
-        console.log(`   Current input value: "${emailInput.value}"`);
+        console.log(`   Current input value BEFORE: "${emailInput.value}"`);
         console.log(`   Input type: ${emailInput.type}`);
         console.log(`   Input name: ${emailInput.name}`);
+        
+        // Add event listeners to detect what's clearing it
+        if (!emailInput.hasAttribute('data-watcher-added')) {
+          emailInput.setAttribute('data-watcher-added', 'true');
+          
+          emailInput.addEventListener('input', (e) => {
+            if (!e.target.value) {
+              console.warn(`⚠️ Email cleared via input event`);
+            }
+          });
+          
+          emailInput.addEventListener('change', (e) => {
+            if (!e.target.value) {
+              console.warn(`⚠️ Email cleared via change event`);
+            }
+          });
+          
+          console.log(`   🔒 Added email event watchers`);
+        }
         
         // Add watcher to detect if value gets cleared
         setTimeout(() => {
@@ -3001,6 +3023,13 @@
             console.error(`   ❌ EMAIL STILL CLEARED! Original: "${data.email}", Current: "${emailInput.value}"`);
           }
         }, 2000);
+        
+        setTimeout(() => {
+          console.log(`   📧 Email value after 5000ms: "${emailInput.value}"`);
+          if (!emailInput.value && data.email) {
+            console.error(`   ❌ EMAIL CLEARED AFTER 5s! Original: "${data.email}", Current: "${emailInput.value}"`);
+          }
+        }, 5000);
       }
     }
     
