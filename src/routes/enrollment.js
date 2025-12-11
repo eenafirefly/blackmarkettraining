@@ -1401,7 +1401,8 @@ router.post('/upload-documents', upload.array('files', 10), async (req, res) => 
           fileName: file.originalname,
           contactID: contactId,
           certificationID: certificationID,
-          contentType: file.mimetype
+          contentType: file.mimetype,
+          dir: 'portfolio'
         });
         
         const presignedResponse = await fetch(
@@ -1417,7 +1418,8 @@ router.post('/upload-documents', upload.array('files', 10), async (req, res) => 
               fileName: file.originalname,
               contactID: contactId,
               certificationID: certificationID,
-              contentType: file.mimetype
+              contentType: file.mimetype,
+              dir: 'portfolio'  // Required for portfolio file uploads
             })
           }
         );
