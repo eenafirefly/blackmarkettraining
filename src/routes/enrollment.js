@@ -330,16 +330,23 @@ router.post('/create', async (req, res) => {
           console.log('💾 Saving Declaration to contact notes...');
           console.log('Note content:', noteText);
           
+          const noteParams = new URLSearchParams({
+            contactID: enrolmentContactId,
+            contactNote: noteText,
+            noteCodeID: 88,  // System note (same as WordPress plugin)
+            noteTypeID: 88
+          });
+          
           const noteResponse = await fetch(
-            `${process.env.AXCELERATE_API_URL}/contact/${enrolmentContactId}/note`,
+            `${process.env.AXCELERATE_API_URL}/contact/note`,
             {
-              method: 'PUT',
+              method: 'POST',
               headers: {
                 'APIToken': process.env.AXCELERATE_API_TOKEN,
                 'WSToken': process.env.AXCELERATE_WS_TOKEN,
                 'Content-Type': 'application/x-www-form-urlencoded'
               },
-              body: `note=${encodeURIComponent(noteText)}`
+              body: noteParams.toString()
             }
           );
           

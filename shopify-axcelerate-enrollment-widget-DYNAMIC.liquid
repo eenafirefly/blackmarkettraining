@@ -5386,9 +5386,14 @@
     
     console.log('✅ Enrollment completed successfully:', result);
     
-    // Find the declaration step
-    const declarationStep = document.querySelector('[data-step="declaration"]');
-    if (!declarationStep) return;
+    // Find the declaration step using the correct ID format
+    const declarationStep = document.getElementById(`ax-step-declaration-${widgetId}`);
+    if (!declarationStep) {
+      console.error('❌ Declaration step not found');
+      return;
+    }
+    
+    console.log('✅ Found declaration step, showing success message');
     
     // Clear the declaration form fields only
     const agreementCheckbox = declarationStep.querySelector('input[name="agreementAccepted"]');
