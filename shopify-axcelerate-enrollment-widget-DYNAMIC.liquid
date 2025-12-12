@@ -3839,6 +3839,13 @@
   
   async function submitEnrollment() {
     try {
+      // Scroll to top when Enrol button is clicked
+      if (widget) {
+        widget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      
       elements.form.style.display = 'none';
       elements.loading.style.display = 'block';
       
@@ -3926,6 +3933,13 @@
   
   function showStep(stepId) {
     console.log('Showing step:', stepId);
+    
+    // Scroll to top of widget/page
+    if (widget) {
+      widget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
     
     // Record activity - user is navigating
     recordActivity();
@@ -5386,6 +5400,21 @@
     
     console.log('✅ Enrollment completed successfully:', result);
     
+    // Mark declaration step as completed
+    markStepCompleted('declaration');
+    completedSteps.add('declaration');
+    localStorage.setItem('ax_completed_steps', JSON.stringify([...completedSteps]));
+    
+    // Update sidebar to show declaration as complete
+    updateSidebarTabs('declaration');
+    
+    // Scroll to top immediately
+    if (widget) {
+      widget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
     // Find the declaration step using the correct ID format
     const declarationStep = document.getElementById(`ax-step-declaration-${widgetId}`);
     if (!declarationStep) {
@@ -5395,31 +5424,75 @@
     
     console.log('✅ Found declaration step, showing success message');
     
-    // Clear the declaration form fields only
-    const agreementCheckbox = declarationStep.querySelector('input[name="agreementAccepted"]');
-    const signatureInput = declarationStep.querySelector('input[name="signature"]');
-    const signatureCanvas = declarationStep.querySelector('.ax-signature-canvas');
-    const guardianNameInput = declarationStep.querySelector('input[name="guardianName"]');
-    const guardianSignatureInput = declarationStep.querySelector('input[name="guardianSignature"]');
-    const guardianSignatureCanvas = declarationStep.querySelectorAll('.ax-signature-canvas')[1];
+    // Hide all form fields except student and fee info
+    const form = declarationStep.querySelector('form');
+    if (!form) return;
     
-    // Clear form fields
-    if (agreementCheckbox) agreementCheckbox.checked = false;
-    if (signatureInput) signatureInput.value = '';
-    if (signatureCanvas) {
-      const ctx = signatureCanvas.getContext('2d');
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(0, 0, signatureCanvas.width, signatureCanvas.height);
-    }
-    if (guardianNameInput) guardianNameInput.value = '';
-    if (guardianSignatureInput) guardianSignatureInput.value = '';
-    if (guardianSignatureCanvas) {
-      const ctx = guardianSignatureCanvas.getContext('2d');
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(0, 0, guardianSignatureCanvas.width, guardianSignatureCanvas.height);
+    // Hide agreement checkbox and label
+    const agreementGroup = form.querySelector('.ax-form-group:has(input[name="agreementAccepted"])') || 
+                          form.querySelector('label:has(input[name="agreementAccepted"])');
+    if (agreementGroup) {
+      agreementGroup.style.display = 'none';
     }
     
-    // Show success message in the declaration step
+    // COMPLETELY REMOVE privacy notice text (not just hide)
+    const privacyNotice = form.querySelector('.ax-privacy-notice');
+    if (privacyNotice) {
+      privacyNotice.remove();
+    }
+    
+    // Remove all headings and paragraphs with privacy/NCVER text
+    form.querySelectorAll('h1, h2, h3, h4, h5, h6, p, div, span').forEach(el => {
+      const text = el.textContent.toLowerCase();
+      if (text.includes('privacy notice') || 
+          text.includes('privacy act') ||
+          text.includes('ncver') || 
+          text.includes('nvetr') ||
+          text.includes('why we collect your personal information') ||
+          text.includes('how we use your personal information') ||
+          text.includes('how we disclose your personal information') ||
+          text.includes('personal information') ||
+          text.includes('vocational education') ||
+          text.includes('billing step terms')) {
+        el.remove();
+      }
+    });
+    
+    // Hide signature section (student)
+    const signatureGroups = form.querySelectorAll('.ax-form-group');
+    signatureGroups.forEach(group => {
+      const label = group.querySelector('label');
+      if (label && label.textContent.toLowerCase().includes('signature')) {
+        group.style.display = 'none';
+      }
+    });
+    
+    // Hide canvas signature pads
+    const canvases = form.querySelectorAll('.ax-signature-canvas');
+    canvases.forEach(canvas => {
+      const parent = canvas.closest('.ax-form-group');
+      if (parent) parent.style.display = 'none';
+    });
+    
+    // Hide guardian name input
+    const guardianNameInput = form.querySelector('input[name="guardianName"]');
+    if (guardianNameInput) {
+      const guardianGroup = guardianNameInput.closest('.ax-form-group');
+      if (guardianGroup) guardianGroup.style.display = 'none';
+    }
+    
+    // Hide Enrol button
+    const enrolButton = form.querySelector('button[type="submit"]');
+    if (enrolButton) {
+      const buttonGroup = enrolButton.closest('.ax-button-group');
+      if (buttonGroup) {
+        buttonGroup.style.display = 'none';
+      } else {
+        enrolButton.style.display = 'none';
+      }
+    }
+    
+    // Show success message at the top
     const existingSuccessMsg = declarationStep.querySelector('.ax-enrollment-success-message');
     if (existingSuccessMsg) {
       existingSuccessMsg.remove();
@@ -5429,18 +5502,12 @@
     successMessage.className = 'ax-enrollment-success-message';
     successMessage.style.cssText = 'background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; margin-bottom: 20px; border-radius: 4px; text-align: center;';
     successMessage.innerHTML = `
-      <strong style="    text-transform: uppercase;">Enrollment Successful!</strong>
-      <p style="margin: 10px auto 0;    max-width: 500px;">Enrolment was successfully completed. A confirmation will be sent to the student along with an invoice / receipt, if generated.</p>
+      <strong style="font-size: 18px; text-transform: uppercase;">✅ Enrollment Successful!</strong>
+      <p style="margin: 10px auto 0; max-width: 500px;">Enrolment was successfully completed. A confirmation will be sent to the student along with an invoice / receipt, if generated.</p>
     `;
     
-    // Insert success message at the top of the form
-    const form = declarationStep.querySelector('form');
-    if (form) {
-      form.insertBefore(successMessage, form.firstChild);
-    }
-    
-    // Scroll to top of declaration step to show success message
-    declarationStep.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Insert success message at the top of the form (before student/fee info)
+    form.insertBefore(successMessage, form.firstChild);
   }
   
   function showError(message) {
