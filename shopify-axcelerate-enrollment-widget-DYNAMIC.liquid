@@ -127,8 +127,8 @@
         <!-- Success State -->
         <div id="ax-success-{{ widget_id }}" class="ax-success-state" style="display: none;">
           <div class="ax-success-icon">✓</div>
-          <h3>Enrollment Submitted Successfully!</h3>
-          <p class="ax-success-message"></p>
+          <h3>Enrolment was successfully completed</h3>
+          <p class="ax-success-message">A confirmation will be sent to the student along with an invoice / receipt, if generated.</p>
         </div>
         
       </div><!-- End Main Content -->
@@ -423,6 +423,11 @@
     box-sizing: border-box;
     background-color: rgb(var(--color-scheme-secondary-background));
     color: rgb(var(--color-scheme-secondary-text));
+  }
+  
+  /* Force visible text color for inputs */
+  .ax-input {
+    color: #333 !important;
   }
   
   .ax-input:focus,
@@ -2127,6 +2132,9 @@
         input = document.createElement('input');
         input.type = 'email';
         input.className = 'ax-input';
+        input.autocomplete = 'email';
+        input.setAttribute('data-lpignore', 'true'); // Ignore LastPass
+        input.setAttribute('data-form-type', 'other'); // Ignore browser autofill
         break;
         
       case 'tel':
@@ -3676,6 +3684,13 @@
         Object.assign(enrollmentData.customFields, stepData);
       });
       
+      console.log('📋 Declaration data included:', {
+        agreementAccepted: enrollmentData.customFields.agreementAccepted,
+        hasSignature: !!enrollmentData.customFields.signature,
+        guardianName: enrollmentData.customFields.guardianName,
+        hasGuardianSignature: !!enrollmentData.customFields.guardianSignature
+      });
+      
       const response = await fetch(`${RENDER_APP_URL}/api/enrollment/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -3761,6 +3776,35 @@
       
       if (dataToRestore && Object.keys(dataToRestore).length > 0) {
         populateFormData(stepId, dataToRestore);
+        
+        // FORCE re-populate email field after delay (workaround for clearing issue)
+        if (stepId === 'contact' && dataToRestore.email) {
+          console.log(`🔄 Scheduling email re-population as backup...`);
+          
+          // Try multiple times with increasing delays
+          [100, 300, 600, 1000].forEach(delay => {
+            setTimeout(() => {
+              // Find within the step container to avoid hidden login email field
+              const contactStepContainer = document.getElementById(`ax-step-contact-${widgetId}`);
+              if (!contactStepContainer) return;
+              
+              const emailInput = contactStepContainer.querySelector(`#ax-email-${widgetId}`);
+              if (emailInput) {
+                const currentValue = emailInput.value;
+                console.log(`📧 [${delay}ms] Email field check - current: "${currentValue}", expected: "${dataToRestore.email}"`);
+                
+                if (!currentValue || currentValue !== dataToRestore.email) {
+                  console.log(`📧 [${delay}ms] Setting email to: "${dataToRestore.email}"`);
+                  emailInput.value = dataToRestore.email;
+                  emailInput.setAttribute('value', dataToRestore.email);
+                  
+                  // Force a re-render
+                  emailInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+              }
+            }, delay);
+          });
+        }
         
         // Auto-mark as completed if step has saved data and passes validation
         if (stepId !== 'login') {
@@ -3988,12 +4032,20 @@
     console.log(`   Fields to populate: ${Object.keys(data).length}`);
     console.log(`   📞 Called from:`, callStack.split('\n')[2]); // Show caller
     
+    // Get the step container to search within (avoid finding hidden login fields)
+    const stepContainer = document.getElementById(`ax-step-${stepId}-${widgetId}`);
+    if (!stepContainer) {
+      console.error(`❌ Step container not found for "${stepId}"`);
+      return;
+    }
+    console.log(`   📦 Searching within step container:`, stepContainer.id)
+    
     // Special debug for email field
     if (stepId === 'contact' && data.email) {
       console.log(`📧 EMAIL POPULATION DEBUG for step "contact":`);
       console.log(`   data.email value: "${data.email}"`);
-      console.log(`   Looking for input ID: ax-email-${widgetId}`);
-      const emailInput = document.getElementById(`ax-email-${widgetId}`);
+      console.log(`   Looking for input ID: ax-email-${widgetId} within step container`);
+      const emailInput = stepContainer.querySelector(`#ax-email-${widgetId}`);
       console.log(`   Email input found:`, emailInput ? 'YES' : 'NO');
       if (emailInput) {
         console.log(`   Current input value BEFORE: "${emailInput.value}"`);
@@ -4056,10 +4108,11 @@
       const inputIdLower = `ax-${fieldId}-${widgetId}`;
       const inputIdCamel = `ax-${fieldId.charAt(0).toLowerCase() + fieldId.slice(1)}-${widgetId}`;
       
-      let input = document.getElementById(inputIdLower);
+      // IMPORTANT: Search within stepContainer to avoid finding hidden login fields!
+      let input = stepContainer.querySelector(`#${inputIdLower}`);
       if (!input && fieldId !== inputIdCamel.replace(`ax-`, '').replace(`-${widgetId}`, '')) {
         // Try camelCase version (e.g., computerSkills instead of computerskills)
-        input = document.getElementById(inputIdCamel);
+        input = stepContainer.querySelector(`#${inputIdCamel}`);
         if (input) {
           console.log(`   - Field "${fieldId}": ✨ Found using camelCase: #${inputIdCamel}`);
         }
@@ -4067,6 +4120,15 @@
       
       if (!input) {
         console.log(`   - Field "${fieldId}": looking for #${inputIdLower}${inputIdLower !== inputIdCamel ? ` or #${inputIdCamel}` : ''}`);
+        
+        // Special handling for email - try without the specific case
+        if (fieldId.toLowerCase() === 'email') {
+          console.log(`   - Email field special check, searching within step container...`);
+          input = stepContainer.querySelector(`#ax-email-${widgetId}`);
+          if (input) {
+            console.log(`   - ✅ Email field found in step container!`);
+          }
+        }
       }
       
       if (input) {
@@ -4112,7 +4174,19 @@
           }
         } else {
           console.log(`     ✅ Found (${input.tagName}), setting value: "${value}"`);
+          
+          // Set value using BOTH methods to ensure it sticks
           input.value = value;
+          input.setAttribute('value', value);
+          input.defaultValue = value;
+          
+          // Special handling for email fields - force repaint
+          if (input.type === 'email' && input.name === 'email') {
+            console.log(`     📧 Email field detected - forcing update`);
+            input.blur();
+            input.focus();
+            input.blur();
+          }
           
           // Trigger change event for conditional logic
           input.dispatchEvent(new Event('change', { bubbles: true }));
@@ -5095,10 +5169,8 @@
     elements.form.style.display = 'none';
     elements.success.style.display = 'block';
     
-    const messageEl = elements.success.querySelector('.ax-success-message');
-    if (messageEl) {
-      messageEl.textContent = result.message || 'Your enrollment has been submitted successfully!';
-    }
+    // Success message is now static in HTML, no need to update dynamically
+    console.log('✅ Enrollment completed successfully:', result);
   }
   
   function showError(message) {

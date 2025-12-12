@@ -153,6 +153,97 @@ router.post('/create', async (req, res) => {
       invoiceId: enrollResult.invoiceID
     });
     
+    // Save Declaration data (signature, agreement) to Contact Notes
+    if (customFields) {
+      const declarationData = [];
+      
+      // Get student name
+      const studentFirstName = customFields.givenName || givenName || '';
+      const studentLastName = customFields.surname || surname || '';
+      const studentFullName = `${studentFirstName} ${studentLastName}`.trim();
+      
+      // Get course name from instance
+      let courseName = 'Unknown Course';
+      try {
+        const instanceResponse = await fetch(
+          `${process.env.AXCELERATE_API_URL}/course/instance/${instanceId}/${courseType}`,
+          {
+            headers: {
+              'APIToken': process.env.AXCELERATE_API_TOKEN,
+              'WSToken': process.env.AXCELERATE_WS_TOKEN
+            }
+          }
+        );
+        
+        if (instanceResponse.ok) {
+          const instanceData = await instanceResponse.json();
+          courseName = instanceData.courseName || instanceData.COURSENAME || instanceData.NAME || courseName;
+        }
+      } catch (err) {
+        console.warn('⚠️ Could not fetch course name:', err);
+      }
+      
+      // Add enrollment header
+      if (studentFullName) {
+        declarationData.push(`${studentFullName} in ${courseName}`);
+        declarationData.push(''); // Empty line
+      }
+      
+      // Add study reason
+      if (customFields.studyReason) {
+        declarationData.push(`Study Reason: ${customFields.studyReason}`);
+        declarationData.push(''); // Empty line
+      }
+      
+      if (customFields.agreementAccepted) {
+        declarationData.push('✅ Terms & Conditions: AGREED');
+      }
+      
+      if (customFields.signature) {
+        declarationData.push('📝 Student Signature: [Captured]');
+      }
+      
+      if (customFields.guardianName) {
+        declarationData.push(`👤 Parent/Guardian: ${customFields.guardianName}`);
+      }
+      
+      if (customFields.guardianSignature) {
+        declarationData.push('📝 Guardian Signature: [Captured]');
+      }
+      
+      if (declarationData.length > 0) {
+        const noteText = `ENROLMENT DECLARATION\n${'-'.repeat(40)}\n${declarationData.join('\n')}\n${'-'.repeat(40)}\nEnrolled in Instance ID: ${instanceId}\nDate: ${new Date().toLocaleString('en-AU', { timeZone: 'Australia/Sydney' })}`;
+        
+        try {
+          console.log('💾 Saving Declaration to contact notes...');
+          console.log('Note content:', noteText);
+          
+          const noteResponse = await fetch(
+            `${process.env.AXCELERATE_API_URL}/contact/${enrolmentContactId}/note`,
+            {
+              method: 'POST',
+              headers: {
+                'APIToken': process.env.AXCELERATE_API_TOKEN,
+                'WSToken': process.env.AXCELERATE_WS_TOKEN,
+                'Content-Type': 'application/x-www-form-urlencoded'
+              },
+              body: `note=${encodeURIComponent(noteText)}`
+            }
+          );
+          
+          if (noteResponse.ok) {
+            console.log('✅ Declaration saved to contact notes');
+          } else {
+            const errorText = await noteResponse.text();
+            console.warn('⚠️ Failed to save declaration to notes:', noteResponse.status, errorText);
+          }
+        } catch (noteError) {
+          console.error('❌ Error saving declaration to notes:', noteError);
+          // Don't fail the enrollment if note save fails
+        }
+      }
+    }
+    
     res.json({
       success: true,
       message: 'Enrollment submitted successfully! Please proceed to payment.',
