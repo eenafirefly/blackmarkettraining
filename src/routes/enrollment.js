@@ -991,7 +991,9 @@ router.post('/save-step', async (req, res) => {
         if (keyLower === 'state') axFieldName = 'STATE';
         if (keyLower === 'country') {
           axFieldName = 'COUNTRYNAME';
+          const originalValue = value;
           value = getCountryName(value); // Convert country code to full name
+          console.log(`   🌍 Residential Country: "${originalValue}" → COUNTRYNAME = "${value}"`);
         }
         
         // Address fields - Postal
@@ -1006,7 +1008,9 @@ router.post('/save-step', async (req, res) => {
         if (keyLower === 'postalstate') axFieldName = 'SSTATE';
         if (keyLower === 'postalcountry') {
           axFieldName = 'SCOUNTRYNAME';
+          const originalValue = value;
           value = getCountryName(value); // Convert country code to full name
+          console.log(`   🌍 Postal Country: "${originalValue}" → SCOUNTRYNAME = "${value}"`);
         }
         
         // Learner identifiers
@@ -1153,6 +1157,26 @@ router.post('/save-step', async (req, res) => {
           console.log(`   Returned: MOBILEPHONE = "${result.MOBILEPHONE || 'null/undefined'}"`);
           if (!result.MOBILEPHONE || result.MOBILEPHONE === 'null') {
             console.error(`⚠️ aXcelerate returned null for MOBILEPHONE field - field name may be incorrect!`);
+          }
+        }
+        
+        // Check specifically for COUNTRYNAME field in response
+        if (updatePayload.COUNTRYNAME) {
+          console.log(`🌍 Residential Country field verification:`);
+          console.log(`   Sent: COUNTRYNAME = "${updatePayload.COUNTRYNAME}"`);
+          console.log(`   Returned: COUNTRYNAME = "${result.COUNTRYNAME || 'null/undefined'}"`);
+          if (!result.COUNTRYNAME || result.COUNTRYNAME === 'null') {
+            console.error(`⚠️ aXcelerate returned null for COUNTRYNAME field - field name may be incorrect!`);
+          }
+        }
+        
+        // Check specifically for SCOUNTRYNAME field in response
+        if (updatePayload.SCOUNTRYNAME) {
+          console.log(`🌍 Postal Country field verification:`);
+          console.log(`   Sent: SCOUNTRYNAME = "${updatePayload.SCOUNTRYNAME}"`);
+          console.log(`   Returned: SCOUNTRYNAME = "${result.SCOUNTRYNAME || 'null/undefined'}"`);
+          if (!result.SCOUNTRYNAME || result.SCOUNTRYNAME === 'null') {
+            console.error(`⚠️ aXcelerate returned null for SCOUNTRYNAME field - field name may be incorrect!`);
           }
         }
       } else {
