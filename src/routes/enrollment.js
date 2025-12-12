@@ -281,39 +281,40 @@ router.post('/create', async (req, res) => {
       console.log('🔍 Fetching course details for instance:', instanceId, 'type:', courseType);
       
       try {
-        const instanceResponse = await fetch(
-          `${process.env.AXCELERATE_API_URL}/course/instance/${instanceId}/${courseType}`,
-          {
-            headers: {
-              'APIToken': process.env.AXCELERATE_API_TOKEN,
-              'WSToken': process.env.AXCELERATE_WS_TOKEN
-            }
+        // Build query parameters for aXcelerate API (correct format)
+        const params = new URLSearchParams({
+          instanceID: instanceId,
+          type: courseType || 'w'
+        });
+        
+        const instanceUrl = `${process.env.AXCELERATE_API_URL}/course/instance/detail?${params}`;
+        console.log('📋 Instance URL:', instanceUrl);
+        
+        const instanceResponse = await fetch(instanceUrl, {
+          headers: {
+            'APIToken': process.env.AXCELERATE_API_TOKEN,
+            'WSToken': process.env.AXCELERATE_WS_TOKEN
           }
-        );
+        });
         
         console.log('📋 Instance API status:', instanceResponse.status);
         
         if (instanceResponse.ok) {
           const instanceData = await instanceResponse.json();
           console.log('📋 Instance data keys:', Object.keys(instanceData));
-          console.log('📋 Course name fields:', {
-            courseName: instanceData.courseName,
-            COURSENAME: instanceData.COURSENAME,
-            NAME: instanceData.NAME,
-            name: instanceData.name
-          });
+          console.log('📋 Full instance data:', JSON.stringify(instanceData, null, 2));
           
-          // Try all possible course name fields
-          courseName = instanceData.courseName || 
+          // aXcelerate returns NAME for course name
+          courseName = instanceData.NAME || 
                       instanceData.COURSENAME || 
-                      instanceData.NAME || 
+                      instanceData.courseName || 
                       instanceData.name ||
                       instanceData.CourseName ||
                       courseName;
           
-          // Try all possible course ID fields
-          actualCourseId = instanceData.courseId || 
-                          instanceData.COURSEID || 
+          // aXcelerate returns COURSEID for course ID
+          actualCourseId = instanceData.COURSEID || 
+                          instanceData.courseId || 
                           instanceData.ID || 
                           instanceData.id ||
                           instanceData.CourseID ||
@@ -325,6 +326,9 @@ router.post('/create', async (req, res) => {
           if (actualCourseId) {
             courseUrl = `https://www.blackmarkettraining.com/qualification-details/?course_id=${actualCourseId}&course_type=${courseType}&instance_id=${instanceId}`;
           }
+        } else {
+          const errorText = await instanceResponse.text();
+          console.error('❌ Failed to fetch instance:', instanceResponse.status, errorText);
         }
       } catch (err) {
         console.error('❌ Could not fetch course details:', err.message);
