@@ -333,7 +333,7 @@ router.post('/create', async (req, res) => {
           const noteResponse = await fetch(
             `${process.env.AXCELERATE_API_URL}/contact/${enrolmentContactId}/note`,
             {
-              method: 'POST',
+              method: 'PUT',
               headers: {
                 'APIToken': process.env.AXCELERATE_API_TOKEN,
                 'WSToken': process.env.AXCELERATE_WS_TOKEN,

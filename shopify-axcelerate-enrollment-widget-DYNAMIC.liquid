@@ -3906,7 +3906,8 @@
         sessionStorage.clear();
         localStorage.removeItem('ax_enrollment_progress');
         
-        showSuccess(result);
+        // Show success message on declaration step and clear form
+        showDeclarationSuccess(result);
       } else {
         throw new Error(result.message || 'Enrollment failed');
       }
@@ -5377,6 +5378,64 @@
     
     // Success message is now static in HTML, no need to update dynamically
     console.log('✅ Enrollment completed successfully:', result);
+  }
+  
+  function showDeclarationSuccess(result) {
+    elements.loading.style.display = 'none';
+    elements.form.style.display = 'flex';
+    
+    console.log('✅ Enrollment completed successfully:', result);
+    
+    // Find the declaration step
+    const declarationStep = document.querySelector('[data-step="declaration"]');
+    if (!declarationStep) return;
+    
+    // Clear the declaration form fields only
+    const agreementCheckbox = declarationStep.querySelector('input[name="agreementAccepted"]');
+    const signatureInput = declarationStep.querySelector('input[name="signature"]');
+    const signatureCanvas = declarationStep.querySelector('.ax-signature-canvas');
+    const guardianNameInput = declarationStep.querySelector('input[name="guardianName"]');
+    const guardianSignatureInput = declarationStep.querySelector('input[name="guardianSignature"]');
+    const guardianSignatureCanvas = declarationStep.querySelectorAll('.ax-signature-canvas')[1];
+    
+    // Clear form fields
+    if (agreementCheckbox) agreementCheckbox.checked = false;
+    if (signatureInput) signatureInput.value = '';
+    if (signatureCanvas) {
+      const ctx = signatureCanvas.getContext('2d');
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+    }
+    if (guardianNameInput) guardianNameInput.value = '';
+    if (guardianSignatureInput) guardianSignatureInput.value = '';
+    if (guardianSignatureCanvas) {
+      const ctx = guardianSignatureCanvas.getContext('2d');
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, guardianSignatureCanvas.width, guardianSignatureCanvas.height);
+    }
+    
+    // Show success message in the declaration step
+    const existingSuccessMsg = declarationStep.querySelector('.ax-enrollment-success-message');
+    if (existingSuccessMsg) {
+      existingSuccessMsg.remove();
+    }
+    
+    const successMessage = document.createElement('div');
+    successMessage.className = 'ax-enrollment-success-message';
+    successMessage.style.cssText = 'background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; margin-bottom: 20px; border-radius: 4px; text-align: center;';
+    successMessage.innerHTML = `
+      <strong>✅ Enrollment Successful!</strong>
+      <p style="margin: 10px 0 0 0;">Enrolment was successfully completed. A confirmation will be sent to the student along with an invoice / receipt, if generated.</p>
+    `;
+    
+    // Insert success message at the top of the form
+    const form = declarationStep.querySelector('form');
+    if (form) {
+      form.insertBefore(successMessage, form.firstChild);
+    }
+    
+    // Scroll to top of declaration step to show success message
+    declarationStep.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   
   function showError(message) {
