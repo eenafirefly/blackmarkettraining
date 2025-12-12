@@ -323,9 +323,8 @@ router.post('/create', async (req, res) => {
           console.log('✅ Resolved course name:', courseName);
           console.log('✅ Resolved course ID:', actualCourseId);
           
-          if (actualCourseId) {
-            courseUrl = `https://www.blackmarkettraining.com/qualification-details/?course_id=${actualCourseId}&course_type=${courseType}&instance_id=${instanceId}`;
-          }
+          // Build aXcelerate program status URL (internal system)
+          courseUrl = `https://blackmarket.app.axcelerate.com/management/management2/ProgramStatus.cfm?PDataID=${instanceId}`;
         } else {
           const errorText = await instanceResponse.text();
           console.error('❌ Failed to fetch instance:', instanceResponse.status, errorText);
