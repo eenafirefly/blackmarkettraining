@@ -1698,12 +1698,40 @@
       } else if (config.stepType === 'enrol') {
         // Declaration step: Show student info, fee, terms, agreement toggle, signatures
         
-        // Get student name and fee
+        // Get student name with multiple fallback methods
         let studentName = 'Student';
+        
+        // Try contactDetails first
         if (contactDetails?.givenName && contactDetails?.surname) {
           studentName = `${contactDetails.givenName} ${contactDetails.surname}`;
-        } else if (formData?.personal?.givenname && formData?.personal?.surname) {
-          studentName = `${formData.personal.givenname} ${formData.personal.surname}`;
+        }
+        // Try localStorage directly
+        else {
+          try {
+            const savedProgress = JSON.parse(localStorage.getItem('ax_enrollment_progress') || '{}');
+            if (savedProgress.contactDetails?.givenName && savedProgress.contactDetails?.surname) {
+              studentName = `${savedProgress.contactDetails.givenName} ${savedProgress.contactDetails.surname}`;
+            }
+          } catch (e) {}
+        }
+        
+        // Try formData (check multiple field name variations)
+        if (studentName === 'Student' && formData?.personal) {
+          const personal = formData.personal;
+          const firstName = personal.givenname || personal.givenName || personal.firstname || personal.firstName || personal.GIVENNAME;
+          const lastName = personal.lastname || personal.surname || personal.lastName || personal.SURNAME; // FIXED: Check lastname first!
+          if (firstName && lastName) {
+            studentName = `${firstName} ${lastName}`;
+          }
+        }
+        
+        if (studentName === 'Student' && formData?.contact) {
+          const contact = formData.contact;
+          const firstName = contact.givenname || contact.givenName || contact.firstname || contact.firstName || contact.GIVENNAME;
+          const lastName = contact.lastname || contact.surname || contact.lastName || contact.SURNAME; // FIXED: Check lastname first!
+          if (firstName && lastName) {
+            studentName = `${firstName} ${lastName}`;
+          }
         }
         
         const courseFee = courseData?.fee ? `$${courseData.fee}` : '$0.00';
@@ -2445,6 +2473,23 @@
     console.log('   instanceId:', instanceId);
     console.log('   contactId:', contactId);
     
+    // CRITICAL: If contactId is null, try to restore from localStorage
+    if (!contactId) {
+      console.warn('⚠️ WARNING: contactId is NULL!');
+      try {
+        const savedProgress = JSON.parse(localStorage.getItem('ax_enrollment_progress') || '{}');
+        if (savedProgress.contactId) {
+          console.log('🔄 Found contactId in localStorage, restoring:', savedProgress.contactId);
+          contactId = savedProgress.contactId;
+          contactDetails = savedProgress.contactDetails || contactDetails;
+        } else {
+          console.error('❌ No contactId found in localStorage either!');
+        }
+      } catch (e) {
+        console.error('❌ Error reading localStorage:', e);
+      }
+    }
+    
     // Fetch course data if not already loaded
     if (!courseData) {
       console.log('   Course data not loaded - fetching now...');
@@ -2467,30 +2512,117 @@
     // Try multiple sources for student name
     let studentName = 'Student';
     
+    console.log('🔍 Attempting to find student name...');
+    console.log('   Method 1: Checking contactDetails object...');
+    console.log('   contactDetails:', contactDetails);
+    
     // Method 1: From contactDetails object
     if (contactDetails?.givenName && contactDetails?.surname) {
       studentName = `${contactDetails.givenName} ${contactDetails.surname}`;
       console.log('   ✅ Student name from contactDetails:', studentName);
     }
-    // Method 2: From formData.personal or formData.contact
-    else if (formData?.personal?.givenname && formData?.personal?.surname) {
-      studentName = `${formData.personal.givenname} ${formData.personal.surname}`;
-      console.log('   ✅ Student name from formData.personal:', studentName);
-    }
-    else if (formData?.contact?.givenname && formData?.contact?.surname) {
-      studentName = `${formData.contact.givenname} ${formData.contact.surname}`;
-      console.log('   ✅ Student name from formData.contact:', studentName);
-    }
-    // Method 3: From sessionStorage
+    // Method 2: From localStorage directly (in case contactDetails object is empty)
     else {
+      console.log('   ❌ contactDetails empty, trying Method 2: localStorage...');
+      try {
+        const savedProgress = JSON.parse(localStorage.getItem('ax_enrollment_progress') || '{}');
+        console.log('   savedProgress.contactDetails:', savedProgress.contactDetails);
+        if (savedProgress.contactDetails?.givenName && savedProgress.contactDetails?.surname) {
+          studentName = `${savedProgress.contactDetails.givenName} ${savedProgress.contactDetails.surname}`;
+          console.log('   ✅ Student name from localStorage.contactDetails:', studentName);
+        } else {
+          console.log('   ❌ localStorage.contactDetails also empty');
+        }
+      } catch (e) {
+        console.warn('   ⚠️ Could not load student name from localStorage');
+      }
+    }
+    
+    // Method 3: From formData.personal or formData.contact (try multiple field name variations)
+    if (studentName === 'Student') {
+      console.log('   ❌ Still no name, trying Method 3: formData.personal...');
+      console.log('   formData.personal exists?', !!formData?.personal);
+      
+      if (formData?.personal) {
+        const personal = formData.personal;
+        console.log('   formData.personal data:', personal);
+        console.log('   Looking for fields: givenname, lastname');
+        
+        const firstName = personal.givenname || personal.givenName || personal.firstname || personal.firstName || personal.GIVENNAME;
+        const lastName = personal.lastname || personal.surname || personal.lastName || personal.SURNAME; // FIXED: Check lastname first!
+        
+        console.log('   Found firstName:', firstName);
+        console.log('   Found lastName:', lastName);
+        
+        if (firstName && lastName) {
+          studentName = `${firstName} ${lastName}`;
+          console.log('   ✅ Student name from formData.personal:', studentName);
+        } else {
+          console.log('   ⚠️ Personal data exists but missing name fields');
+          console.log('   Available fields:', Object.keys(personal));
+        }
+      } else {
+        console.log('   ❌ formData.personal does not exist');
+      }
+    }
+    
+    if (studentName === 'Student') {
+      console.log('   ❌ Still no name, trying formData.contact...');
+      
+      if (formData?.contact) {
+        const contact = formData.contact;
+        console.log('   formData.contact data:', contact);
+        
+        const firstName = contact.givenname || contact.givenName || contact.firstname || contact.firstName || contact.GIVENNAME;
+        const lastName = contact.lastname || contact.surname || contact.lastName || contact.SURNAME; // FIXED: Check lastname first!
+        
+        console.log('   Found firstName:', firstName);
+        console.log('   Found lastName:', lastName);
+        
+        if (firstName && lastName) {
+          studentName = `${firstName} ${lastName}`;
+          console.log('   ✅ Student name from formData.contact:', studentName);
+        } else {
+          console.log('   ⚠️ Contact data exists but missing name fields');
+          console.log('   Available fields:', Object.keys(contact));
+        }
+      } else {
+        console.log('   ❌ formData.contact does not exist');
+      }
+    }
+    
+    // Method 4: From sessionStorage
+    if (studentName === 'Student') {
       try {
         const personalData = JSON.parse(sessionStorage.getItem('ax_form_personal') || '{}');
-        if (personalData.givenname && personalData.surname) {
-          studentName = `${personalData.givenname} ${personalData.surname}`;
+        const firstName = personalData.givenname || personalData.givenName;
+        const lastName = personalData.lastname || personalData.surname; // FIXED: Check lastname first!
+        if (firstName && lastName) {
+          studentName = `${firstName} ${lastName}`;
           console.log('   ✅ Student name from sessionStorage.personal:', studentName);
         }
       } catch (e) {
         console.warn('   ⚠️ Could not load student name from sessionStorage');
+      }
+    }
+    
+    // Method 5: Fetch from aXcelerate if we have contactId but no name
+    if (studentName === 'Student' && contactId) {
+      console.log('   ⚠️ No student name found in local storage - fetching from aXcelerate...');
+      try {
+        const contactResponse = await fetch(`${RENDER_APP_URL}/api/axcelerate/contact/${contactId}`);
+        if (contactResponse.ok) {
+          const contact = await contactResponse.json();
+          if (contact.GIVENNAME && contact.SURNAME) {
+            studentName = `${contact.GIVENNAME} ${contact.SURNAME}`;
+            // Update contactDetails for future use
+            contactDetails.givenName = contact.GIVENNAME;
+            contactDetails.surname = contact.SURNAME;
+            console.log('   ✅ Student name fetched from aXcelerate:', studentName);
+          }
+        }
+      } catch (e) {
+        console.warn('   ⚠️ Could not fetch student name from aXcelerate:', e);
       }
     }
     
@@ -3344,6 +3476,28 @@
         contactDetails.mobile = '';
         console.log('📋 Stored contact details from manual form:', contactDetails);
         
+        // Save contactDetails to localStorage immediately (before changing step)
+        const progress = {
+          contactId,
+          authToken: null,
+          currentStep: 'login',
+          instanceId,
+          courseId,
+          courseType,
+          formData: {},
+          contactDetails,
+          completedSteps: [],
+          timestamp: Date.now()
+        };
+        localStorage.setItem('ax_enrollment_progress', JSON.stringify(progress));
+        console.log('💾 Saved initial progress with contactDetails to localStorage');
+        console.log('   Saved contactDetails:', contactDetails);
+        console.log('   Saved contactId:', contactId);
+        
+        // Verify it was saved correctly
+        const verification = JSON.parse(localStorage.getItem('ax_enrollment_progress'));
+        console.log('✅ Verification - localStorage now contains:', verification.contactDetails);
+        
         // Start inactivity tracking for incomplete booking email
         startInactivityTracking();
         
@@ -3705,6 +3859,29 @@
       Object.values(formData).forEach(stepData => {
         Object.assign(enrollmentData.customFields, stepData);
       });
+      
+      console.log('📋 ALL customFields being sent to backend:', enrollmentData.customFields);
+      console.log('📋 Total fields:', Object.keys(enrollmentData.customFields).length);
+      console.log('📋 All formData steps:', Object.keys(formData));
+      
+      // Check specifically for background and subject matter fields
+      console.log('🔍 Checking for Background step fields:');
+      const backgroundFields = Object.keys(enrollmentData.customFields).filter(k => 
+        k.toLowerCase().includes('priorlearning') || 
+        k.toLowerCase().includes('qualification') ||
+        k.toLowerCase().includes('disability')
+      );
+      console.log('   Background fields found:', backgroundFields);
+      backgroundFields.forEach(f => console.log(`   ${f}: ${enrollmentData.customFields[f]}`));
+      
+      console.log('🔍 Checking for Subject Matter fields:');
+      const subjectFields = Object.keys(enrollmentData.customFields).filter(k => 
+        k.toLowerCase().includes('computer') || 
+        k.toLowerCase().includes('skill') ||
+        k.toLowerCase().includes('subject')
+      );
+      console.log('   Subject Matter fields found:', subjectFields);
+      subjectFields.forEach(f => console.log(`   ${f}: ${enrollmentData.customFields[f]}`));
       
       console.log('📋 Declaration data included:', {
         agreementAccepted: enrollmentData.customFields.agreementAccepted,
@@ -5077,8 +5254,11 @@
       
       // Only restore if for same course
       if (progress.instanceId !== instanceId) {
+        console.log(`❌ Instance ID mismatch - saved: ${progress.instanceId}, current: ${instanceId}`);
+        console.log('   Not restoring progress (different course)');
         return false;
       }
+      console.log('✅ Instance ID matches - restoring progress');
       
       // Restore state
       contactId = progress.contactId;
@@ -5103,6 +5283,10 @@
       console.log('📌 Current Step:', progress.currentStep);
       console.log('📌 Form Data Steps:', Object.keys(formData));
       console.log('📌 Completed Steps:', Array.from(completedSteps));
+      console.log('📌 Contact Details (restored):', contactDetails);
+      console.log('   - givenName:', contactDetails.givenName);
+      console.log('   - surname:', contactDetails.surname);
+      console.log('   - email:', contactDetails.email);
       
       // Unlock tabs and mark login as completed if we have contactId
       if (contactId) {

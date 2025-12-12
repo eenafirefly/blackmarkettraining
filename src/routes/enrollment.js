@@ -183,7 +183,29 @@ router.post('/create', async (req, res) => {
     
     // Update contact with custom fields if provided
     if (customFields && Object.keys(customFields).length > 0) {
+      console.log('📋 Custom fields received from frontend:');
+      console.log('   Total fields:', Object.keys(customFields).length);
+      console.log('   Field names:', Object.keys(customFields));
+      
+      // Check for background fields
+      const backgroundFields = Object.keys(customFields).filter(k => 
+        k.toLowerCase().includes('priorlearning') || 
+        k.toLowerCase().includes('qualification') ||
+        k.toLowerCase().includes('disability')
+      );
+      console.log('   Background fields:', backgroundFields);
+      
+      // Check for subject matter fields
+      const subjectFields = Object.keys(customFields).filter(k => 
+        k.toLowerCase().includes('computer') || 
+        k.toLowerCase().includes('skill') ||
+        k.toLowerCase().includes('subject')
+      );
+      console.log('   Subject Matter fields:', subjectFields);
+      
       await updateContactCustomFields(enrolmentContactId, customFields);
+    } else {
+      console.warn('⚠️ No custom fields provided or empty customFields object');
     }
     
     // Create enrollment
@@ -573,10 +595,23 @@ async function updateContactCustomFields(contactId, customFields) {
     
     if (!updateResponse.ok) {
       const errorText = await updateResponse.text();
-      console.error('Failed to update custom fields:', errorText);
+      console.error('❌ Failed to update custom fields:', updateResponse.status, errorText);
+      
+      // Try to parse the error to see which fields failed
+      try {
+        const errorData = JSON.parse(errorText);
+        console.error('   Error details:', errorData);
+        if (errorData.FIELDNAMES) {
+          console.error('   Failed fields:', errorData.FIELDNAMES);
+        }
+      } catch (e) {
+        // Not JSON, just log the raw text
+      }
       // Don't throw - continue enrollment even if custom fields fail
     } else {
       console.log('✅ Custom fields updated successfully');
+      const responseData = await updateResponse.json();
+      console.log('   aXcelerate response:', responseData);
     }
     
   } catch (error) {
