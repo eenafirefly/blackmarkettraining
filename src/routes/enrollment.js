@@ -269,12 +269,13 @@ router.post('/create', async (req, res) => {
       const declarationData = [];
       
       // Get student name
-      const studentFirstName = customFields.givenName || givenName || '';
-      const studentLastName = customFields.surname || surname || '';
+      const studentFirstName = customFields.givenName || customFields.givenname || givenName || '';
+      const studentLastName = customFields.surname || customFields.lastname || surname || '';
       const studentFullName = `${studentFirstName} ${studentLastName}`.trim();
       
-      // Get course name from instance
+      // Get course name and details from instance
       let courseName = 'Unknown Course';
+      let courseUrl = '';
       try {
         const instanceResponse = await fetch(
           `${process.env.AXCELERATE_API_URL}/course/instance/${instanceId}/${courseType}`,
@@ -289,50 +290,90 @@ router.post('/create', async (req, res) => {
         if (instanceResponse.ok) {
           const instanceData = await instanceResponse.json();
           courseName = instanceData.courseName || instanceData.COURSENAME || instanceData.NAME || courseName;
+          const courseId = instanceData.courseId || instanceData.COURSEID || instanceData.ID;
+          if (courseId) {
+            courseUrl = `https://www.blackmarkettraining.com/qualification-details/?course_id=${courseId}&course_type=${courseType}&instance_id=${instanceId}`;
+          }
         }
       } catch (err) {
         console.warn('⚠️ Could not fetch course name:', err);
       }
       
-      // Add enrollment header
-      if (studentFullName) {
-        declarationData.push(`${studentFullName} in ${courseName}`);
-        declarationData.push(''); // Empty line
-      }
-      
-      // Add study reason
+      // Get study reason text (convert ID to text if needed)
+      let studyReasonText = '';
       if (customFields.studyReason || customFields.studyreason) {
         const studyReasonValue = customFields.studyReason || customFields.studyreason;
-        declarationData.push(`Study Reason: ${studyReasonValue}`);
-        declarationData.push(''); // Empty line
+        // Map study reason ID to text (common values)
+        const studyReasonMap = {
+          '1': 'To get a job',
+          '2': 'To develop my existing business',
+          '3': 'To start my own business',
+          '4': 'To try for a different career',
+          '5': 'To get a better job or promotion',
+          '6': 'It was a requirement of my job',
+          '7': 'I wanted extra skills for my job',
+          '8': 'To get into another course of study',
+          '11': 'Other reasons',
+          '12': 'For personal interest or self-development'
+        };
+        studyReasonText = studyReasonMap[studyReasonValue] || studyReasonValue;
       }
       
-      if (customFields.agreementAccepted) {
-        declarationData.push('✅ Terms & Conditions: AGREED');
+      // Build HTML note (matching WordPress plugin format)
+      let noteHtml = '';
+      
+      // Enrollment header with course link
+      if (studentFullName && courseName) {
+        if (courseUrl) {
+          noteHtml += `<p><a href="${courseUrl}" target="_blank">${studentFullName}</a> in <a href="${courseUrl}" target="_blank">${courseName}</a></p>`;
+        } else {
+          noteHtml += `<p>${studentFullName} in ${courseName}</p>`;
+        }
       }
       
+      // Study reason
+      if (studyReasonText) {
+        noteHtml += `<p><strong>StudyReason:</strong> (${customFields.studyReason || customFields.studyreason}) ${studyReasonText}</p>`;
+      }
+      
+      // Signature section
+      noteHtml += '<p><strong>Signature:</strong></p>';
+      
+      // Embed student signature as image
       if (customFields.signature) {
-        declarationData.push('📝 Student Signature: [Captured]');
+        noteHtml += `<p><img src="${customFields.signature}" alt="Student Signature" style="max-width: 400px; border: 1px solid #ccc;" /></p>`;
       }
       
-      if (customFields.guardianName) {
-        declarationData.push(`👤 Parent/Guardian: ${customFields.guardianName}`);
-      }
+      // Divider
+      noteHtml += '<hr />';
       
-      if (customFields.guardianSignature) {
-        declarationData.push('📝 Guardian Signature: [Captured]');
-      }
+      // Billing Step Terms
+      noteHtml += '<p><strong>Billing Step Terms</strong></p>';
+      noteHtml += '<p><strong>PRIVACY NOTICE</strong></p>';
+      
+      // Privacy notice sections
+      noteHtml += '<p><strong>Why we collect your personal information</strong></p>';
+      noteHtml += '<p>As a registered training organisation (RTO), we collect your personal information so we can process and manage your enrolment in a vocational education and training (VET) course with us.</p>';
+      
+      noteHtml += '<p><strong>How we use your personal information</strong></p>';
+      noteHtml += '<p>We use your personal information to enable us to deliver VET courses to you, and otherwise, as needed, to comply with our obligations as an RTO.</p>';
+      
+      noteHtml += '<p><strong>How we disclose your personal information</strong></p>';
+      noteHtml += '<p>We are required by law (under the National Vocational Education and Training Regulator Act 2011 (Cth) (NVETR Act)) to disclose the personal information we collect about you to the National VET Data Collection kept by the National Centre for Vocational Education Research Ltd (NCVER). The NCVER is responsible for collecting, managing, analysing and communicating research and statistics about the Australian VET sector.</p>';
+      noteHtml += '<p>We are also authorised by law (under the NVETR Act) to disclose your personal information to the relevant state or territory training authority.</p>';
+      
+      noteHtml += '<p><strong>How the NCVER and other bodies handle your personal information</strong></p>';
+      noteHtml += '<p>The NCVER will collect, hold, use and disclose your personal information in accordance with the law, including the Privacy Act 1988 (Cth) (Privacy Act) and the NVETR Act. Your personal information may be used and disclosed by NCVER for purposes that include populating authenticated VET transcripts; administration of VET; facilitation of statistics and research relating to education, including surveys and data linkage; and understanding the VET market.</p>';
+      noteHtml += '<p>The NCVER is authorised to disclose information to the Australian Government Department of Employment, Skills, Small and Family Business, other Commonwealth and State agencies, and other bodies engaged by the NCVER to assist with the NCVER\'s activities.</p>';
       
       if (declarationData.length > 0) {
-        const noteText = `ENROLMENT DECLARATION\n${'-'.repeat(40)}\n${declarationData.join('\n')}\n${'-'.repeat(40)}\nEnrolled in Instance ID: ${instanceId}\nDate: ${new Date().toLocaleString('en-AU', { timeZone: 'Australia/Sydney' })}`;
-        
         try {
           console.log('💾 Saving Declaration to contact notes...');
-          console.log('Note content:', noteText);
+          console.log('Note HTML preview:', noteHtml.substring(0, 500) + '...');
           
           const noteParams = new URLSearchParams({
             contactID: enrolmentContactId,
-            contactNote: noteText,
+            contactNote: noteHtml,
             noteCodeID: 88,  // System note (same as WordPress plugin)
             noteTypeID: 88
           });
