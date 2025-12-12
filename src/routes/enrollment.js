@@ -990,10 +990,10 @@ router.post('/save-step', async (req, res) => {
         if (keyLower === 'postcode') axFieldName = 'POSTCODE';
         if (keyLower === 'state') axFieldName = 'STATE';
         if (keyLower === 'country') {
-          axFieldName = 'COUNTRYNAME';
+          axFieldName = 'COUNTRYID';
           const originalValue = value;
-          value = getCountryName(value); // Convert country code to full name
-          console.log(`   🌍 Residential Country: "${originalValue}" → COUNTRYNAME = "${value}"`);
+          value = convertISOtoSACC(value); // Convert ISO code to SACC code (e.g., AU → 1101)
+          console.log(`   🌍 Residential Country: "${originalValue}" → COUNTRYID = "${value}"`);
         }
         
         // Address fields - Postal
@@ -1007,10 +1007,10 @@ router.post('/save-step', async (req, res) => {
         if (keyLower === 'postalpostcode') axFieldName = 'SPOSTCODE';
         if (keyLower === 'postalstate') axFieldName = 'SSTATE';
         if (keyLower === 'postalcountry') {
-          axFieldName = 'SCOUNTRYNAME';
+          axFieldName = 'SCOUNTRYID';
           const originalValue = value;
-          value = getCountryName(value); // Convert country code to full name
-          console.log(`   🌍 Postal Country: "${originalValue}" → SCOUNTRYNAME = "${value}"`);
+          value = convertISOtoSACC(value); // Convert ISO code to SACC code (e.g., AU → 1101)
+          console.log(`   🌍 Postal Country: "${originalValue}" → SCOUNTRYID = "${value}"`);
         }
         
         // Learner identifiers
@@ -1160,23 +1160,23 @@ router.post('/save-step', async (req, res) => {
           }
         }
         
-        // Check specifically for COUNTRYNAME field in response
-        if (updatePayload.COUNTRYNAME) {
+        // Check specifically for COUNTRYID field in response
+        if (updatePayload.COUNTRYID) {
           console.log(`🌍 Residential Country field verification:`);
-          console.log(`   Sent: COUNTRYNAME = "${updatePayload.COUNTRYNAME}"`);
-          console.log(`   Returned: COUNTRYNAME = "${result.COUNTRYNAME || 'null/undefined'}"`);
-          if (!result.COUNTRYNAME || result.COUNTRYNAME === 'null') {
-            console.error(`⚠️ aXcelerate returned null for COUNTRYNAME field - field name may be incorrect!`);
+          console.log(`   Sent: COUNTRYID = "${updatePayload.COUNTRYID}"`);
+          console.log(`   Returned: COUNTRYID = "${result.COUNTRYID || 'null/undefined'}"`);
+          if (!result.COUNTRYID || result.COUNTRYID === 'null') {
+            console.error(`⚠️ aXcelerate returned null for COUNTRYID field - field name may be incorrect!`);
           }
         }
         
-        // Check specifically for SCOUNTRYNAME field in response
-        if (updatePayload.SCOUNTRYNAME) {
+        // Check specifically for SCOUNTRYID field in response
+        if (updatePayload.SCOUNTRYID) {
           console.log(`🌍 Postal Country field verification:`);
-          console.log(`   Sent: SCOUNTRYNAME = "${updatePayload.SCOUNTRYNAME}"`);
-          console.log(`   Returned: SCOUNTRYNAME = "${result.SCOUNTRYNAME || 'null/undefined'}"`);
-          if (!result.SCOUNTRYNAME || result.SCOUNTRYNAME === 'null') {
-            console.error(`⚠️ aXcelerate returned null for SCOUNTRYNAME field - field name may be incorrect!`);
+          console.log(`   Sent: SCOUNTRYID = "${updatePayload.SCOUNTRYID}"`);
+          console.log(`   Returned: SCOUNTRYID = "${result.SCOUNTRYID || 'null/undefined'}"`);
+          if (!result.SCOUNTRYID || result.SCOUNTRYID === 'null') {
+            console.error(`⚠️ aXcelerate returned null for SCOUNTRYID field - field name may be incorrect!`);
           }
         }
       } else {
