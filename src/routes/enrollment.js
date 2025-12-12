@@ -142,7 +142,22 @@ router.post('/create', async (req, res) => {
     if (!enrollResponse.ok) {
       const errorText = await enrollResponse.text();
       console.error('Enrollment error:', enrollResponse.status, errorText);
-      throw new Error('Failed to create enrollment');
+      
+      // Parse error details if available
+      let errorDetails = 'Failed to create enrollment';
+      try {
+        const errorData = JSON.parse(errorText);
+        if (errorData.DETAILS) {
+          errorDetails = errorData.DETAILS;
+        } else if (errorData.MESSAGES) {
+          errorDetails = errorData.MESSAGES;
+        }
+      } catch (e) {
+        // Not JSON, use raw text
+        errorDetails = errorText || 'Failed to create enrollment';
+      }
+      
+      throw new Error(errorDetails);
     }
     
     const enrollResult = await enrollResponse.json();
@@ -444,6 +459,29 @@ async function updateContactCustomFields(contactId, customFields) {
       ...customFields
     };
     
+    // Convert boolean-like fields to proper boolean values for aXcelerate
+    // aXcelerate expects 'true'/'false' strings for boolean fields
+    const booleanFields = ['DisabilityStatus', 'DisabilityFlag', 'uniqueStudentIdentifier'];
+    
+    booleanFields.forEach(field => {
+      if (payload[field] !== undefined) {
+        const value = payload[field];
+        // Convert "Yes"/"No" or similar to boolean
+        if (typeof value === 'string') {
+          const lowerValue = value.toLowerCase();
+          if (lowerValue === 'yes' || lowerValue === 'true' || lowerValue === '1') {
+            payload[field] = 'true';
+          } else if (lowerValue === 'no' || lowerValue === 'false' || lowerValue === '0' || lowerValue === '') {
+            payload[field] = 'false';
+          }
+        } else if (typeof value === 'boolean') {
+          payload[field] = value ? 'true' : 'false';
+        }
+      }
+    });
+    
+    console.log('📤 Sending payload to aXcelerate:', payload);
+    
     const updateResponse = await fetch(
       `${process.env.AXCELERATE_API_URL}/contact/${contactId}`,
       {
@@ -464,7 +502,7 @@ async function updateContactCustomFields(contactId, customFields) {
       console.error('Failed to update custom fields:', errorText);
       // Don't throw - continue enrollment even if custom fields fail
     } else {
-      console.log('Custom fields updated successfully');
+      console.log('✅ Custom fields updated successfully');
     }
     
   } catch (error) {
