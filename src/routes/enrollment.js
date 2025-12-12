@@ -373,6 +373,8 @@ router.post('/create', async (req, res) => {
           
           // First, try to get existing notes to check if declaration note exists
           let existingNoteId = null;
+          console.log('🔍 Checking for existing declaration note for contact:', enrolmentContactId);
+          
           try {
             const getNotesResponse = await fetch(
               `${process.env.AXCELERATE_API_URL}/contact/${enrolmentContactId}`,
@@ -384,23 +386,43 @@ router.post('/create', async (req, res) => {
               }
             );
             
+            console.log('📋 Contact fetch status:', getNotesResponse.status);
+            
             if (getNotesResponse.ok) {
               const contactData = await getNotesResponse.json();
-              const notes = contactData.NOTES || contactData.notes || [];
+              console.log('📋 Contact data keys:', Object.keys(contactData));
               
-              // Find existing ENROLMENT DECLARATION note
-              const existingNote = notes.find(note => 
-                (note.NOTE || note.note || '').includes('ENROLMENT DECLARATION') ||
-                (note.NOTE || note.note || '').includes(courseName)
-              );
+              // Try different possible note field names
+              const notes = contactData.NOTES || contactData.notes || contactData.Notes || [];
+              console.log('📋 Found', notes.length, 'notes');
               
-              if (existingNote) {
-                existingNoteId = existingNote.NOTEID || existingNote.noteId || existingNote.id;
-                console.log('📝 Found existing declaration note ID:', existingNoteId);
+              if (notes.length > 0) {
+                console.log('📋 First note structure:', Object.keys(notes[0]));
+                
+                // Find existing ENROLMENT DECLARATION note
+                const existingNote = notes.find(note => {
+                  const noteContent = note.NOTE || note.note || note.CONTACTNOTE || note.contactNote || '';
+                  const noteTitle = note.TITLE || note.title || '';
+                  return noteContent.includes('ENROLMENT DECLARATION') || noteTitle.includes('ENROLMENT DECLARATION');
+                });
+                
+                if (existingNote) {
+                  existingNoteId = existingNote.NOTEID || existingNote.noteId || existingNote.id || existingNote.ID;
+                  console.log('✅ Found existing declaration note!');
+                  console.log('   Note ID:', existingNoteId);
+                  console.log('   Note structure:', Object.keys(existingNote));
+                } else {
+                  console.log('📝 No existing declaration note found');
+                }
+              } else {
+                console.log('📝 Contact has no notes yet');
               }
+            } else {
+              const errorText = await getNotesResponse.text();
+              console.warn('⚠️ Failed to fetch contact:', getNotesResponse.status, errorText);
             }
           } catch (err) {
-            console.warn('⚠️ Could not fetch existing notes:', err);
+            console.warn('⚠️ Error fetching existing notes:', err.message);
           }
           
           // Update existing note or create new one
