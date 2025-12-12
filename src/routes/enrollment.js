@@ -942,6 +942,12 @@ router.post('/save-step', async (req, res) => {
     Object.entries(stepData).forEach(([key, value]) => {
       const keyLower = key.toLowerCase();
       
+      // Skip empty values (but allow 0, false, etc.)
+      if (value === '' || value === null || value === undefined) {
+        console.log(`   ⏭️ Skipping empty field: ${key}`);
+        return;
+      }
+      
       if (personalDetailFields.includes(keyLower)) {
         // Map field names to aXcelerate's expected format
         let axFieldName = key.toUpperCase();
@@ -958,7 +964,10 @@ router.post('/save-step', async (req, res) => {
         if (keyLower === 'gender' || keyLower === 'sex') axFieldName = 'SEX';
         if (keyLower === 'email' || keyLower === 'emailaddress') axFieldName = 'EMAILADDRESS';
         if (keyLower === 'alternativeemail' || keyLower === 'alternativeemailaddress') axFieldName = 'EMAILADDRESSALTERNATIVE';
-        if (keyLower === 'mobile' || keyLower === 'mobilephone') axFieldName = 'MOBILE';
+        if (keyLower === 'mobile' || keyLower === 'mobilephone') {
+          axFieldName = 'MOBILE';
+          console.log(`   📱 Mobile field detected: "${key}" → MOBILE, value: "${value}"`);
+        }
         if (keyLower === 'homephone') axFieldName = 'PHONE';
         if (keyLower === 'workphone') axFieldName = 'WORKPHONE';
         if (keyLower === 'fax') axFieldName = 'FAX';
@@ -1136,6 +1145,16 @@ router.post('/save-step', async (req, res) => {
         console.log('✅ Axcelerate response:', result);
         console.log(`✅ Saved ${Object.keys(updatePayload).length} fields to aXcelerate`);
         console.log('📋 Fields saved:', Object.keys(updatePayload).join(', '));
+        
+        // Check specifically for MOBILE field in response
+        if (updatePayload.MOBILE) {
+          console.log(`📱 Mobile field verification:`);
+          console.log(`   Sent: MOBILE = "${updatePayload.MOBILE}"`);
+          console.log(`   Returned: MOBILE = "${result.MOBILE || 'null/undefined'}"`);
+          if (!result.MOBILE || result.MOBILE === 'null') {
+            console.error(`⚠️ aXcelerate returned null for MOBILE field - field name may be incorrect!`);
+          }
+        }
       } else {
         const errorText = await updateResponse.text();
         console.error('❌ Failed to update contact:', updateResponse.status, errorText);
