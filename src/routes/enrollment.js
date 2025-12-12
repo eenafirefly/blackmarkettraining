@@ -301,8 +301,9 @@ router.post('/create', async (req, res) => {
       }
       
       // Add study reason
-      if (customFields.studyReason) {
-        declarationData.push(`Study Reason: ${customFields.studyReason}`);
+      if (customFields.studyReason || customFields.studyreason) {
+        const studyReasonValue = customFields.studyReason || customFields.studyreason;
+        declarationData.push(`Study Reason: ${studyReasonValue}`);
         declarationData.push(''); // Empty line
       }
       
