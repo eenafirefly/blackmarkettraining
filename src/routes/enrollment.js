@@ -43,10 +43,80 @@ const upload = multer({
 });
 
 /**
+ * Create contact ONLY (no enrollment)
+ * POST /api/enrollment/create-contact
+ * 
+ * Used at Login step - creates contact but does NOT create enrollment
+ */
+router.post('/create-contact', async (req, res) => {
+  try {
+    const {
+      givenName,
+      surname,
+      email,
+      phone,
+      instanceId,
+      courseType
+    } = req.body;
+    
+    // Validate required fields
+    if (!givenName || !surname || !email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required contact fields: givenName, surname, email'
+      });
+    }
+    
+    console.log('🆕 Creating contact ONLY (no enrollment):', { givenName, surname, email });
+    
+    // Find or create contact
+    const contactResult = await findOrCreateContact({
+      givenName,
+      surname,
+      email,
+      phone
+    });
+    
+    // Check if this was an existing contact
+    if (contactResult.alreadyExists) {
+      console.log('🔄 Existing contact detected - returning existing contact info');
+      
+      return res.json({
+        success: false,
+        existingContact: true,
+        contactId: contactResult.contact.CONTACTID,
+        email: email,
+        message: 'Existing contact found. Please check your email for resuming your enrollment.'
+      });
+    }
+    
+    console.log('✅ New contact created successfully:', contactResult.contact.CONTACTID);
+    
+    // Return success with contact ID (NO enrollment created)
+    res.json({
+      success: true,
+      message: 'Contact created successfully. Please continue with enrollment steps.',
+      data: {
+        contactId: contactResult.contact.CONTACTID
+      }
+    });
+    
+  } catch (error) {
+    console.error('Contact creation error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create contact',
+      message: error.message
+    });
+  }
+});
+
+/**
  * Create enrollment with custom fields
  * POST /api/enrollment/create
  * 
  * Handles multi-step enrollment with all custom fields
+ * This is called ONLY when Declaration step is completed
  */
 router.post('/create', async (req, res) => {
   try {
@@ -124,6 +194,9 @@ router.post('/create', async (req, res) => {
       tentative: true // Mark as tentative until payment
     };
     
+    console.log('📤 Creating enrollment in aXcelerate...');
+    console.log('   This will trigger "Booking Confirmation" email from aXcelerate');
+    
     const enrollResponse = await fetch(
       `${process.env.AXCELERATE_API_URL}/course/enrol`,
       {
@@ -162,11 +235,12 @@ router.post('/create', async (req, res) => {
     
     const enrollResult = await enrollResponse.json();
     
-    console.log('Enrollment created successfully:', {
+    console.log('✅ Enrollment created successfully:', {
       contactId: enrolmentContactId,
       learnerId: enrollResult.LEARNERID,
       invoiceId: enrollResult.invoiceID
     });
+    console.log('📧 aXcelerate will send "Booking Confirmation - Black Market Training" email automatically');
     
     // Save Declaration data (signature, agreement) to Contact Notes
     if (customFields) {

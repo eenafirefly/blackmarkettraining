@@ -3256,9 +3256,9 @@
       // Note: Backend will handle duplicate detection automatically
       // No need for frontend search - this avoids 405 errors
       
-      // Create new contact (backend will detect if it already exists)
-      console.log('🆕 Creating new contact...');
-      const createResponse = await fetch(`${RENDER_APP_URL}/api/enrollment/create`, {
+      // Create new contact ONLY (no enrollment yet - that happens in Declaration step)
+      console.log('🆕 Creating new contact (no enrollment)...');
+      const createResponse = await fetch(`${RENDER_APP_URL}/api/enrollment/create-contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -3667,7 +3667,8 @@
       elements.form.style.display = 'none';
       elements.loading.style.display = 'block';
       
-      console.log('📤 Submitting final enrollment...');
+      console.log('📤 Submitting final enrollment (Declaration step)...');
+      console.log('   This will CREATE the enrollment and send "Booking Confirmation" email');
       console.log('All collected data:', formData);
       
       // Combine all form data
