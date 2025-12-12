@@ -366,107 +366,50 @@ router.post('/create', async (req, res) => {
       noteHtml += '<p>The NCVER will collect, hold, use and disclose your personal information in accordance with the law, including the Privacy Act 1988 (Cth) (Privacy Act) and the NVETR Act. Your personal information may be used and disclosed by NCVER for purposes that include populating authenticated VET transcripts; administration of VET; facilitation of statistics and research relating to education, including surveys and data linkage; and understanding the VET market.</p>';
       noteHtml += '<p>The NCVER is authorised to disclose information to the Australian Government Department of Employment, Skills, Small and Family Business, other Commonwealth and State agencies, and other bodies engaged by the NCVER to assist with the NCVER\'s activities.</p>';
       
-      if (declarationData.length > 0) {
-        try {
-          console.log('💾 Saving Declaration to contact notes...');
-          console.log('Note HTML preview:', noteHtml.substring(0, 500) + '...');
-          
-          // First, try to get existing notes to check if declaration note exists
-          let existingNoteId = null;
-          console.log('🔍 Checking for existing declaration note for contact:', enrolmentContactId);
-          
-          try {
-            const getNotesResponse = await fetch(
-              `${process.env.AXCELERATE_API_URL}/contact/${enrolmentContactId}`,
-              {
-                headers: {
-                  'APIToken': process.env.AXCELERATE_API_TOKEN,
-                  'WSToken': process.env.AXCELERATE_WS_TOKEN
-                }
-              }
-            );
-            
-            console.log('📋 Contact fetch status:', getNotesResponse.status);
-            
-            if (getNotesResponse.ok) {
-              const contactData = await getNotesResponse.json();
-              console.log('📋 Contact data keys:', Object.keys(contactData));
-              
-              // Try different possible note field names
-              const notes = contactData.NOTES || contactData.notes || contactData.Notes || [];
-              console.log('📋 Found', notes.length, 'notes');
-              
-              if (notes.length > 0) {
-                console.log('📋 First note structure:', Object.keys(notes[0]));
-                
-                // Find existing ENROLMENT DECLARATION note
-                const existingNote = notes.find(note => {
-                  const noteContent = note.NOTE || note.note || note.CONTACTNOTE || note.contactNote || '';
-                  const noteTitle = note.TITLE || note.title || '';
-                  return noteContent.includes('ENROLMENT DECLARATION') || noteTitle.includes('ENROLMENT DECLARATION');
-                });
-                
-                if (existingNote) {
-                  existingNoteId = existingNote.NOTEID || existingNote.noteId || existingNote.id || existingNote.ID;
-                  console.log('✅ Found existing declaration note!');
-                  console.log('   Note ID:', existingNoteId);
-                  console.log('   Note structure:', Object.keys(existingNote));
-                } else {
-                  console.log('📝 No existing declaration note found');
-                }
-              } else {
-                console.log('📝 Contact has no notes yet');
-              }
-            } else {
-              const errorText = await getNotesResponse.text();
-              console.warn('⚠️ Failed to fetch contact:', getNotesResponse.status, errorText);
-            }
-          } catch (err) {
-            console.warn('⚠️ Error fetching existing notes:', err.message);
+      // Always create a new declaration note (aXcelerate doesn't support updating notes)
+      try {
+        console.log('💾 Creating Declaration note in aXcelerate...');
+        console.log('   Contact ID:', enrolmentContactId);
+        console.log('   Note length:', noteHtml.length, 'characters');
+        console.log('   Note preview:', noteHtml.substring(0, 200) + '...');
+        
+        const noteParams = new URLSearchParams({
+          contactID: enrolmentContactId,
+          contactNote: noteHtml,
+          noteCodeID: 88,  // System note (same as WordPress plugin)
+          noteTypeID: 88
+        });
+        
+        console.log('📤 Sending note to aXcelerate...');
+        
+        const noteResponse = await fetch(
+          `${process.env.AXCELERATE_API_URL}/contact/note`,
+          {
+            method: 'POST',
+            headers: {
+              'APIToken': process.env.AXCELERATE_API_TOKEN,
+              'WSToken': process.env.AXCELERATE_WS_TOKEN,
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: noteParams.toString()
           }
-          
-          // Update existing note or create new one
-          const noteParams = new URLSearchParams({
-            contactID: enrolmentContactId,
-            contactNote: noteHtml,
-            noteCodeID: 88,
-            noteTypeID: 88
-          });
-          
-          if (existingNoteId) {
-            noteParams.append('noteID', existingNoteId);
-            console.log('🔄 Updating existing note...');
-          } else {
-            console.log('➕ Creating new note...');
-          }
-          
-          const noteResponse = await fetch(
-            `${process.env.AXCELERATE_API_URL}/contact/note`,
-            {
-              method: 'POST',
-              headers: {
-                'APIToken': process.env.AXCELERATE_API_TOKEN,
-                'WSToken': process.env.AXCELERATE_WS_TOKEN,
-                'Content-Type': 'application/x-www-form-urlencoded'
-              },
-              body: noteParams.toString()
-            }
-          );
-          
-          if (noteResponse.ok) {
-            if (existingNoteId) {
-              console.log('✅ Declaration note updated successfully');
-            } else {
-              console.log('✅ Declaration note created successfully');
-            }
-          } else {
-            const errorText = await noteResponse.text();
-            console.warn('⚠️ Failed to save declaration to notes:', noteResponse.status, errorText);
-          }
-        } catch (noteError) {
-          console.error('❌ Error saving declaration to notes:', noteError);
-          // Don't fail the enrollment if note save fails
+        );
+        
+        console.log('📥 aXcelerate response status:', noteResponse.status);
+        
+        if (noteResponse.ok) {
+          const noteResult = await noteResponse.json();
+          console.log('✅ Declaration note saved successfully!');
+          console.log('   Response:', noteResult);
+        } else {
+          const errorText = await noteResponse.text();
+          console.error('❌ Failed to save declaration note:', noteResponse.status);
+          console.error('   Error:', errorText);
         }
+      } catch (noteError) {
+        console.error('❌ Error saving declaration to notes:', noteError.message);
+        console.error('   Stack:', noteError.stack);
+        // Don't fail the enrollment if note save fails
       }
     }
     
