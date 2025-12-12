@@ -276,6 +276,10 @@ router.post('/create', async (req, res) => {
       // Get course name and details from instance
       let courseName = 'Unknown Course';
       let courseUrl = '';
+      let actualCourseId = courseId;
+      
+      console.log('🔍 Fetching course details for instance:', instanceId, 'type:', courseType);
+      
       try {
         const instanceResponse = await fetch(
           `${process.env.AXCELERATE_API_URL}/course/instance/${instanceId}/${courseType}`,
@@ -287,17 +291,50 @@ router.post('/create', async (req, res) => {
           }
         );
         
+        console.log('📋 Instance API status:', instanceResponse.status);
+        
         if (instanceResponse.ok) {
           const instanceData = await instanceResponse.json();
-          courseName = instanceData.courseName || instanceData.COURSENAME || instanceData.NAME || courseName;
-          const courseId = instanceData.courseId || instanceData.COURSEID || instanceData.ID;
-          if (courseId) {
-            courseUrl = `https://www.blackmarkettraining.com/qualification-details/?course_id=${courseId}&course_type=${courseType}&instance_id=${instanceId}`;
+          console.log('📋 Instance data keys:', Object.keys(instanceData));
+          console.log('📋 Course name fields:', {
+            courseName: instanceData.courseName,
+            COURSENAME: instanceData.COURSENAME,
+            NAME: instanceData.NAME,
+            name: instanceData.name
+          });
+          
+          // Try all possible course name fields
+          courseName = instanceData.courseName || 
+                      instanceData.COURSENAME || 
+                      instanceData.NAME || 
+                      instanceData.name ||
+                      instanceData.CourseName ||
+                      courseName;
+          
+          // Try all possible course ID fields
+          actualCourseId = instanceData.courseId || 
+                          instanceData.COURSEID || 
+                          instanceData.ID || 
+                          instanceData.id ||
+                          instanceData.CourseID ||
+                          courseId;
+          
+          console.log('✅ Resolved course name:', courseName);
+          console.log('✅ Resolved course ID:', actualCourseId);
+          
+          if (actualCourseId) {
+            courseUrl = `https://www.blackmarkettraining.com/qualification-details/?course_id=${actualCourseId}&course_type=${courseType}&instance_id=${instanceId}`;
           }
         }
       } catch (err) {
-        console.warn('⚠️ Could not fetch course name:', err);
+        console.error('❌ Could not fetch course details:', err.message);
       }
+      
+      // Build profile URL
+      const profileUrl = `https://blackmarket.app.axcelerate.com/management/management2/Contact_View.cfm?ContactID=${enrolmentContactId}`;
+      
+      // Get enrollment URL
+      const enrollmentUrl = `https://www.blackmarkettraining.com/qualification-details/?course_id=${actualCourseId}&course_type=${courseType}&instance_id=${instanceId}`;
       
       // Get study reason text (convert ID to text if needed)
       let studyReasonText = '';
@@ -322,13 +359,13 @@ router.post('/create', async (req, res) => {
       // Build HTML note (matching WordPress plugin format)
       let noteHtml = '';
       
-      // Enrollment header with course link
+      // Course Enrollment From URL
+      noteHtml += `<p>Course Enrolment from - <a href="${enrollmentUrl}" target="_blank">${enrollmentUrl}</a></p>`;
+      
+      // Enrollment header with links
       if (studentFullName && courseName) {
-        if (courseUrl) {
-          noteHtml += `<p><a href="${courseUrl}" target="_blank">${studentFullName}</a> in <a href="${courseUrl}" target="_blank">${courseName}</a></p>`;
-        } else {
-          noteHtml += `<p>${studentFullName} in ${courseName}</p>`;
-        }
+        noteHtml += `<p><strong>Enrolments:</strong></p>`;
+        noteHtml += `<p><a href="${profileUrl}" target="_blank">${studentFullName}</a> in <a href="${courseUrl}" target="_blank">${courseName}</a></p>`;
       }
       
       // Study reason
@@ -344,6 +381,18 @@ router.post('/create', async (req, res) => {
         noteHtml += `<p><img src="${customFields.signature}" alt="Student Signature" style="max-width: 400px; border: 1px solid #ccc;" /></p>`;
       }
       
+      // Guardian section (if provided)
+      if (customFields.guardianName || customFields.guardianSignature) {
+        noteHtml += '<hr />';
+        if (customFields.guardianName) {
+          noteHtml += `<p><strong>Parent/Guardian:</strong> ${customFields.guardianName}</p>`;
+        }
+        if (customFields.guardianSignature) {
+          noteHtml += '<p><strong>Guardian Signature:</strong></p>';
+          noteHtml += `<p><img src="${customFields.guardianSignature}" alt="Guardian Signature" style="max-width: 400px; border: 1px solid #ccc;" /></p>`;
+        }
+      }
+      
       // Divider
       noteHtml += '<hr />';
       
@@ -351,7 +400,7 @@ router.post('/create', async (req, res) => {
       noteHtml += '<p><strong>Billing Step Terms</strong></p>';
       noteHtml += '<p><strong>PRIVACY NOTICE</strong></p>';
       
-      // Privacy notice sections
+      // Privacy notice sections (complete text)
       noteHtml += '<p><strong>Why we collect your personal information</strong></p>';
       noteHtml += '<p>As a registered training organisation (RTO), we collect your personal information so we can process and manage your enrolment in a vocational education and training (VET) course with us.</p>';
       
@@ -365,6 +414,10 @@ router.post('/create', async (req, res) => {
       noteHtml += '<p><strong>How the NCVER and other bodies handle your personal information</strong></p>';
       noteHtml += '<p>The NCVER will collect, hold, use and disclose your personal information in accordance with the law, including the Privacy Act 1988 (Cth) (Privacy Act) and the NVETR Act. Your personal information may be used and disclosed by NCVER for purposes that include populating authenticated VET transcripts; administration of VET; facilitation of statistics and research relating to education, including surveys and data linkage; and understanding the VET market.</p>';
       noteHtml += '<p>The NCVER is authorised to disclose information to the Australian Government Department of Employment, Skills, Small and Family Business, other Commonwealth and State agencies, and other bodies engaged by the NCVER to assist with the NCVER\'s activities.</p>';
+      noteHtml += '<p>NCVER may also disclose personal information to persons engaged by NCVER to conduct research on NCVER\'s behalf.</p>';
+      noteHtml += '<p>The NCVER does not disclose your personal information to any other overseas recipients.</p>';
+      noteHtml += '<p>For more information about how the NCVER will handle your personal information please refer to the NCVER Privacy Policy at <a href="https://www.ncver.edu.au/privacy" target="_blank">www.ncver.edu.au/privacy</a>.</p>';
+      noteHtml += '<p>If you would like to seek access to or correct your information, in the first instance, please contact Black Market Training at <a href="mailto:info@blackmarkettraining.com">info@blackmarkettraining.com</a> to request access to or correction of your information. If you are not able to satisfactorily resolve your concerns, you can contact the NCVER.</p>';
       
       // Always create a new declaration note (aXcelerate doesn't support updating notes)
       try {
