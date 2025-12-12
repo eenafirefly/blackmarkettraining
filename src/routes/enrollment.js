@@ -577,6 +577,16 @@ async function updateContactCustomFields(contactId, customFields) {
     });
     
     console.log('📤 Sending payload to aXcelerate:', payload);
+    console.log('📤 Payload details:');
+    Object.entries(payload).forEach(([key, value]) => {
+      console.log(`   ${key}: "${value}" (type: ${typeof value}, length: ${value ? value.length : 0})`);
+    });
+    
+    // Show the actual URL-encoded body that will be sent
+    const bodyString = Object.keys(payload)
+      .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(payload[key])}`)
+      .join('&');
+    console.log('📤 URL-encoded body (first 500 chars):', bodyString.substring(0, 500));
     
     const updateResponse = await fetch(
       `${process.env.AXCELERATE_API_URL}/contact/${contactId}`,
