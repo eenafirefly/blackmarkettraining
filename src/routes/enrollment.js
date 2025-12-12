@@ -965,8 +965,8 @@ router.post('/save-step', async (req, res) => {
         if (keyLower === 'email' || keyLower === 'emailaddress') axFieldName = 'EMAILADDRESS';
         if (keyLower === 'alternativeemail' || keyLower === 'alternativeemailaddress') axFieldName = 'EMAILADDRESSALTERNATIVE';
         if (keyLower === 'mobile' || keyLower === 'mobilephone') {
-          axFieldName = 'MOBILE';
-          console.log(`   📱 Mobile field detected: "${key}" → MOBILE, value: "${value}"`);
+          axFieldName = 'MOBILEPHONE';
+          console.log(`   📱 Mobile field detected: "${key}" → MOBILEPHONE, value: "${value}"`);
         }
         if (keyLower === 'homephone') axFieldName = 'PHONE';
         if (keyLower === 'workphone') axFieldName = 'WORKPHONE';
@@ -1146,13 +1146,13 @@ router.post('/save-step', async (req, res) => {
         console.log(`✅ Saved ${Object.keys(updatePayload).length} fields to aXcelerate`);
         console.log('📋 Fields saved:', Object.keys(updatePayload).join(', '));
         
-        // Check specifically for MOBILE field in response
-        if (updatePayload.MOBILE) {
+        // Check specifically for MOBILEPHONE field in response
+        if (updatePayload.MOBILEPHONE) {
           console.log(`📱 Mobile field verification:`);
-          console.log(`   Sent: MOBILE = "${updatePayload.MOBILE}"`);
-          console.log(`   Returned: MOBILE = "${result.MOBILE || 'null/undefined'}"`);
-          if (!result.MOBILE || result.MOBILE === 'null') {
-            console.error(`⚠️ aXcelerate returned null for MOBILE field - field name may be incorrect!`);
+          console.log(`   Sent: MOBILEPHONE = "${updatePayload.MOBILEPHONE}"`);
+          console.log(`   Returned: MOBILEPHONE = "${result.MOBILEPHONE || 'null/undefined'}"`);
+          if (!result.MOBILEPHONE || result.MOBILEPHONE === 'null') {
+            console.error(`⚠️ aXcelerate returned null for MOBILEPHONE field - field name may be incorrect!`);
           }
         }
       } else {
