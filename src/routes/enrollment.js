@@ -371,12 +371,52 @@ router.post('/create', async (req, res) => {
           console.log('💾 Saving Declaration to contact notes...');
           console.log('Note HTML preview:', noteHtml.substring(0, 500) + '...');
           
+          // First, try to get existing notes to check if declaration note exists
+          let existingNoteId = null;
+          try {
+            const getNotesResponse = await fetch(
+              `${process.env.AXCELERATE_API_URL}/contact/${enrolmentContactId}`,
+              {
+                headers: {
+                  'APIToken': process.env.AXCELERATE_API_TOKEN,
+                  'WSToken': process.env.AXCELERATE_WS_TOKEN
+                }
+              }
+            );
+            
+            if (getNotesResponse.ok) {
+              const contactData = await getNotesResponse.json();
+              const notes = contactData.NOTES || contactData.notes || [];
+              
+              // Find existing ENROLMENT DECLARATION note
+              const existingNote = notes.find(note => 
+                (note.NOTE || note.note || '').includes('ENROLMENT DECLARATION') ||
+                (note.NOTE || note.note || '').includes(courseName)
+              );
+              
+              if (existingNote) {
+                existingNoteId = existingNote.NOTEID || existingNote.noteId || existingNote.id;
+                console.log('📝 Found existing declaration note ID:', existingNoteId);
+              }
+            }
+          } catch (err) {
+            console.warn('⚠️ Could not fetch existing notes:', err);
+          }
+          
+          // Update existing note or create new one
           const noteParams = new URLSearchParams({
             contactID: enrolmentContactId,
             contactNote: noteHtml,
-            noteCodeID: 88,  // System note (same as WordPress plugin)
+            noteCodeID: 88,
             noteTypeID: 88
           });
+          
+          if (existingNoteId) {
+            noteParams.append('noteID', existingNoteId);
+            console.log('🔄 Updating existing note...');
+          } else {
+            console.log('➕ Creating new note...');
+          }
           
           const noteResponse = await fetch(
             `${process.env.AXCELERATE_API_URL}/contact/note`,
@@ -392,7 +432,11 @@ router.post('/create', async (req, res) => {
           );
           
           if (noteResponse.ok) {
-            console.log('✅ Declaration saved to contact notes');
+            if (existingNoteId) {
+              console.log('✅ Declaration note updated successfully');
+            } else {
+              console.log('✅ Declaration note created successfully');
+            }
           } else {
             const errorText = await noteResponse.text();
             console.warn('⚠️ Failed to save declaration to notes:', noteResponse.status, errorText);
