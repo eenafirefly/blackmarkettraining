@@ -550,19 +550,16 @@ async function updateContactCustomFields(contactId, customFields) {
   try {
     console.log('Updating contact custom fields:', { contactId, customFields });
     
-    // Build payload with custom fields (no prefix - aXcelerate adds it internally)
-    // IMPORTANT: Normalize field names to lowercase (aXcelerate custom fields are case-sensitive)
+    // Build payload with custom fields
+    // IMPORTANT: aXcelerate expects custom fields with CUSTOMFIELD_ prefix in UPPERCASE
     const payload = {};
     
     Object.entries(customFields).forEach(([key, value]) => {
-      // Convert camelCase to lowercase for aXcelerate compatibility
-      // e.g., "computerSkills" -> "computerskills"
-      const normalizedKey = key.toLowerCase();
-      payload[normalizedKey] = value;
-      
-      if (key !== normalizedKey) {
-        console.log(`   Normalized ${key} -> ${normalizedKey}`);
-      }
+      // Convert to CUSTOMFIELD_UPPERCASE format
+      // e.g., "computerSkills" -> "CUSTOMFIELD_COMPUTERSKILLS"
+      const fieldName = `CUSTOMFIELD_${key.toUpperCase()}`;
+      payload[fieldName] = value;
+      console.log(`   Mapping ${key} -> ${fieldName} = "${value}"`);
     });
     
     // Convert boolean-like fields to proper boolean values for aXcelerate
@@ -1102,15 +1099,10 @@ router.post('/save-step', async (req, res) => {
         updatePayload[axFieldName] = value;
         console.log(`   📝 Personal field: ${key} → ${axFieldName} = "${value}"`);
       } else {
-        // Custom field - send with just the variable name (same format as background fields)
-        // IMPORTANT: Normalize to lowercase for aXcelerate (case-sensitive)
-        const normalizedKey = key.toLowerCase();
-        updatePayload[normalizedKey] = value;
-        if (key !== normalizedKey) {
-          console.log(`   📝 Custom field: ${key} → ${normalizedKey} = "${value}"`);
-        } else {
-          console.log(`   📝 Custom field: ${key} = "${value}"`);
-        }
+        // Custom field - aXcelerate expects CUSTOMFIELD_ prefix in UPPERCASE
+        const fieldName = `CUSTOMFIELD_${key.toUpperCase()}`;
+        updatePayload[fieldName] = value;
+        console.log(`   📝 Custom field: ${key} → ${fieldName} = "${value}"`);
       }
     });
     
