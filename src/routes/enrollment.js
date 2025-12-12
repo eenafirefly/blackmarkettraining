@@ -603,9 +603,9 @@ router.post('/send-resume-email', async (req, res) => {
  */
 router.post('/save-step', async (req, res) => {
   try {
-    const { contactId, stepId, stepData, instanceId, courseId, courseType, courseName } = req.body;
+    const { contactId, stepId, stepData, instanceId, courseId, courseType, courseName, skipEmail } = req.body;
     
-    console.log('💾 Saving step data to aXcelerate:', { contactId, stepId, instanceId });
+    console.log('💾 Saving step data to aXcelerate:', { contactId, stepId, instanceId, skipEmail });
     
     if (!contactId || !instanceId) {
       return res.status(400).json({
@@ -972,7 +972,12 @@ router.post('/save-step', async (req, res) => {
       contactName = `${contact.GIVENNAME || ''} ${contact.SURNAME || ''}`.trim();
     }
     
-    if (process.env.SENDGRID_API_KEY && contactEmail && shouldSendEmail) {
+    // Only send email if skipEmail flag is NOT true AND shouldSendEmail is true
+    if (skipEmail) {
+      console.log('⏭️ Skipping incomplete email - skipEmail flag is true (frontend will handle via inactivity tracking)');
+    }
+    
+    if (process.env.SENDGRID_API_KEY && contactEmail && shouldSendEmail && !skipEmail) {
       try {
         console.log('📧 Sending incomplete enrollment email via SendGrid to:', contactEmail);
         

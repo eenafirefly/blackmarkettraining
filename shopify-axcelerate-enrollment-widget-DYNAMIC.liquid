@@ -1038,18 +1038,16 @@
   }
   
   .ax-summary-section-title {
-    font-size: 20px;
     font-weight: 600;
-    color: #333;
+    text-transform: uppercase;
     margin: 0 0 20px 0;
     padding-bottom: 10px;
-    border-bottom: 2px solid #5892c7;
+    border-bottom: 2px solid #dfe0df;
   }
   
   .ax-summary-subtitle {
-    font-size: 16px;
-    font-weight: 600;
-    color: #333;
+       font-weight: 700;
+    text-transform: uppercase;
     margin: 0 0 15px 0;
   }
   
@@ -1058,18 +1056,12 @@
     grid-template-columns: 150px 1fr;
     gap: 20px;
     padding: 12px 0;
-    align-items: start;
+       align-items: center;
   }
   
-  .ax-summary-label {
-    font-weight: 600;
-    color: #666;
-    font-size: 14px;
-  }
+
   
   .ax-summary-value {
-    color: #333;
-    font-size: 14px;
     background: #f5f5f5;
     padding: 10px 15px;
     border-radius: 4px;
@@ -1095,6 +1087,19 @@
       padding: 20px;
     }
   }
+
+  .ax-terms-content *{
+    margin-bottom:1rem;
+  }
+  .ax-terms-content h1,
+  .ax-terms-content h2,
+  .ax-terms-content h3,
+  .ax-terms-content h4,
+   .ax-terms-content h5,
+   .ax-terms-content h6{
+        text-transform: uppercase;
+    font-weight: 600;
+   }
 </style>
 
 <script>
@@ -1237,12 +1242,149 @@
   let formSteps = [];
   let stepConfigs = {}; // Stores step configurations with fields
   let formData = {}; // Stores data from all steps
+  let completedSteps = new Set(); // Track which steps have been explicitly completed
   let contactDetails = { // Stores logged-in user's details for pre-filling
     givenName: '',
     surname: '',
     email: '',
     mobile: ''
   };
+  
+  // Inactivity tracking for incomplete booking emails
+  let lastActivityTime = Date.now();
+  let incompleteEmailSent = false;
+  let inactivityCheckInterval = null;
+  
+  // =========================================================================
+  // Signature Pad Functionality
+  // =========================================================================
+  
+  function initSignaturePad(canvas, clearBtn, hiddenInput) {
+    if (!canvas) {
+      console.error('Canvas element not found for signature pad');
+      return;
+    }
+    
+    console.log('🎨 Initializing signature pad:', canvas.id);
+    
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let lastX = 0;
+    let lastY = 0;
+    
+    // Canvas is already sized in HTML (800x150), just use those dimensions
+    console.log('Canvas dimensions:', canvas.width, 'x', canvas.height);
+    
+    // Fill canvas with white background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Configure drawing style
+    ctx.strokeStyle = '#000000';
+    ctx.fillStyle = '#000000';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    console.log('✅ Signature pad ready!');
+    
+    function getCoordinates(e) {
+      const rect = canvas.getBoundingClientRect();
+      let clientX, clientY;
+      
+      if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+      
+      return {
+        x: clientX - rect.left,
+        y: clientY - rect.top
+      };
+    }
+    
+    function startDrawing(e) {
+      e.preventDefault();
+      isDrawing = true;
+      const coords = getCoordinates(e);
+      lastX = coords.x;
+      lastY = coords.y;
+      
+      console.log('🖊️ Drawing started at:', lastX, lastY);
+      
+      // Draw a dot when clicking/touching
+      ctx.fillStyle = '#000000';
+      ctx.beginPath();
+      ctx.arc(lastX, lastY, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    function draw(e) {
+      if (!isDrawing) return;
+      e.preventDefault();
+      
+      const coords = getCoordinates(e);
+      
+      // Draw line
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(lastX, lastY);
+      ctx.lineTo(coords.x, coords.y);
+      ctx.stroke();
+      
+      lastX = coords.x;
+      lastY = coords.y;
+    }
+    
+    function stopDrawing(e) {
+      if (!isDrawing) return;
+      e.preventDefault();
+      isDrawing = false;
+      
+      // Update hidden input with signature data
+      if (hiddenInput) {
+        hiddenInput.value = canvas.toDataURL('image/png');
+        console.log('✍️ Signature captured');
+      }
+    }
+    
+    // Mouse events
+    canvas.addEventListener('mousedown', startDrawing, { passive: false });
+    canvas.addEventListener('mousemove', draw, { passive: false });
+    canvas.addEventListener('mouseup', stopDrawing, { passive: false });
+    canvas.addEventListener('mouseleave', stopDrawing, { passive: false });
+    
+    // Touch events
+    canvas.addEventListener('touchstart', startDrawing, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
+    canvas.addEventListener('touchend', stopDrawing, { passive: false });
+    canvas.addEventListener('touchcancel', stopDrawing, { passive: false });
+    
+    // Clear button
+    if (clearBtn) {
+      clearBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        // Clear and refill with white background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Reset drawing style
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#000000';
+        
+        if (hiddenInput) {
+          hiddenInput.value = '';
+        }
+        console.log('🗑️ Signature cleared');
+      });
+    }
+    
+    console.log('✅ Signature pad initialized:', canvas.id);
+  }
   
   // =========================================================================
   // Initialization
@@ -1310,13 +1452,13 @@
       console.log('Fetching course details for instance:', instanceId);
       
       const response = await fetch(
-        `${RENDER_APP_URL}/api/axcelerate/courses/${instanceId}?type=${courseType || 'w'}`
+        `${RENDER_APP_URL}/api/axcelerate/instance/${instanceId}/${courseType || 'w'}`
       );
       
       if (response.ok) {
         const courses = await response.json();
         const course = Array.isArray(courses) ? courses[0] : courses;
-        courseName = course.NAME || course.COURSENAME || 'Course';
+        courseName = course.courseName || course.name || course.NAME || course.COURSENAME || 'Course';
         
         if (elements.courseTitle) {
           elements.courseTitle.textContent = courseName;
@@ -1549,13 +1691,158 @@
         `;
         form.appendChild(buttonGroup);
       } else if (config.stepType === 'enrol') {
-        // Declaration step: Show terms and submit
+        // Declaration step: Show student info, fee, terms, agreement toggle, signatures
+        
+        // Get student name and fee
+        let studentName = 'Student';
+        if (contactDetails?.givenName && contactDetails?.surname) {
+          studentName = `${contactDetails.givenName} ${contactDetails.surname}`;
+        } else if (formData?.personal?.givenname && formData?.personal?.surname) {
+          studentName = `${formData.personal.givenname} ${formData.personal.surname}`;
+        }
+        
+        const courseFee = courseData?.fee ? `$${courseData.fee}` : '$0.00';
+        
+        // Student Name and Fee section (two-column layout)
+        const infoSection = document.createElement('div');
+        infoSection.className = 'ax-declaration-info';
+        infoSection.innerHTML = `
+          <div style="display: grid; grid-template-columns: 150px 1fr; gap: 20px; align-items: center; margin-bottom: 20px;">
+            <label style="font-weight: 600; margin: 0;">Student:</label>
+            <div style="background: #f5f5f5; padding: 12px 15px; border-radius: 4px;">
+              ${studentName}
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 150px 1fr; gap: 20px; align-items: center; margin-bottom: 20px;">
+            <label style="font-weight: 600; margin: 0;">Fee:</label>
+            <div style="background: #f5f5f5; padding: 12px 15px; border-radius: 4px;">
+              ${courseFee}
+            </div>
+          </div>
+        `;
+        form.appendChild(infoSection);
+        
+        // Terms/Agreement text
         if (config.stepTerms) {
           const termsDiv = document.createElement('div');
           termsDiv.className = 'ax-terms-content';
+          termsDiv.style.cssText = 'max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 15px; margin: 20px 0; border-radius: 4px; background: #fafafa;';
           termsDiv.innerHTML = config.stepTerms;
-          form.insertBefore(termsDiv, form.firstChild);
+          form.appendChild(termsDiv);
         }
+        
+        // Agreement Toggle
+        const agreementGroup = document.createElement('div');
+        agreementGroup.className = 'ax-form-group';
+        agreementGroup.style.cssText = 'margin: 30px 0;';
+        agreementGroup.innerHTML = `
+          <label style="display: inline-flex; align-items: center; gap: 10px; cursor: pointer;">
+            <input type="checkbox" id="ax-agreement-toggle-${widgetId}" name="agreementAccepted" required style="width: 18px; height: 18px; cursor: pointer;">
+            <span>Do you agree?</span>
+          </label>
+        `;
+        form.appendChild(agreementGroup);
+        
+        // Signature (required) - Canvas drawing field
+        const signatureGroup = document.createElement('div');
+        signatureGroup.className = 'ax-form-group';
+        signatureGroup.innerHTML = `
+          <label style="display: block; margin-bottom: 8px;">
+            Signature:<span class="ax-required">*</span>
+          </label>
+          <div style="position: relative; border: 2px solid #000; background: #fff; border-radius: 4px; padding: 10px;">
+            <canvas id="ax-signature-canvas-${widgetId}" 
+                    width="800" 
+                    height="150"
+                    style="display: block; width: 100%; height: 150px; cursor: crosshair; touch-action: none; background: #ffffff; border: 1px dashed #ccc;">
+            </canvas>
+            <button type="button" 
+                    id="ax-signature-clear-${widgetId}" 
+                    style="position: absolute; top: 15px; right: 15px; background: #f0f0f0; border: 2px solid #333; border-radius: 4px; padding: 8px 15px; font-size: 13px; cursor: pointer; font-weight: 600; z-index: 10;">
+              ↻ Clear
+            </button>
+          </div>
+          <input type="hidden" id="ax-signature-${widgetId}" name="signature" required>
+        `;
+        form.appendChild(signatureGroup);
+        
+        // Initialize signature canvas - use longer delay and retry if needed
+        let initAttempts = 0;
+        const tryInitSignature = () => {
+          const canvas = document.getElementById(`ax-signature-canvas-${widgetId}`);
+          const clearBtn = document.getElementById(`ax-signature-clear-${widgetId}`);
+          const hiddenInput = document.getElementById(`ax-signature-${widgetId}`);
+          
+          if (canvas && canvas.getContext) {
+            console.log('📝 Found signature canvas, initializing...');
+            initSignaturePad(canvas, clearBtn, hiddenInput);
+          } else {
+            initAttempts++;
+            console.warn(`❌ Signature canvas not ready (attempt ${initAttempts})`);
+            if (initAttempts < 5) {
+              setTimeout(tryInitSignature, 500);
+            }
+          }
+        };
+        setTimeout(tryInitSignature, 300);
+        
+        // Parent/Guardian Name
+        const guardianNameGroup = document.createElement('div');
+        guardianNameGroup.className = 'ax-form-group';
+        guardianNameGroup.innerHTML = `
+          <label for="ax-guardian-name-${widgetId}" style="display: block; margin-bottom: 8px;">
+            Parent/Guardian Name:
+          </label>
+          <input type="text" 
+                 id="ax-guardian-name-${widgetId}" 
+                 name="guardianName" 
+                 class="ax-input" 
+                 placeholder="">
+        `;
+        form.appendChild(guardianNameGroup);
+        
+        // Parent/Guardian Signature - Canvas drawing field
+        const guardianSignatureGroup = document.createElement('div');
+        guardianSignatureGroup.className = 'ax-form-group';
+        guardianSignatureGroup.innerHTML = `
+          <label style="display: block; margin-bottom: 8px;">
+            Parent/Guardian Signature:
+          </label>
+          <div style="position: relative; border: 2px solid #000; background: #fff; border-radius: 4px; padding: 10px;">
+            <canvas id="ax-guardian-signature-canvas-${widgetId}" 
+                    width="800" 
+                    height="150"
+                    style="display: block; width: 100%; height: 150px; cursor: crosshair; touch-action: none; background: #ffffff; border: 1px dashed #ccc;">
+            </canvas>
+            <button type="button" 
+                    id="ax-guardian-signature-clear-${widgetId}" 
+                    style="position: absolute; top: 15px; right: 15px; background: #f0f0f0; border: 2px solid #333; border-radius: 4px; padding: 8px 15px; font-size: 13px; cursor: pointer; font-weight: 600; z-index: 10;">
+              ↻ Clear
+            </button>
+          </div>
+          <input type="hidden" id="ax-guardian-signature-${widgetId}" name="guardianSignature">
+        `;
+        form.appendChild(guardianSignatureGroup);
+        
+        // Initialize guardian signature canvas - use longer delay and retry if needed
+        let guardianInitAttempts = 0;
+        const tryInitGuardianSignature = () => {
+          const canvas = document.getElementById(`ax-guardian-signature-canvas-${widgetId}`);
+          const clearBtn = document.getElementById(`ax-guardian-signature-clear-${widgetId}`);
+          const hiddenInput = document.getElementById(`ax-guardian-signature-${widgetId}`);
+          
+          if (canvas && canvas.getContext) {
+            console.log('📝 Found guardian signature canvas, initializing...');
+            initSignaturePad(canvas, clearBtn, hiddenInput);
+          } else {
+            guardianInitAttempts++;
+            console.warn(`❌ Guardian signature canvas not ready (attempt ${guardianInitAttempts})`);
+            if (guardianInitAttempts < 5) {
+              setTimeout(tryInitGuardianSignature, 500);
+            }
+          }
+        };
+        setTimeout(tryInitGuardianSignature, 300);
         
         // Check if user is already enrolled
         const isAlreadyEnrolled = window.isAlreadyEnrolled || false;
@@ -1578,7 +1865,7 @@
         } else {
           // Normal case - allow enrollment
           buttonGroup.innerHTML = `
-           <button type="submit" class="push-btn inline-block w-100 text-center ax-btn ax-btn-primary"><span class="push-btn__surface w-100">Save</span></button>
+           <button type="submit" class="push-btn inline-block w-100 text-center ax-btn ax-btn-primary"><span class="push-btn__surface w-100">Enrol</span></button>
           `;
         }
         
@@ -2704,6 +2991,9 @@
       await fetchContactDetailsForPrefill(contactId);
       console.log('📋 Contact details fetched:', contactDetails);
       
+      // Start inactivity tracking for incomplete booking email
+      startInactivityTracking();
+      
       // Unlock all tabs now that user is logged in
       unlockAllTabs();
       
@@ -2863,11 +3153,13 @@
     
     if (stepIndex >= 0 && stepIndex < tabs.length) {
       const tab = tabs[stepIndex];
+      const config = stepConfigs[stepId];
       
       // Special handling for login step - always mark as completed AND disabled
       if (stepId === 'login') {
         tab.classList.add('completed', 'disabled');
         tab.classList.remove('active', 'locked');
+        completedSteps.add(stepId);
         const statusIcon = tab.querySelector('.ax-tab-status');
         if (statusIcon) {
           statusIcon.textContent = '✓';
@@ -2877,12 +3169,29 @@
         return;
       }
       
+      // Special handling for enrollment-summary (Review Details) - always mark as completed when called
+      if (config && config.stepType === 'enrollment-summary') {
+        tab.classList.add('completed');
+        tab.classList.remove('active', 'locked', 'disabled');
+        completedSteps.add(stepId);
+        
+        const statusIcon = tab.querySelector('.ax-tab-status');
+        if (statusIcon) {
+          statusIcon.textContent = '✓';
+          statusIcon.style.display = 'block';
+        }
+        
+        console.log(`✅ Marked step ${stepId} as completed (enrollment-summary)`);
+        return;
+      }
+      
       // For other steps, validate required fields before marking as completed
       const allRequiredFieldsFilled = validateStepRequiredFields(stepId);
       
       if (allRequiredFieldsFilled) {
         tab.classList.add('completed');
         tab.classList.remove('active', 'locked', 'disabled');
+        completedSteps.add(stepId);
         
         const statusIcon = tab.querySelector('.ax-tab-status');
         if (statusIcon) {
@@ -2894,6 +3203,7 @@
       } else {
         // Remove completed status if required fields are not filled
         tab.classList.remove('completed');
+        completedSteps.delete(stepId);
         
         const statusIcon = tab.querySelector('.ax-tab-status');
         if (statusIcon) {
@@ -3005,6 +3315,9 @@
         contactDetails.mobile = '';
         console.log('📋 Stored contact details from manual form:', contactDetails);
         
+        // Start inactivity tracking for incomplete booking email
+        startInactivityTracking();
+        
         // Unlock all tabs now that user is logged in
         unlockAllTabs();
         
@@ -3044,6 +3357,37 @@
     const stepData = {};
     
     // Handle different field types
+    // For declaration step, also capture signature and guardian fields
+    if (config.stepType === 'enrol') {
+      const agreementCheckbox = form.querySelector('input[name="agreementAccepted"]');
+      const signature = form.querySelector('input[name="signature"]');
+      const guardianName = form.querySelector('input[name="guardianName"]');
+      const guardianSignature = form.querySelector('input[name="guardianSignature"]');
+      
+      if (agreementCheckbox) {
+        stepData.agreementAccepted = agreementCheckbox.checked;
+      }
+      
+      // Signature is required - check if it's filled
+      if (signature) {
+        if (signature.value && signature.value.trim() !== '') {
+          stepData.signature = signature.value; // Base64 PNG data
+        } else {
+          // Show error if signature is empty
+          alert('Please provide your signature before submitting.');
+          return; // Prevent form submission
+        }
+      }
+      
+      if (guardianName && guardianName.value) {
+        stepData.guardianName = guardianName.value;
+      }
+      
+      if (guardianSignature && guardianSignature.value) {
+        stepData.guardianSignature = guardianSignature.value; // Base64 PNG data
+      }
+    }
+    
     config.fields.forEach(field => {
       if (field.type === 'checkbox-with-recognition') {
         // Collect all checked values for the main field
@@ -3134,6 +3478,9 @@
     
     // Handle based on step type
     if (config.stepType === 'enrollment-summary') {
+      // Mark enrollment summary (Review Details) as completed
+      markStepCompleted(stepId);
+      
       // Check for existing enrollment before proceeding
       console.log('🔍 Checking for existing enrollment before proceeding...');
       const alreadyEnrolled = await checkExistingEnrollment(true); // Show modal
@@ -3149,6 +3496,9 @@
         showStep(nextStep.id);
       }
     } else if (config.stepType === 'review') {
+      // Mark review step as completed
+      markStepCompleted(stepId);
+      
       // Check for existing enrollment before proceeding
       console.log('🔍 Checking for existing enrollment before proceeding...');
       const alreadyEnrolled = await checkExistingEnrollment(true); // Show modal
@@ -3177,6 +3527,80 @@
   }
   
   // =========================================================================
+  // Inactivity Tracking for Incomplete Booking Email
+  // =========================================================================
+  
+  function recordActivity() {
+    lastActivityTime = Date.now();
+    console.log('👤 Activity recorded at:', new Date(lastActivityTime).toLocaleTimeString());
+  }
+  
+  function startInactivityTracking() {
+    if (inactivityCheckInterval) {
+      clearInterval(inactivityCheckInterval);
+    }
+    
+    // Check every 5 minutes (300000ms) if 2 hours have passed
+    inactivityCheckInterval = setInterval(() => {
+      const inactiveTime = Date.now() - lastActivityTime;
+      const twoHours = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+      
+      if (!incompleteEmailSent && inactiveTime >= twoHours && contactId) {
+        console.log('⏰ 2 hours of inactivity detected - sending incomplete booking email');
+        sendIncompleteBookingEmail();
+      }
+    }, 5 * 60 * 1000); // Check every 5 minutes
+    
+    console.log('✅ Inactivity tracking started');
+  }
+  
+  function stopInactivityTracking() {
+    if (inactivityCheckInterval) {
+      clearInterval(inactivityCheckInterval);
+      inactivityCheckInterval = null;
+      console.log('🛑 Inactivity tracking stopped');
+    }
+  }
+  
+  async function sendIncompleteBookingEmail() {
+    if (incompleteEmailSent) {
+      console.log('📧 Incomplete email already sent, skipping');
+      return;
+    }
+    
+    try {
+      console.log('📧 Sending incomplete booking email after 2 hours of inactivity...');
+      
+      const response = await fetch(`${RENDER_APP_URL}/api/enrollment/send-incomplete-booking`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contactId,
+          email: contactDetails.email,
+          instanceId,
+          courseId,
+          courseType,
+          courseName,
+          resumeUrl: window.location.href
+        })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Incomplete booking email sent:', result);
+        incompleteEmailSent = true;
+        
+        // Stop tracking after email is sent
+        stopInactivityTracking();
+      } else {
+        console.error('❌ Failed to send incomplete booking email:', response.status);
+      }
+    } catch (error) {
+      console.error('❌ Error sending incomplete booking email:', error);
+    }
+  }
+  
+  // =========================================================================
   // Save Step Data to aXcelerate
   // =========================================================================
   
@@ -3185,6 +3609,9 @@
       console.warn('No contact ID, cannot save to aXcelerate');
       return;
     }
+    
+    // Record activity - user is actively filling forms
+    recordActivity();
     
     try {
       console.log('💾 Saving step data to aXcelerate:');
@@ -3204,7 +3631,8 @@
           courseId,
           courseType,
           courseName,
-          resumeUrl: window.location.href
+          resumeUrl: window.location.href,
+          skipEmail: true // Don't send email on every save
         })
       });
       
@@ -3257,6 +3685,9 @@
       const result = await response.json();
       
       if (result.success) {
+        // Stop inactivity tracking - enrollment is complete
+        stopInactivityTracking();
+        
         // Clear saved data
         sessionStorage.clear();
         localStorage.removeItem('ax_enrollment_progress');
@@ -3280,6 +3711,9 @@
   
   function showStep(stepId) {
     console.log('Showing step:', stepId);
+    
+    // Record activity - user is navigating
+    recordActivity();
     
     currentStep = stepId;
     
@@ -3420,9 +3854,21 @@
       return;
     }
     
+    // Find Review Details step ID (enrollment-summary type)
+    let reviewStepId = null;
+    for (const [id, config] of Object.entries(stepConfigs)) {
+      if (config && config.stepType === 'enrollment-summary') {
+        reviewStepId = id;
+        break;
+      }
+    }
+    
+    // Check if Review Details is completed
+    const reviewCompleted = reviewStepId && completedSteps.has(reviewStepId);
+    
     // Check if all required steps are complete (for Review/Declaration)
     const requiredSteps = formSteps.filter(s => 
-      s.id !== 'login' && s.id !== 'review' && s.id !== 'declaration'
+      s.id !== 'login' && s.id !== reviewStepId && s.id !== 'declaration'
     );
     const allRequiredStepsComplete = requiredSteps.every(s => {
       const stepData = formData[s.id];
@@ -3431,6 +3877,7 @@
     
     tabs.forEach((tab, index) => {
       const tabStepId = tab.dataset.step;
+      const tabConfig = stepConfigs[tabStepId];
       tab.classList.remove('active', 'locked');
       
       const statusIcon = tab.querySelector('.ax-tab-status');
@@ -3441,8 +3888,31 @@
           tab.classList.add('completed', 'disabled');
           if (statusIcon) statusIcon.textContent = '✓';
         }
-      } else if (tabStepId === 'review' || tabStepId === 'declaration') {
-        // Review and Declaration - only enable if all required steps complete
+      } else if (tabStepId === 'declaration' || (tabConfig && tabConfig.stepType === 'enrol')) {
+        // Declaration - ONLY enable if Review Details is completed
+        if (!reviewCompleted) {
+          tab.classList.add('disabled', 'locked');
+          if (statusIcon) {
+            statusIcon.textContent = '!';
+            statusIcon.style.display = 'block';
+          }
+        } else if (index === currentIndex) {
+          tab.classList.add('active');
+          tab.classList.remove('disabled', 'locked');
+          if (statusIcon) statusIcon.style.display = 'none';
+        } else {
+          // Declaration is unlocked but not active
+          tab.classList.remove('disabled', 'locked');
+          if (completedSteps.has(tabStepId)) {
+            tab.classList.add('completed');
+            if (statusIcon) statusIcon.textContent = '✓';
+          } else {
+            tab.classList.remove('completed');
+            if (statusIcon) statusIcon.textContent = '!';
+          }
+        }
+      } else if (tabStepId === reviewStepId || (tabConfig && tabConfig.stepType === 'enrollment-summary')) {
+        // Review Details - only enable if all required steps complete
         if (!allRequiredStepsComplete) {
           tab.classList.add('disabled', 'locked');
           if (statusIcon) {
@@ -3454,17 +3924,20 @@
           tab.classList.remove('disabled', 'locked');
           if (statusIcon) statusIcon.style.display = 'none';
         } else {
+          // Review is unlocked - check if completed
           tab.classList.remove('disabled', 'locked');
-          const stepData = formData[tabStepId];
-          const hasData = stepData && typeof stepData === 'object' && Object.keys(stepData).length > 0;
-          const allRequiredFilled = validateStepRequiredFields(tabStepId);
-          
-          if (hasData && allRequiredFilled) {
+          if (completedSteps.has(tabStepId)) {
             tab.classList.add('completed');
-            if (statusIcon) statusIcon.textContent = '✓';
+            if (statusIcon) {
+              statusIcon.textContent = '✓';
+              statusIcon.style.display = 'block';
+            }
           } else {
             tab.classList.remove('completed');
-            if (statusIcon) statusIcon.textContent = '!';
+            if (statusIcon) {
+              statusIcon.textContent = '!';
+              statusIcon.style.display = 'block';
+            }
           }
         }
       } else if (index === currentIndex) {
@@ -3472,13 +3945,8 @@
         tab.classList.add('active');
         if (statusIcon) statusIcon.style.display = 'none';
       } else {
-        // All other steps - check if they have data and all required fields filled
-        const stepData = formData[tabStepId];
-        const hasData = stepData && typeof stepData === 'object' && Object.keys(stepData).length > 0;
-        const allRequiredFilled = validateStepRequiredFields(tabStepId);
-        
-        if (hasData && allRequiredFilled) {
-          // Step has data AND all required fields filled - show as completed with checkmark
+        // All other steps - check if explicitly completed OR has valid data
+        if (completedSteps.has(tabStepId)) {
           tab.classList.add('completed');
           tab.classList.remove('disabled');
           if (statusIcon) {
@@ -3486,17 +3954,30 @@
             statusIcon.style.display = 'block';
           }
         } else {
-          // Step has no data OR missing required fields - show exclamation mark, keep clickable
-          tab.classList.remove('completed', 'disabled');
-          if (statusIcon) {
-            statusIcon.textContent = '!';
-            statusIcon.style.display = 'block';
+          // Check if has data and all required fields filled
+          const stepData = formData[tabStepId];
+          const hasData = stepData && typeof stepData === 'object' && Object.keys(stepData).length > 0;
+          const allRequiredFilled = validateStepRequiredFields(tabStepId);
+          
+          if (hasData && allRequiredFilled) {
+            tab.classList.add('completed');
+            tab.classList.remove('disabled');
+            if (statusIcon) {
+              statusIcon.textContent = '✓';
+              statusIcon.style.display = 'block';
+            }
+          } else {
+            tab.classList.remove('completed', 'disabled');
+            if (statusIcon) {
+              statusIcon.textContent = '!';
+              statusIcon.style.display = 'block';
+            }
           }
         }
       }
     });
     
-    console.log(`📊 All required steps complete: ${allRequiredStepsComplete}`);
+    console.log(`📊 All required steps complete: ${allRequiredStepsComplete}, Review completed: ${reviewCompleted}`);
   }
   
   function populateFormData(stepId, data) {
@@ -4464,12 +4945,14 @@
         courseType,
         formData,
         contactDetails,
+        completedSteps: Array.from(completedSteps), // Convert Set to Array for storage
         timestamp: Date.now()
       };
       localStorage.setItem('ax_enrollment_progress', JSON.stringify(progress));
       console.log('📌 Progress saved to localStorage');
       console.log('   Saved formData keys:', Object.keys(progress.formData));
       console.log('   Saved contactDetails:', progress.contactDetails);
+      console.log('   Saved completedSteps:', progress.completedSteps);
     } else {
       console.log('⚠️ saveProgress() skipped - contactId:', contactId, 'currentStep:', currentStep);
     }
@@ -4507,6 +4990,13 @@
       formData = progress.formData || {};
       contactDetails = progress.contactDetails || { givenName: '', surname: '', email: '', mobile: '' };
       
+      // Restore completedSteps
+      if (progress.completedSteps && Array.isArray(progress.completedSteps)) {
+        completedSteps = new Set(progress.completedSteps);
+      } else {
+        completedSteps = new Set();
+      }
+      
       // Restore session storage for each step
       Object.entries(formData).forEach(([step, data]) => {
         sessionStorage.setItem(`ax_form_${step}`, JSON.stringify(data));
@@ -4516,9 +5006,13 @@
       console.log('📌 Contact ID:', contactId);
       console.log('📌 Current Step:', progress.currentStep);
       console.log('📌 Form Data Steps:', Object.keys(formData));
+      console.log('📌 Completed Steps:', Array.from(completedSteps));
       
       // Unlock tabs and mark login as completed if we have contactId
       if (contactId) {
+        // Resume inactivity tracking
+        startInactivityTracking();
+        
         unlockAllTabs();
         markStepCompleted('login');
         
@@ -4533,7 +5027,7 @@
         // Auto-mark completed steps based on saved data
         // Only mark as completed if step has actual field data AND passes validation
         Object.keys(formData).forEach(stepId => {
-          if (stepId !== 'login') {
+          if (stepId !== 'login' && !completedSteps.has(stepId)) {
             const stepData = formData[stepId];
             const hasData = stepData && typeof stepData === 'object' && Object.keys(stepData).length > 0;
             if (hasData) {
@@ -4548,6 +5042,8 @@
             } else {
               console.log(`⏭️ Skipping "${stepId}" - no data or empty`);
             }
+          } else if (completedSteps.has(stepId)) {
+            console.log(`✅ "${stepId}" already in completedSteps - keeping completed status`);
           }
         });
       }
@@ -4578,6 +5074,17 @@
       saveProgress();
     }
   });
+  
+  // Track user activity (clicks, keystrokes, mouse movement)
+  if (typeof document !== 'undefined') {
+    ['click', 'keydown', 'mousemove', 'scroll'].forEach(eventType => {
+      document.addEventListener(eventType, () => {
+        if (contactId && !incompleteEmailSent) {
+          recordActivity();
+        }
+      }, { passive: true });
+    });
+  }
   
   // =========================================================================
   // UI Helpers
