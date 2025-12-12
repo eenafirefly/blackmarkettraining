@@ -1103,9 +1103,14 @@ router.post('/save-step', async (req, res) => {
         console.log(`   📝 Personal field: ${key} → ${axFieldName} = "${value}"`);
       } else {
         // Custom field - send with just the variable name (same format as background fields)
-        // Background custom fields work by sending just the variable name
-        updatePayload[key] = value;
-        console.log(`   📝 Custom field: ${key} = "${value}" (sent as-is, no prefix)`);
+        // IMPORTANT: Normalize to lowercase for aXcelerate (case-sensitive)
+        const normalizedKey = key.toLowerCase();
+        updatePayload[normalizedKey] = value;
+        if (key !== normalizedKey) {
+          console.log(`   📝 Custom field: ${key} → ${normalizedKey} = "${value}"`);
+        } else {
+          console.log(`   📝 Custom field: ${key} = "${value}"`);
+        }
       }
     });
     
