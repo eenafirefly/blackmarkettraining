@@ -1406,10 +1406,10 @@
     
     // IMPORTANT: Check URL parameters FIRST (resume link takes priority over localStorage)
     const urlParams = new URLSearchParams(window.location.search);
-    const hasResumeLink = urlParams.has('auth_token') && urlParams.has('contact_id');
+    const hasResumeLink = urlParams.has('enrolment');
     
     if (hasResumeLink) {
-      console.log('🔗 Resume link detected - clearing old progress and using URL parameters');
+      console.log('🔗 Resume link detected - clearing old progress and using enrolment token');
       localStorage.removeItem('ax_enrollment_progress'); // Clear old data
       const hasOAuthReturn = await checkOAuthReturn();
       
@@ -2979,11 +2979,32 @@
   
   async function checkOAuthReturn() {
     const urlParams = new URLSearchParams(window.location.search);
-    authToken = urlParams.get('auth_token');
-    contactId = urlParams.get('contact_id');
+    const enrolmentToken = urlParams.get('enrolment');
     const authError = urlParams.get('auth_error');
     
-    console.log('Checking OAuth return:', { authToken: !!authToken, contactId, authError });
+    // Decode enrolment token to extract contactId and timestamp
+    if (enrolmentToken) {
+      try {
+        const decoded = atob(enrolmentToken); // Decode base64
+        const [extractedContactId, timestamp] = decoded.split(':');
+        contactId = extractedContactId;
+        authToken = enrolmentToken; // Store the full token for reference
+        console.log('🔓 Decoded enrolment token:', { contactId, timestamp });
+      } catch (e) {
+        console.error('❌ Failed to decode enrolment token:', e);
+        contactId = null;
+        authToken = null;
+      }
+    } else {
+      // Fallback: Check for old auth_token format (for backwards compatibility)
+      authToken = urlParams.get('auth_token');
+      contactId = urlParams.get('contact_id');
+      if (authToken && contactId) {
+        console.log('⚠️ Using legacy auth_token format');
+      }
+    }
+    
+    console.log('Checking OAuth/Resume link:', { hasToken: !!authToken, contactId, authError });
     
     if (authError) {
       showError('Authentication failed: ' + authError);
@@ -2992,7 +3013,7 @@
     }
     
     if (authToken && contactId) {
-      console.log('✅ OAuth/Resume successful! Contact ID:', contactId);
+      console.log('✅ OAuth/Resume link authenticated! Contact ID:', contactId);
       
       // Fetch contact details for pre-filling (await to ensure data is loaded)
       console.log('📋 Fetching contact details from aXcelerate...');
@@ -5211,11 +5232,13 @@
   function cleanUrl() {
     if (window.history && window.history.replaceState) {
       const url = new URL(window.location.href);
-      // IMPORTANT: Keep auth_token and contact_id (they make the resume link work!)
-      // Only remove error parameters
+      // IMPORTANT: Keep enrolment parameter (it makes the resume link work!)
+      // Only remove error parameters and legacy auth parameters
       url.searchParams.delete('auth_error');
+      url.searchParams.delete('auth_token'); // Remove legacy parameter
+      url.searchParams.delete('contact_id'); // Remove legacy parameter
       window.history.replaceState({}, document.title, url.toString());
-      console.log('🧹 Cleaned URL (kept auth_token and contact_id for resume link)');
+      console.log('🧹 Cleaned URL (kept enrolment token for resume link)');
     }
   }
   
