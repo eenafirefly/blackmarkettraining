@@ -550,10 +550,20 @@ async function updateContactCustomFields(contactId, customFields) {
   try {
     console.log('Updating contact custom fields:', { contactId, customFields });
     
-    // Build payload with custom fields
-    const payload = {
-      ...customFields
-    };
+    // Build payload with custom fields (no prefix - aXcelerate adds it internally)
+    // IMPORTANT: Normalize field names to lowercase (aXcelerate custom fields are case-sensitive)
+    const payload = {};
+    
+    Object.entries(customFields).forEach(([key, value]) => {
+      // Convert camelCase to lowercase for aXcelerate compatibility
+      // e.g., "computerSkills" -> "computerskills"
+      const normalizedKey = key.toLowerCase();
+      payload[normalizedKey] = value;
+      
+      if (key !== normalizedKey) {
+        console.log(`   Normalized ${key} -> ${normalizedKey}`);
+      }
+    });
     
     // Convert boolean-like fields to proper boolean values for aXcelerate
     // aXcelerate expects 'true'/'false' strings for boolean fields
