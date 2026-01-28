@@ -213,7 +213,7 @@ router.post('/create', async (req, res) => {
       contactID: enrolmentContactId,
       instanceID: instanceId,
       type: courseType,
-      tentative: true // Mark as tentative until payment
+      tentative: false // Mark as tentative until payment
     };
     
     console.log('📤 Creating enrollment in aXcelerate...');
