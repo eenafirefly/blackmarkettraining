@@ -262,6 +262,7 @@ class EnrolmentService {
           contactID: contactId,
           instanceID: instanceId,
           type: 'p',
+          payerID: contactId,
           tentative: false
         }),
         3,

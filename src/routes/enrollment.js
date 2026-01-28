@@ -214,6 +214,7 @@ router.post('/create', async (req, res) => {
       contactID: enrolmentContactId,
       instanceID: instanceId,
       type: courseType,
+      payerID: enrolmentContactId, // Self-paying (payer is same as student)
       tentative: false, // Auto-confirm booking
       generateInvoice: 1 // Force invoice generation for paid courses
     };
