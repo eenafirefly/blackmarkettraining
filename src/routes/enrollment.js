@@ -6,6 +6,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { convertISOtoSACC } from '../utils/country-codes.js';
+import axcelerateClient from '../services/axcelerate.js';
 
 const router = express.Router();
 
@@ -263,6 +264,19 @@ router.post('/create', async (req, res) => {
       invoiceId: enrollResult.invoiceID
     });
     console.log('📧 aXcelerate will send "Booking Confirmation - Black Market Training" email automatically');
+    
+    // Mark invoice as paid for pre-paid courses
+    if (enrollResult.invoiceID) {
+      try {
+        console.log('💰 Marking invoice as paid:', enrollResult.invoiceID);
+        await axcelerateClient.markInvoiceAsPaid(enrollResult.invoiceID);
+        console.log('✅ Invoice marked as paid successfully');
+      } catch (paymentError) {
+        console.error('⚠️ Failed to mark invoice as paid:', paymentError.message);
+        // Don't fail the entire enrollment if payment marking fails
+        // Admin can manually mark as paid in Axcelerate if needed
+      }
+    }
     
     // Save Declaration data (signature, agreement) to Contact Notes
     if (customFields) {

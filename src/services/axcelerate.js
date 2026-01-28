@@ -310,6 +310,67 @@ class AxcelerateClient {
   }
 
   /**
+   * Mark an invoice as paid (for pre-paid courses)
+   * @param {string} invoiceID - Invoice ID to mark as paid
+   * @param {number} amount - Payment amount (optional, will use invoice amount if not provided)
+   * @returns {Promise<Object>} Payment result
+   */
+  async markInvoiceAsPaid(invoiceID, amount = null) {
+    if (!invoiceID) {
+      throw new Error('invoiceID is required');
+    }
+
+    try {
+      // First, get invoice details to get the total amount if not provided
+      if (!amount) {
+        const invoiceResponse = await this.client.get(`/invoice/${invoiceID}`, {
+          headers: {
+            'APIToken': this.apiToken,
+            'WSToken': this.wsToken
+          }
+        });
+        amount = invoiceResponse.data.TOTAL || invoiceResponse.data.total || 0;
+      }
+
+      const payload = {
+        invoiceID: invoiceID,
+        amount: amount,
+        paymentMethod: 'Pre-paid', // or 'Cash', 'Credit Card', etc.
+        notes: 'Pre-paid course - auto-marked as paid'
+      };
+
+      // Convert payload to form-encoded format
+      const formDataString = Object.keys(payload)
+        .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(String(payload[key]))}`)
+        .join('&');
+
+      const response = await this.client.post('/payment/add', formDataString, {
+        headers: {
+          'APIToken': this.apiToken,
+          'WSToken': this.wsToken,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Length': Buffer.byteLength(formDataString)
+        }
+      });
+      
+      console.log(`✅ Invoice ${invoiceID} marked as paid: $${amount}`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to mark invoice as paid:', error.response?.data);
+      
+      // Extract error details
+      let errorMessage = 'Payment failed';
+      if (error.response?.data?.details) {
+        errorMessage = error.response.data.details;
+      } else if (error.response?.data?.messages) {
+        errorMessage = error.response.data.messages;
+      }
+      
+      throw new Error(`aXcelerate payment failed: ${errorMessage}`);
+    }
+  }
+
+  /**
    * Search for class instances
    * @param {Object} searchParams - Search parameters
    * @returns {Promise<Array>} Array of class instances
