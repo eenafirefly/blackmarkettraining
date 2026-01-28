@@ -214,7 +214,8 @@ router.post('/create', async (req, res) => {
       contactID: enrolmentContactId,
       instanceID: instanceId,
       type: courseType,
-      tentative: false // Mark as tentative until payment
+      tentative: false, // Auto-confirm booking
+      generateInvoice: 1 // Force invoice generation for paid courses
     };
     
     console.log('📤 Creating enrollment in aXcelerate...');
