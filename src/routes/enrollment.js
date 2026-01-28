@@ -221,6 +221,13 @@ router.post('/create', async (req, res) => {
     
     console.log('📤 Creating enrollment in aXcelerate...');
     console.log('   This will trigger "Booking Confirmation" email from aXcelerate');
+    console.log('   Enrollment data:', enrollmentData);
+    
+    const requestBody = Object.keys(enrollmentData)
+      .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(enrollmentData[key])}`)
+      .join('&');
+    
+    console.log('📋 Request body being sent to Axcelerate:', requestBody);
     
     const enrollResponse = await fetch(
       `${process.env.AXCELERATE_API_URL}/course/enrol`,
@@ -231,9 +238,7 @@ router.post('/create', async (req, res) => {
           'WSToken': process.env.AXCELERATE_WS_TOKEN,
           'Content-Type': 'application/x-www-form-urlencoded'
         },
-        body: Object.keys(enrollmentData)
-          .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(enrollmentData[key])}`)
-          .join('&')
+        body: requestBody
       }
     );
     
@@ -265,6 +270,7 @@ router.post('/create', async (req, res) => {
       learnerId: enrollResult.LEARNERID,
       invoiceId: enrollResult.invoiceID
     });
+    console.log('📋 Full Axcelerate response:', JSON.stringify(enrollResult, null, 2));
     console.log('📧 aXcelerate will send "Booking Confirmation - Black Market Training" email automatically');
     
     // Mark invoice as paid for pre-paid courses
