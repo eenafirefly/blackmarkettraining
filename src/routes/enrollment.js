@@ -265,19 +265,23 @@ router.post('/create', async (req, res) => {
     
     const enrollResult = await enrollResponse.json();
     
+    // Handle both uppercase and camelCase field names from Axcelerate
+    const invoiceId = enrollResult.INVOICEID || enrollResult.invoiceID;
+    const learnerId = enrollResult.LEARNERID || enrollResult.learnerID;
+    
     console.log('✅ Enrollment created successfully:', {
       contactId: enrolmentContactId,
-      learnerId: enrollResult.LEARNERID,
-      invoiceId: enrollResult.invoiceID
+      learnerId: learnerId,
+      invoiceId: invoiceId
     });
     console.log('📋 Full Axcelerate response:', JSON.stringify(enrollResult, null, 2));
     console.log('📧 aXcelerate will send "Booking Confirmation - Black Market Training" email automatically');
     
     // Mark invoice as paid for pre-paid courses
-    if (enrollResult.invoiceID) {
+    if (invoiceId) {
       try {
-        console.log('💰 Marking invoice as paid:', enrollResult.invoiceID);
-        await axcelerateClient.markInvoiceAsPaid(enrollResult.invoiceID);
+        console.log('💰 Marking invoice as paid:', invoiceId);
+        await axcelerateClient.markInvoiceAsPaid(invoiceId);
         console.log('✅ Invoice marked as paid successfully');
       } catch (paymentError) {
         console.error('⚠️ Failed to mark invoice as paid:', paymentError.message);
@@ -496,9 +500,9 @@ router.post('/create', async (req, res) => {
       message: 'Enrollment submitted successfully! Please proceed to payment.',
       data: {
         contactId: enrolmentContactId,
-        learnerId: enrollResult.LEARNERID,
-        invoiceId: enrollResult.invoiceID,
-        invoiceNumber: enrollResult.invoiceNumber,
+        learnerId: learnerId,
+        invoiceId: invoiceId,
+        invoiceNumber: enrollResult.invoiceNumber || enrollResult.INVOICENUMBER,
         instanceId: instanceId
       }
     });
