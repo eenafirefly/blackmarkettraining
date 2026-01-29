@@ -220,11 +220,10 @@ class AxcelerateClient {
       contactID,
       instanceID,
       type = 'p', // Default to program/class
-      payerID = null, // Who is paying (defaults to contactID if not provided)
+      payerID = null, // Who is paying (optional)
       tentative = false, // false = confirmed enrolment
       invoiceID = null,
-      generateInvoice = 1, // Generate invoice by default for paid courses
-      finaliseInvoice = 1 // Finalize invoice by default (marks as paid for pre-paid courses)
+      generateInvoice = 0 // Don't generate invoice by default (for pre-paid courses)
     } = enrolmentData;
 
     if (!contactID || !instanceID) {
@@ -235,12 +234,15 @@ class AxcelerateClient {
       contactID,
       instanceID,
       type,
-      payerID: payerID || contactID, // Default to self-paying if not specified
       tentative: tentative ? 'true' : 'false',
-      generateInvoice: generateInvoice,
-      finaliseInvoice: finaliseInvoice // Marks invoice as finalized/paid
+      generateInvoice: generateInvoice
     };
 
+    // Add optional parameters if provided
+    if (payerID) {
+      payload.payerID = payerID;
+    }
+    
     // Add invoiceID if payment was processed
     if (invoiceID) {
       payload.invoiceID = invoiceID;
@@ -315,66 +317,6 @@ class AxcelerateClient {
     };
   }
 
-  /**
-   * Mark an invoice as paid (for pre-paid courses)
-   * @param {string} invoiceID - Invoice ID to mark as paid
-   * @param {number} amount - Payment amount (optional, will use invoice amount if not provided)
-   * @returns {Promise<Object>} Payment result
-   */
-  async markInvoiceAsPaid(invoiceID, amount = null) {
-    if (!invoiceID) {
-      throw new Error('invoiceID is required');
-    }
-
-    try {
-      // First, get invoice details to get the total amount if not provided
-      if (!amount) {
-        const invoiceResponse = await this.client.get(`/invoice/${invoiceID}`, {
-          headers: {
-            'APIToken': this.apiToken,
-            'WSToken': this.wsToken
-          }
-        });
-        amount = invoiceResponse.data.TOTAL || invoiceResponse.data.total || 0;
-      }
-
-      const payload = {
-        invoiceID: invoiceID,
-        amount: amount,
-        paymentMethod: 'Pre-paid', // or 'Cash', 'Credit Card', etc.
-        notes: 'Pre-paid course - auto-marked as paid'
-      };
-
-      // Convert payload to form-encoded format
-      const formDataString = Object.keys(payload)
-        .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(String(payload[key]))}`)
-        .join('&');
-
-      const response = await this.client.post('/accounting/payment', formDataString, {
-        headers: {
-          'APIToken': this.apiToken,
-          'WSToken': this.wsToken,
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Content-Length': Buffer.byteLength(formDataString)
-        }
-      });
-      
-      console.log(`✅ Invoice ${invoiceID} marked as paid: $${amount}`);
-      return response.data;
-    } catch (error) {
-      console.error('Failed to mark invoice as paid:', error.response?.data);
-      
-      // Extract error details
-      let errorMessage = 'Payment failed';
-      if (error.response?.data?.details) {
-        errorMessage = error.response.data.details;
-      } else if (error.response?.data?.messages) {
-        errorMessage = error.response.data.messages;
-      }
-      
-      throw new Error(`aXcelerate payment failed: ${errorMessage}`);
-    }
-  }
 
   /**
    * Search for class instances

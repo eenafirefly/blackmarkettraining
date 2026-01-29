@@ -214,10 +214,8 @@ router.post('/create', async (req, res) => {
       contactID: enrolmentContactId,
       instanceID: instanceId,
       type: courseType,
-      payerID: enrolmentContactId, // Self-paying (payer is same as student)
       tentative: false, // Auto-confirm booking
-      cost: 0, // Override cost to 0 for pre-paid courses (already paid outside Axcelerate)
-      generateInvoice: 0 // Don't generate invoice since already paid
+      generateInvoice: 0 // Don't generate invoice - course is pre-paid externally
     };
     
     console.log('📤 Creating enrollment in aXcelerate...');
@@ -277,10 +275,11 @@ router.post('/create', async (req, res) => {
     });
     console.log('📋 Full Axcelerate response:', JSON.stringify(enrollResult, null, 2));
     console.log('📧 aXcelerate will send "Booking Confirmation - Black Market Training" email automatically');
-    console.log('💰 Invoice finalized during enrollment (finaliseInvoice=1) - should be marked as paid');
+    console.log('💰 No invoice generated (generateInvoice=0) - course is pre-paid externally');
     
-    // Note: Invoice is marked as finalized/paid using finaliseInvoice=1 parameter during enrollment
-    // No separate payment API call needed for pre-paid courses
+    // Note: Since courses are pre-paid (payment handled outside Axcelerate),
+    // we don't generate invoices to avoid "outstanding fees" warnings.
+    // This matches WordPress plugin's "always_free_bookings" setting.
     
     // Save Declaration data (signature, agreement) to Contact Notes
     if (customFields) {
