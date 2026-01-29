@@ -263,7 +263,8 @@ class EnrolmentService {
           instanceID: instanceId,
           type: 'p',
           payerID: contactId,
-          tentative: false
+          tentative: false,
+          finaliseInvoice: 1 // Mark invoice as finalized/paid for Shopify pre-paid orders
         }),
         3,
         1000

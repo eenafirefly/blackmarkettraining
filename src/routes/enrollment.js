@@ -216,7 +216,8 @@ router.post('/create', async (req, res) => {
       type: courseType,
       payerID: enrolmentContactId, // Self-paying (payer is same as student)
       tentative: false, // Auto-confirm booking
-      generateInvoice: 1 // Force invoice generation for paid courses
+      generateInvoice: 1, // Force invoice generation for paid courses
+      finaliseInvoice: 1 // Mark invoice as finalized/paid (pre-paid courses)
     };
     
     console.log('📤 Creating enrollment in aXcelerate...');
@@ -276,19 +277,10 @@ router.post('/create', async (req, res) => {
     });
     console.log('📋 Full Axcelerate response:', JSON.stringify(enrollResult, null, 2));
     console.log('📧 aXcelerate will send "Booking Confirmation - Black Market Training" email automatically');
+    console.log('💰 Invoice finalized during enrollment (finaliseInvoice=1) - should be marked as paid');
     
-    // Mark invoice as paid for pre-paid courses
-    if (invoiceId) {
-      try {
-        console.log('💰 Marking invoice as paid:', invoiceId);
-        await axcelerateClient.markInvoiceAsPaid(invoiceId);
-        console.log('✅ Invoice marked as paid successfully');
-      } catch (paymentError) {
-        console.error('⚠️ Failed to mark invoice as paid:', paymentError.message);
-        // Don't fail the entire enrollment if payment marking fails
-        // Admin can manually mark as paid in Axcelerate if needed
-      }
-    }
+    // Note: Invoice is marked as finalized/paid using finaliseInvoice=1 parameter during enrollment
+    // No separate payment API call needed for pre-paid courses
     
     // Save Declaration data (signature, agreement) to Contact Notes
     if (customFields) {
