@@ -216,8 +216,8 @@ router.post('/create', async (req, res) => {
       type: courseType,
       payerID: enrolmentContactId, // Self-paying (payer is same as student)
       tentative: false, // Auto-confirm booking
-      generateInvoice: 1, // Force invoice generation for paid courses
-      finaliseInvoice: 1 // Mark invoice as finalized/paid (pre-paid courses)
+      cost: 0, // Override cost to 0 for pre-paid courses (already paid outside Axcelerate)
+      generateInvoice: 0 // Don't generate invoice since already paid
     };
     
     console.log('📤 Creating enrollment in aXcelerate...');

@@ -350,7 +350,7 @@ class AxcelerateClient {
         .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(String(payload[key]))}`)
         .join('&');
 
-      const response = await this.client.post('/payment/add', formDataString, {
+      const response = await this.client.post('/accounting/payment', formDataString, {
         headers: {
           'APIToken': this.apiToken,
           'WSToken': this.wsToken,
