@@ -223,7 +223,8 @@ class AxcelerateClient {
       payerID = null, // Who is paying (defaults to contactID if not provided)
       tentative = false, // false = confirmed enrolment
       invoiceID = null,
-      generateInvoice = 1 // Generate invoice by default for paid courses
+      generateInvoice = 1, // Generate invoice by default for paid courses
+      finaliseInvoice = 1 // Finalize invoice by default (marks as paid for pre-paid courses)
     } = enrolmentData;
 
     if (!contactID || !instanceID) {
@@ -236,7 +237,8 @@ class AxcelerateClient {
       type,
       payerID: payerID || contactID, // Default to self-paying if not specified
       tentative: tentative ? 'true' : 'false',
-      generateInvoice: generateInvoice
+      generateInvoice: generateInvoice,
+      finaliseInvoice: finaliseInvoice // Marks invoice as finalized/paid
     };
 
     // Add invoiceID if payment was processed
