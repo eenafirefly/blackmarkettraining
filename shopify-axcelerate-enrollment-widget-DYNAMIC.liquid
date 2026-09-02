@@ -502,7 +502,15 @@
     line-height: 1.5;
     display: none; /* Hidden by default, replaced by tooltip */
   }
-  
+
+  .ax-file-format-text {
+    font-size: 13px;
+    color: #666;
+    margin-top: 6px;
+    line-height: 1.5;
+    display: block;
+  }
+
   .ax-help-text a {
     color: #2196F3;
     text-decoration: underline;
@@ -1397,6 +1405,22 @@
   
   async function init() {
     console.log('🚀 Initializing dynamic enrollment widget...');
+    console.log('📌 Current URL:', window.location.href);
+    
+    // Check URL parameters directly
+    const currentUrlParams = new URLSearchParams(window.location.search);
+    const urlInstanceId = currentUrlParams.get('instance_id');
+    
+    console.log('📌 URL instance_id parameter:', urlInstanceId);
+    
+    // If URL doesn't have instance_id parameter, hide widget
+    if (!urlInstanceId) {
+      console.warn('❌ No instance_id in URL - hiding enrollment widget');
+      widget.style.display = 'none';
+      return; // Stop initialization
+    }
+    
+    console.log('✅ instance_id found in URL:', urlInstanceId);
     
     // Fetch course and form configurations
     await Promise.all([
@@ -1687,6 +1711,16 @@
           </button>
         `;
         form.appendChild(buttonGroup);
+      } else if (config.stepType === 'document-upload') {
+        // Document Upload: Next button to proceed to Review Details
+        const buttonGroup = document.createElement('div');
+        buttonGroup.className = 'ax-button-group relative z-10 mt-5';
+        buttonGroup.innerHTML = `
+          <button type="submit" class="push-btn inline-block w-100 text-center ax-btn ax-btn-primary">
+            <span class="push-btn__surface w-100">Next: Review Details →</span>
+          </button>
+        `;
+        form.appendChild(buttonGroup);
       } else if (config.stepType === 'review') {
         // Review step: Single Save button
         const buttonGroup = document.createElement('div');
@@ -1912,7 +1946,85 @@
       form.addEventListener('submit', (e) => handleStepSubmit(e, stepId, config));
     }
     
+    // Setup special conditional logic handlers for known field relationships
+    setupSpecialConditionalHandlers();
+    
     console.log('✅ Dynamic steps rendered:', Object.keys(stepConfigs).length);
+  }
+  
+  // =========================================================================
+  // Special Conditional Handlers for Known Field Relationships
+  // =========================================================================
+  
+  function setupSpecialConditionalHandlers() {
+    console.log('🔧 setupSpecialConditionalHandlers called');
+    console.log('   Looking for: ax-speakotherlanguage-' + widgetId);
+    console.log('   Looking for: ax-field-group-languagespoken-' + widgetId);
+    
+    // Handle speakotherlanguage -> languagespoken relationship
+    const speakOtherLangSelect = document.getElementById(`ax-speakotherlanguage-${widgetId}`);
+    const languageSpokenGroup = document.getElementById(`ax-field-group-languagespoken-${widgetId}`);
+    const languageSpokenSelect = document.getElementById(`ax-languagespoken-${widgetId}`);
+    
+    console.log('   speakOtherLangSelect found:', !!speakOtherLangSelect);
+    console.log('   languageSpokenGroup found:', !!languageSpokenGroup);
+    console.log('   languageSpokenSelect found:', !!languageSpokenSelect);
+    
+    if (speakOtherLangSelect && languageSpokenGroup && languageSpokenSelect) {
+      console.log('🔗 Setting up speakotherlanguage -> languagespoken conditional logic');
+      
+      // Log current state
+      console.log('   Current speakotherlanguage value:', speakOtherLangSelect.value);
+      console.log('   Current languagespoken required:', languageSpokenSelect.required);
+      console.log('   Current languagespoken hidden:', languageSpokenGroup.classList.contains('ax-hidden'));
+      
+      // Store original required state
+      if (languageSpokenSelect.required) {
+        languageSpokenSelect.dataset.originalRequired = 'true';
+        console.log('   Stored originalRequired = true');
+      }
+      
+      // Initial state based on current value
+      const initialValue = speakOtherLangSelect.value;
+      if (initialValue === 'No') {
+        languageSpokenGroup.classList.add('ax-hidden');
+        languageSpokenSelect.required = false;
+        console.log('  ✅ Initial: Hide languagespoken + removed required (No selected)');
+        console.log('     languagespoken.required now:', languageSpokenSelect.required);
+      } else if (initialValue === 'Yes') {
+        languageSpokenGroup.classList.remove('ax-hidden');
+        if (languageSpokenSelect.dataset.originalRequired === 'true') {
+          languageSpokenSelect.required = true;
+        }
+        console.log('  ✅ Initial: Show languagespoken + set required (Yes selected)');
+      }
+      
+      // Add change listener
+      speakOtherLangSelect.addEventListener('change', (e) => {
+        const value = e.target.value;
+        console.log('🔄 speakotherlanguage changed to:', value);
+        
+        if (value === 'Yes') {
+          languageSpokenGroup.classList.remove('ax-hidden');
+          if (languageSpokenSelect.dataset.originalRequired === 'true') {
+            languageSpokenSelect.required = true;
+          }
+          console.log('  ✅ Show languagespoken (required=' + languageSpokenSelect.required + ')');
+        } else if (value === 'No') {
+          languageSpokenGroup.classList.add('ax-hidden');
+          languageSpokenSelect.required = false;
+          languageSpokenSelect.value = ''; // Clear value when hidden
+          console.log('  ✅ Hide languagespoken (required=' + languageSpokenSelect.required + ')');
+        }
+      });
+      
+      console.log('✅ speakotherlanguage conditional handler set up successfully');
+    } else {
+      console.log('❌ Could not find required elements:');
+      console.log('   speakOtherLangSelect:', !!speakOtherLangSelect);
+      console.log('   languageSpokenGroup:', !!languageSpokenGroup);
+      console.log('   languageSpokenSelect:', !!languageSpokenSelect);
+    }
   }
   
   // =========================================================================
@@ -1958,11 +2070,19 @@
       return fieldGroup;
     }
     
+    // Override required flag for conditionally hidden fields
+    // languagespoken should only be required when "speakotherlanguage" = Yes
+    let isFieldRequired = field.required;
+    if (field.fieldId === 'languagespoken') {
+      isFieldRequired = false; // Make it optional - conditional logic will handle it
+      console.log('🔧 Overriding languagespoken: changed from required=true to required=false');
+    }
+    
     // Create label
     const label = document.createElement('label');
     label.htmlFor = `ax-${field.fieldId}-${widgetId}`;
     label.innerHTML = field.name;
-    if (field.required) {
+    if (isFieldRequired) {
       const required = document.createElement('span');
       required.className = 'ax-required';
       required.textContent = '*';
@@ -2004,12 +2124,22 @@
             input.appendChild(option);
           });
         }
+        
+        // Store original required state for conditional logic
+        if (field.required) {
+          input.dataset.originalRequired = 'true';
+        }
         break;
         
       case 'textarea':
         input = document.createElement('textarea');
         input.className = 'ax-input';
         input.rows = field.rows || 4;
+        
+        // Store original required state for conditional logic
+        if (field.required) {
+          input.dataset.originalRequired = 'true';
+        }
         break;
         
       case 'checkbox-with-recognition':
@@ -2136,7 +2266,10 @@
             radio.name = field.fieldId;
             radio.value = opt.value;
             radio.className = 'ax-radio';
-            if (field.required) radio.required = true;
+            if (field.required) {
+              radio.required = true;
+              radio.dataset.originalRequired = 'true'; // Store original required state
+            }
             
             const span = document.createElement('span');
             span.textContent = opt.display;
@@ -2148,6 +2281,19 @@
         }
         
         fieldGroup.appendChild(radioGroup);
+        
+        // Handle initially hidden radio groups
+        if (field.hideInitially === 'hidden') {
+          fieldGroup.classList.add('ax-hidden');
+          // Remove required attribute for initially hidden radio buttons
+          const radios = radioGroup.querySelectorAll('input[type="radio"]');
+          radios.forEach(radio => {
+            if (radio.required) {
+              radio.required = false;
+            }
+          });
+        }
+        
         return fieldGroup;
         
       case 'date':
@@ -2232,14 +2378,23 @@
         fileContainer.appendChild(fileInputLabel);
         fileContainer.appendChild(fileInput);
         
-        // Instructions/Help text
-        if (field.instructions || field.helpText) {
-          const helpDiv = document.createElement('div');
-          helpDiv.className = 'ax-help-text';
-          helpDiv.textContent = field.instructions || field.helpText;
-          fileContainer.appendChild(helpDiv);
+        // Instructions text (which document to provide)
+        if (field.instructions) {
+          const instructionsDiv = document.createElement('div');
+          instructionsDiv.className = 'ax-help-text';
+          instructionsDiv.textContent = field.instructions;
+          fileContainer.appendChild(instructionsDiv);
         }
-        
+
+        // Accepted file formats - shown statically on the page (not just
+        // on tooltip hover), so students know upfront what they can upload.
+        if (field.helpText || field.acceptedFileTypes) {
+          const formatDiv = document.createElement('div');
+          formatDiv.className = 'ax-file-format-text';
+          formatDiv.textContent = field.helpText || `Accepted formats: ${field.acceptedFileTypes}`;
+          fileContainer.appendChild(formatDiv);
+        }
+
         // Upload button
         const uploadBtn = document.createElement('button');
         uploadBtn.type = 'button';
@@ -2267,7 +2422,10 @@
     if (input) {
       input.id = `ax-${field.fieldId}-${widgetId}`;
       input.name = field.fieldId;
-      if (field.required) input.required = true;
+      if (isFieldRequired) {
+        input.required = true;
+        input.dataset.originalRequired = 'true'; // Store that this field should be required when visible
+      }
       if (field.placeholder) input.placeholder = field.placeholder;
       
       // Add validation pattern if present
@@ -2284,6 +2442,10 @@
       // Handle conditional visibility
       if (field.hideInitially === 'hidden') {
         fieldGroup.classList.add('ax-hidden');
+        // Remove required attribute for initially hidden fields
+        if (input.required) {
+          input.required = false;
+        }
       }
       
       // Setup event listeners for conditional logic
@@ -2816,15 +2978,40 @@
     const fieldGroup = document.getElementById(`ax-field-group-${targetFieldId}-${widgetId}`);
     
     if (fieldGroup) {
+      // Find ALL input/select/textarea elements (handles radio button groups)
+      const inputs = fieldGroup.querySelectorAll('input, select, textarea');
+      
       if (action === 'show') {
         fieldGroup.classList.remove('ax-hidden');
-        console.log(`  ✅ Showing field: ${targetFieldId}`);
+        // Re-enable required validation for all inputs that were originally required
+        inputs.forEach(input => {
+          if (input.dataset.originalRequired === 'true') {
+            input.required = true;
+          }
+        });
+        console.log(`  ✅ Showing field: ${targetFieldId} (${inputs.length} input(s))`);
       } else if (action === 'hide') {
         fieldGroup.classList.add('ax-hidden');
-        console.log(`  ✅ Hiding field: ${targetFieldId}`);
+        // Disable required validation for all inputs in hidden field
+        inputs.forEach(input => {
+          if (input.required) {
+            input.dataset.originalRequired = 'true'; // Store original state
+            input.required = false;
+          }
+        });
+        console.log(`  ✅ Hiding field: ${targetFieldId} (${inputs.length} input(s))`);
       } else if (action === 'toggle') {
-        fieldGroup.classList.toggle('ax-hidden');
-        console.log(`  ✅ Toggling field: ${targetFieldId}`);
+        const isHidden = fieldGroup.classList.toggle('ax-hidden');
+        // Toggle required attribute based on visibility for all inputs
+        inputs.forEach(input => {
+          if (isHidden && input.required) {
+            input.dataset.originalRequired = 'true';
+            input.required = false;
+          } else if (!isHidden && input.dataset.originalRequired === 'true') {
+            input.required = true;
+          }
+        });
+        console.log(`  ✅ Toggling field: ${targetFieldId} (${inputs.length} input(s))`);
       }
     } else {
       console.warn(`⚠️ Field group not found: ax-field-group-${targetFieldId}-${widgetId}`);
@@ -3013,15 +3200,24 @@
     }
     
     console.log(`   ✅ Found current files list element`);
-    
+
     currentFilesList.innerHTML = '';
-    
+
+    // Native HTML "required" can never be satisfied by a pre-existing file
+    // (file inputs can't be pre-filled), so relax/restore it based on whether
+    // files already exist - otherwise the browser blocks submission even
+    // though the file was already uploaded.
+    const fileInput = document.getElementById(`ax-${fieldId}-${widgetId}`);
+    if (fileInput && fileInput.dataset.minFiles !== undefined) {
+      fileInput.required = !(files && files.length > 0);
+    }
+
     if (!files || files.length === 0) {
       console.log(`   📝 No files to display`);
       currentFilesList.innerHTML = '<div class="ax-no-files">No files uploaded yet</div>';
       return;
     }
-    
+
     console.log(`   📄 Adding ${files.length} file(s) to the list`);
     
     files.forEach((file, index) => {
@@ -3951,6 +4147,13 @@
       el.style.display = 'none';
     });
     
+    // Setup special conditional handlers when nationality step is shown
+    if (stepId === 'nationality') {
+      setTimeout(() => {
+        setupSpecialConditionalHandlers();
+      }, 200);
+    }
+    
     // Show current step
     const stepElement = document.getElementById('ax-step-' + stepId + '-' + widgetId);
     if (stepElement) {
@@ -4622,7 +4825,7 @@
       });
       
       return documentsByType;
-      
+
     } catch (error) {
       console.error('❌ Error fetching portfolio documents:', error);
       console.error('   Error name:', error.name);
@@ -4631,7 +4834,88 @@
       return {};
     }
   }
-  
+
+  // Loads already-uploaded portfolio documents for every document-upload
+  // step and renders them into the "Current Files" list. Called both after
+  // a fresh OAuth/resume login (fetchSavedFormData) and when a session is
+  // restored from localStorage on page refresh (restoreProgress) - without
+  // this, a refresh loses the visible file list even though the files are
+  // still saved in Axcelerate.
+  async function loadPortfolioDocumentsForAllSteps(contactIdToFetch) {
+    console.log('🔍 Checking for document-upload steps...');
+    console.log('   Available stepConfigs:', Object.keys(stepConfigs));
+
+    let documentStepsFound = 0;
+    for (const [stepId, config] of Object.entries(stepConfigs)) {
+      if (config.stepType === 'document-upload') {
+        documentStepsFound++;
+        console.log(`📄 Found document-upload step: "${stepId}"`);
+        console.log(`   portfolioChecklistId: ${config.portfolioChecklistId}`);
+
+        if (config.portfolioChecklistId) {
+          try {
+            console.log(`📥 Fetching portfolio documents for step "${stepId}"...`);
+            const portfolioDocuments = await fetchPortfolioDocuments(contactIdToFetch, config.portfolioChecklistId);
+
+            console.log(`📦 Portfolio documents received:`, Object.keys(portfolioDocuments));
+            console.log(`   Document counts:`, Object.entries(portfolioDocuments).map(([type, docs]) => `${type}: ${docs.length}`));
+
+            // Map documents to their field IDs
+            if (config.fields) {
+              console.log(`   📋 Processing ${config.fields.length} fields...`);
+              config.fields.forEach(field => {
+                if (field.type === 'file-upload' && field.portfolioItemType) {
+                  console.log(`   🔍 Looking for field "${field.fieldId}" with portfolioItemType="${field.portfolioItemType}"`);
+                  console.log(`   Available types in portfolioDocuments:`, Object.keys(portfolioDocuments));
+
+                  const docs = portfolioDocuments[field.portfolioItemType];
+                  if (docs && docs.length > 0) {
+                    console.log(`   ✅ Found ${docs.length} document(s) for ${field.portfolioItemType}:`, docs.map(d => d.name));
+
+                    // Save to formData
+                    if (!formData[stepId]) {
+                      formData[stepId] = {};
+                    }
+                    formData[stepId][field.fieldId] = docs;
+                    sessionStorage.setItem(`ax_form_${stepId}`, JSON.stringify(formData[stepId]));
+                    console.log(`   💾 Saved to formData[${stepId}][${field.fieldId}]`);
+
+                    // Update the current files list in the DOM
+                    updateCurrentFilesList(field.fieldId, docs);
+                  } else {
+                    console.warn(`   ❌ No documents found for portfolioItemType="${field.portfolioItemType}"`);
+                    console.warn(`   portfolioDocuments keys:`, Object.keys(portfolioDocuments));
+                  }
+                } else if (field.type === 'file-upload') {
+                  console.warn(`   ⚠️ File-upload field "${field.fieldId}" has no portfolioItemType!`);
+                }
+              });
+            }
+
+            // Validate and mark step as completed if all documents uploaded
+            const isValid = validateStepRequiredFields(stepId);
+            if (isValid) {
+              console.log(`✅ Document step "${stepId}" passes validation - marking as completed`);
+              markStepCompleted(stepId);
+            } else {
+              console.log(`⚠️ Document step "${stepId}" does not pass validation yet`);
+            }
+          } catch (error) {
+            console.error(`❌ Error loading portfolio documents for step "${stepId}":`, error);
+          }
+        } else {
+          console.warn(`⚠️ Step "${stepId}" is document-upload but has no portfolioChecklistId!`);
+        }
+      }
+    }
+
+    if (documentStepsFound === 0) {
+      console.warn('⚠️ No document-upload steps found in stepConfigs!');
+    } else {
+      console.log(`✅ Processed ${documentStepsFound} document-upload step(s)`);
+    }
+  }
+
   async function fetchSavedFormData(contactIdToFetch) {
     try {
       console.log('📊 Fetching ALL saved form data for contact:', contactIdToFetch);
@@ -4991,81 +5275,10 @@
       
       console.log('✅ Finished loading saved form data from aXcelerate');
       console.log('📦 Total steps populated:', Object.keys(formData).length);
-      
+
       // Load portfolio documents for document-upload steps
-      console.log('🔍 Checking for document-upload steps...');
-      console.log('   Available stepConfigs:', Object.keys(stepConfigs));
-      
-      let documentStepsFound = 0;
-      for (const [stepId, config] of Object.entries(stepConfigs)) {
-        if (config.stepType === 'document-upload') {
-          documentStepsFound++;
-          console.log(`📄 Found document-upload step: "${stepId}"`);
-          console.log(`   portfolioChecklistId: ${config.portfolioChecklistId}`);
-          
-          if (config.portfolioChecklistId) {
-            try {
-              console.log(`📥 Fetching portfolio documents for step "${stepId}"...`);
-              const portfolioDocuments = await fetchPortfolioDocuments(contactIdToFetch, config.portfolioChecklistId);
-              
-              console.log(`📦 Portfolio documents received:`, Object.keys(portfolioDocuments));
-              console.log(`   Document counts:`, Object.entries(portfolioDocuments).map(([type, docs]) => `${type}: ${docs.length}`));
-              
-              // Map documents to their field IDs
-              if (config.fields) {
-                console.log(`   📋 Processing ${config.fields.length} fields...`);
-                config.fields.forEach(field => {
-                  if (field.type === 'file-upload' && field.portfolioItemType) {
-                    console.log(`   🔍 Looking for field "${field.fieldId}" with portfolioItemType="${field.portfolioItemType}"`);
-                    console.log(`   Available types in portfolioDocuments:`, Object.keys(portfolioDocuments));
-                    
-                    const docs = portfolioDocuments[field.portfolioItemType];
-                    if (docs && docs.length > 0) {
-                      console.log(`   ✅ Found ${docs.length} document(s) for ${field.portfolioItemType}:`, docs.map(d => d.name));
-                      
-                      // Save to formData
-                      if (!formData[stepId]) {
-                        formData[stepId] = {};
-                      }
-                      formData[stepId][field.fieldId] = docs;
-                      sessionStorage.setItem(`ax_form_${stepId}`, JSON.stringify(formData[stepId]));
-                      console.log(`   💾 Saved to formData[${stepId}][${field.fieldId}]`);
-                      
-                      // Update the current files list in the DOM
-                      updateCurrentFilesList(field.fieldId, docs);
-                    } else {
-                      console.warn(`   ❌ No documents found for portfolioItemType="${field.portfolioItemType}"`);
-                      console.warn(`   portfolioDocuments keys:`, Object.keys(portfolioDocuments));
-                    }
-                  } else if (field.type === 'file-upload') {
-                    console.warn(`   ⚠️ File-upload field "${field.fieldId}" has no portfolioItemType!`);
-                  }
-                });
-              }
-              
-              // Validate and mark step as completed if all documents uploaded
-              const isValid = validateStepRequiredFields(stepId);
-              if (isValid) {
-                console.log(`✅ Document step "${stepId}" passes validation - marking as completed`);
-                markStepCompleted(stepId);
-              } else {
-                console.log(`⚠️ Document step "${stepId}" does not pass validation yet`);
-              }
-            } catch (error) {
-              console.error(`❌ Error loading portfolio documents for step "${stepId}":`, error);
-            }
-          } else {
-            console.warn(`⚠️ Step "${stepId}" is document-upload but has no portfolioChecklistId!`);
-          }
-        }
-      }
-      
-      if (documentStepsFound === 0) {
-        console.warn('⚠️ No document-upload steps found in stepConfigs!');
-      } else {
-        console.log(`✅ Processed ${documentStepsFound} document-upload step(s)`);
-      }
-      
+      await loadPortfolioDocumentsForAllSteps(contactIdToFetch);
+
     } catch (error) {
       console.error('❌ Error fetching saved form data:', error);
     }
@@ -5318,7 +5531,15 @@
         } else {
           console.log('📋 Contact details already in memory:', contactDetails);
         }
-        
+
+        // Re-fetch document-upload "Current Files" lists from Axcelerate.
+        // formData/sessionStorage restored above don't repopulate the file
+        // list DOM or the "already has files" required-attribute state, so
+        // without this a page refresh made previously uploaded documents
+        // look like they'd disappeared.
+        console.log('📄 Reloading portfolio documents after progress restore...');
+        await loadPortfolioDocumentsForAllSteps(contactId);
+
         // Auto-mark completed steps based on saved data
         // Only mark as completed if step has actual field data AND passes validation
         Object.keys(formData).forEach(stepId => {
@@ -5527,9 +5748,11 @@
       return;
     }
     
+    // Mask email for display
+    const masked = email.substring(0, 1) + '****' + email.substring(email.indexOf('@'));
+    
     const emailEl = elements.modal.querySelector('#ax-modal-email');
     if (emailEl) {
-      const masked = email.substring(0, 1) + '****' + email.substring(email.indexOf('@'));
       emailEl.textContent = masked;
     }
     elements.modal.style.display = 'block';
